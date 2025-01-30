@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 
 # Define URL and version
-URL=${URL:-https://s3.amazonaws.com/bti-openaccess-us-east-1-bti-bfx/haydar-miRNA}
+URL=${URL:-https://bti-openaccess-us-east-1-bti-bfx.s3.us-east-1.amazonaws.com/haydar-miRNA}
 RELEASE=${RELEASE:-v1}
 
 # Remove old symlinks in data
@@ -28,7 +28,7 @@ done
 
 
 # Check the md5s for everything we downloaded except CHANGELOG.md
-cd $RELEASE
+cd data/$RELEASE
 echo "Checking MD5 hashes..."
 md5sum -c md5sum.txt
 cd ../../
