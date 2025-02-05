@@ -26,9 +26,16 @@ do
   fi
 done
 
+GENCODE39="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.primary_assembly.annotation.gtf.gz"
+cd data
+if [ ! -e ${GENCODE39##*/} ]
+then
+  echo "Downloading ${GENCODE39##*/}"
+  curl -k -O $GENCODE39
+fi
 
 # Check the md5s for everything we downloaded except CHANGELOG.md
-cd data/$RELEASE
+cd $RELEASE
 echo "Checking MD5 hashes..."
 md5sum -c md5sum.txt
 cd ../../
