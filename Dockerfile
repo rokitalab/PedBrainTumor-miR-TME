@@ -2,6 +2,7 @@ FROM rocker/tidyverse:4.4.0
 LABEL maintainer="Ryan Corbett (rcorbett@childrensnational.org)"
 WORKDIR /rocker-build/
 
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils dialog
 
 # Add curl, bzip2 and some dev libs
 RUN apt-get update -qq && apt-get -y --no-install-recommends install \
@@ -69,5 +70,7 @@ RUN R -e 'BiocManager::install(c( \
 ## install GitHub packages
 RUN R -e "remotes::install_github('clauswilke/colorblindr', ref = '1ac3d4d62dad047b68bb66c06cee927a4517d678', dependencies = TRUE)"
 RUN R -e "remotes::install_github('thomasp85/patchwork', ref = '1cb732b129ed6a65774796dc1f618558c7498b66', dependencies = TRUE)"
+
+WORKDIR /rocker-build/
 
 ADD Dockerfile .
