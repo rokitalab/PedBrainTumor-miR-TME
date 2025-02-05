@@ -1,0 +1,180 @@
+---
+title: 'Human miRNA differential expression in DIPG/DMG versus normal brain'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2025"
+---
+
+This script performs differential expression analysis of human miRNAs in DIPG/DMG samples versus normal pons
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(DESeq2)
+library(ggplot2)
+library(EnhancedVolcano)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-differential-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+```
+
+Set file paths 
+
+```{r file paths}
+mirna_cts_file <- file.path(data_dir,
+                          "30-931106737-miRNA_expression.csv")
+```
+
+Wrangle data
+
+```{r wrangle data}
+mirna_cts <- read_csv(mirna_cts_file) %>%
+  column_to_rownames("...1")
+```
+
+Create sample metaata df
+
+```{r metadata}
+metadata_df <- tibble(id = names(mirna_cts)) %>%
+  dplyr::mutate(group = case_when(
+    grepl("left-pons", id) ~ "normal pons",
+    TRUE ~ "DIPG_DMG"
+  )) %>%
+  as.data.frame()
+```
+
+Construct DESeqDataSet Object
+
+```{r create dds}
+dds <- DESeqDataSetFromMatrix(countData = mirna_cts, 
+                              colData = metadata_df, 
+                              design = ~group)
+```
+
+Plot miRNA expression PCA
+
+```{r pca}
+# transform raw counts
+vsdata <- varianceStabilizingTransformation(dds)
+
+pdf(file.path(plot_dir,
+              "mirna-pca-plot.pdf"),
+    width = 5, height = 3)
+
+plotPCA(vsdata, intgroup="group")
+
+dev.off()
+```
+
+Run DESeq2 function
+
+```{r deseq2}
+dds <- DESeq(dds)
+```
+
+Write results to variable
+
+```{r results}
+# set contrast as dipg/dmg versus normal
+res <- results(dds, contrast = c("group", "DIPG_DMG", "normal pons"))
+
+summary(res)
+```
+
+Generate differential expression volcano plot
+
+```{r volcanoplot}
+volc_plot <- EnhancedVolcano(res,
+                             lab = rownames(res), 
+                             x = "log2FoldChange",
+                             y = "pvalue",
+                             title = "DIPG/DMG versus normal pons",
+                             subtitle = NULL,
+                             caption = NULL,
+                             pCutoff = max(res$pvalue[res$padj < 0.05], na.rm = TRUE),
+                             FCcutoff = 2,
+                             pointSize = 4,
+                             labSize = 3,
+                             typeConnectors = "closed",
+                             drawConnectors = TRUE,
+                             widthConnectors = 1,
+                             colConnectors = 'black',
+                             max.overlaps = 8)
+
+pdf(file.path(plot_dir,
+              "de-mirna-dipg-dmg-versus-normal-volcano-plot.pdf"),
+    width = 6, height = 6)
+
+volc_plot
+
+dev.off()
+```
+
+Print DIPG/DMG upregulated miRNAs
+
+```{r}
+res <- data.frame(results(dds))
+
+res %>%
+  dplyr::filter(log2FoldChange > 0,
+                padj < 0.05)
+```
+
+Print DIPG/DMG downregulated miRNAs
+
+```{r}
+res %>%
+  dplyr::filter(log2FoldChange < 0,
+                padj < 0.05)
+```
+
+Plot counts of differentially expression miRNAs
+
+```{r plot cts}
+de_mirnas <- res %>%
+  arrange(pvalue) %>%
+  dplyr::filter(padj < 0.05) %>%
+  rownames_to_column("mirna_id") %>%
+  pull(mirna_id)
+
+for (mirna in de_mirnas){
+  
+  pdf(file.path(plot_dir,
+                glue::glue("{mirna}_cts_dipg_dmg_versus_normal.pdf")),
+      width = 5, height = 5)
+  
+  plotCounts(dds,
+             gene = mirna,
+             intgroup = "group")
+  
+  dev.off()
+  
+}
+```
+
+Save differential expression results
+
+```{r write output}
+res %>% 
+  rownames_to_column("mirna_id") %>%
+  write_tsv(file.path(results_dir,
+                      "mirna-differential-expr-deseq2-dipg-dmg-versus-normal.tsv"))
+```
+
+Print session info
+
+```{r session info}
+sessionInfo()
+```
