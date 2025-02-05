@@ -25,8 +25,7 @@ facilitate the review of your pull request.-->
 
 
 
-#### Is the analysis in a mature enough form that the resulting figure(s) and/or table(s) are 
-ready for review?
+#### Is the analysis in a mature enough form that the resulting figure(s) and/or table(s) are ready for review?
 
 
 
