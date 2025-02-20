@@ -28,6 +28,8 @@ data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "human-mirna-differential-expression")
 results_dir <- file.path(analysis_dir, "results")
 plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
 ```
 
 Set file paths 
@@ -41,7 +43,8 @@ Wrangle data
 
 ```{r wrangle data}
 mirna_cts <- read_csv(mirna_cts_file) %>%
-  column_to_rownames("...1")
+  column_to_rownames("...1") %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
 ```
 
 Create sample metaata df
@@ -73,7 +76,8 @@ pdf(file.path(plot_dir,
               "mirna-pca-plot.pdf"),
     width = 5, height = 3)
 
-plotPCA(vsdata, intgroup="group")
+plotPCA(vsdata, intgroup="group", pcsToUse = 2:3) +
+  theme_Publication()
 
 dev.off()
 ```
@@ -125,11 +129,12 @@ dev.off()
 Print DIPG/DMG upregulated miRNAs
 
 ```{r}
-res <- data.frame(results(dds))
+res <- data.frame(results(dds, contrast = c("group", "DIPG_DMG", "normal pons")))
 
 res %>%
   dplyr::filter(log2FoldChange > 0,
-                padj < 0.05)
+                padj < 0.05) %>%
+  arrange(padj)
 ```
 
 Print DIPG/DMG downregulated miRNAs
@@ -137,7 +142,8 @@ Print DIPG/DMG downregulated miRNAs
 ```{r}
 res %>%
   dplyr::filter(log2FoldChange < 0,
-                padj < 0.05)
+                padj < 0.05) %>%
+  arrange(padj)
 ```
 
 Plot counts of differentially expression miRNAs
@@ -150,16 +156,29 @@ de_mirnas <- res %>%
   pull(mirna_id)
 
 for (mirna in de_mirnas){
+
+  counts_df <- plotCounts(dds,
+                          gene = mirna,
+                          intgroup = "group",
+                          returnData = TRUE)
   
-  pdf(file.path(plot_dir,
+  # Convert it into a ggplot
+  ggplot(counts_df, aes(x = group, y = count)) +
+    geom_jitter(aes(fill = group), width = 0.2, 
+                shape = 21,
+                size = 3, alpha = 0.85,
+                 show.legend = FALSE) +  # Points for individual samples
+    geom_boxplot(outlier.shape = NA, alpha = 0.05,
+             show.legend = FALSE) +  # Boxplot to show distribution
+    scale_y_log10() +  # Log-transform if necessary
+    theme_Publication() +
+    labs(title = mirna,
+         x = "Group",
+         y = "Normalized Count")
+  
+  ggsave(file.path(plot_dir,
                 glue::glue("{mirna}_cts_dipg_dmg_versus_normal.pdf")),
-      width = 5, height = 5)
-  
-  plotCounts(dds,
-             gene = mirna,
-             intgroup = "group")
-  
-  dev.off()
+         width = 4, height = 4)
   
 }
 ```
