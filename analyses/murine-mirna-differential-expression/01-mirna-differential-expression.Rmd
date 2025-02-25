@@ -1,0 +1,305 @@
+---
+title: 'miRNA differential expression in CAR-T treated versus untreated mice'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2025"
+---
+
+This script performs differential expression analysis of human miRNAs in DIPG/DMG samples versus normal pons
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(DESeq2)
+library(ggplot2)
+library(EnhancedVolcano)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "murine-mirna-differential-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+```
+
+Set file paths 
+
+```{r file paths}
+mirna_cts_file <- file.path(data_dir,
+                          "30-963755216-miRNA_expression.csv")
+```
+
+Wrangle data. Remove Tube1 sample due to sparse counts as a results of low sequencing depth
+
+```{r wrangle data}
+mirna_cts <- read_csv(mirna_cts_file) %>%
+  column_to_rownames("...1") %>% 
+  dplyr::select(-`Day14-Tube1`)
+
+names(mirna_cts) <- str_replace(names(mirna_cts), "RESUB-", "")
+
+mirna_cts <- mirna_cts %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 5)
+```
+
+Create sample metaata df
+
+```{r metadata}
+metadata_df <- tibble(id = names(mirna_cts)) %>%
+  dplyr::mutate(time = unlist(lapply(strsplit(id, "-"), function(x) x[[1]])),
+                treatment = c(rep("B7H3", 2),
+                              rep("STOP", 3), "untreated",
+                              rep("B7H3", 3),
+                              rep("STOP", 3), 
+                              rep("untreated", 2),
+                              rep("B7H3", 2), 
+                              rep("STOP", 3), 
+                              rep("untreated", 2))
+  ) %>%
+  as.data.frame()
+
+write_tsv(metadata_df,
+          file.path(results_dir,
+                    "sample-metadata.tsv"))
+```
+
+Construct DESeqDataSet Object
+
+```{r create dds}
+dds_all <- DESeqDataSetFromMatrix(countData = mirna_cts, 
+                              colData = metadata_df, 
+                              design = ~ time + treatment)
+```
+
+Generate PCA plot from all samples, and by timepoint
+
+```{r pca timepoints}
+# transform raw counts
+vsdata <- varianceStabilizingTransformation(dds_all)
+
+p_all <- plotPCA(vsdata, intgroup = c("time", "treatment"), ntop = 250) +
+  aes(color = treatment, shape = time) +  # Modify aesthetics
+  scale_shape_manual(values = c("Day14" = 16, "Day21" = 17, "Day28" = 18)) +  
+  scale_color_manual(values = c("B7H3" = "#E64B35FF", "STOP" = "#4DBBD5FF", "untreated" = "#00A087FF")) +  
+  theme_Publication() +
+  labs(title = "All Samples", color = "Treatment", shape = "Time Point")
+
+# Save the plot
+ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-all.pdf")),
+       p_all, width = 5, height = 4)
+
+# Get unique time points
+time_points <- unique(colData(dds_all)$time)
+
+p_list <- list()
+
+# Create PCA plots for each time point
+for (time in time_points) {
+  
+  # Subset data for the specific time point
+  vsdata_subset <- vsdata[,colData(vsdata)$time == time]
+  
+  # Generate PCA plot
+  p_list[[time]] <- plotPCA(vsdata_subset, intgroup = "treatment", ntop = 250) +
+    aes(color = treatment) +  # Modify aesthetics
+    scale_color_manual(values = c("B7H3" = "#E64B35FF", "STOP" = "#4DBBD5FF", "untreated" = "#00A087FF")) +  
+    theme_Publication() +
+    labs(title = time, color = "Treatment")
+  
+}
+
+# merge PCA plots
+
+p_timepoint <- ggarrange(p_list[["Day14"]],
+               p_list[["Day21"]],
+               p_list[["Day28"]],
+               ncol = 1,
+               align = "h")
+
+# Save the plot
+ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-by-timepoint.pdf")),
+       p_timepoint, width = 5, height = 10)
+```
+
+Generate PCA plots by treatment
+
+```{r pca treatments}
+# Get unique treatments
+treatments <- unique(colData(dds_all)$treatment)
+
+p_list <- list()
+
+# Create PCA plots for each time point
+for (treatment in treatments) {
+  
+  # Subset data for the specific time point
+  vsdata_subset <- vsdata[,colData(vsdata)$treatment == treatment]
+  
+  # Generate PCA plot
+  p_list[[treatment]] <- plotPCA(vsdata_subset, intgroup = "time", ntop = 250) +
+    ggtitle(glue::glue("PCA Plot - {treatment}")) +
+    theme_Publication() +
+    labs(title = treatment, color = "Time Point")
+
+}
+
+# merge treatment PCA plots
+
+p_treatment <- ggarrange(p_list[["B7H3"]],
+               p_list[["STOP"]],
+               p_list[["untreated"]],
+               ncol = 1,
+               align = "h")
+
+# Save the plot
+ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-by-treatment.pdf")),
+       p_treatment, width = 5, height = 10)
+```
+
+For differential expression analyses, we will generate DESeqDataSet objects for each timepoint and perform the following comparisions:
+- B7H3 versus untreated
+- STOP versus untreated
+
+```{r deseq2}
+timepoints <- c("Day14", "Day21", "Day28")
+
+# create empty results list
+res <- list()
+
+# loop through time points to perform differential expression analyses
+for (timepoint in timepoints){
+
+  # create DDS obejct
+  dds <- DESeqDataSetFromMatrix(countData = mirna_cts[,metadata_df$time == timepoint], 
+                                colData = metadata_df[metadata_df$time == timepoint,], 
+                                design = ~ treatment)
+  
+  # run DESeq2
+  dds <- DESeq(dds)
+  
+  # pull B7H3 versus untreated contrast and generate data frame
+  res_B7H3_vs_Untreated <- results(dds, 
+                                     contrast = c("treatment", "B7H3", "untreated"))
+
+  res_B7H3_vs_Untreated <- data.frame(res_B7H3_vs_Untreated) %>%
+    rownames_to_column("mirna_id")
+  
+  # generate volcano plot
+  volc_plot <- EnhancedVolcano(res_B7H3_vs_Untreated,
+                           lab = res_B7H3_vs_Untreated$mirna_id, 
+                           x = "log2FoldChange",
+                           y = "pvalue",
+                           title = glue::glue("B7H3 CAR-T versus Untreated, {timepoint}"),
+                           subtitle = NULL,
+                           caption = NULL,
+                           pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj < 0.1], na.rm = TRUE),
+                           FCcutoff = 2,
+                           pointSize = 4,
+                           labSize = 4,
+                           typeConnectors = "closed",
+                           drawConnectors = TRUE,
+                           widthConnectors = 1,
+                           colConnectors = 'black',
+                           max.overlaps = 8)
+
+  ggsave(file.path(plot_dir,
+                glue::glue("murine-mirna-deseq2-b7h3-versus-untreated-{timepoint}.pdf")),
+         volc_plot, width = 8, height = 6)
+  
+  # pull STOP versus untreated contrast and generate data frame
+  res_STOP_vs_untreated <- results(dds, 
+                                  contrast = c("treatment", "STOP", "untreated"))
+  
+  res_STOP_vs_untreated <- data.frame(res_STOP_vs_untreated) %>%
+    rownames_to_column("mirna_id")
+  
+  # join two contrast dfs by miRNA id, adding suffixes to column names to indicate comparisons
+  res[[timepoint]] <- res_B7H3_vs_Untreated %>%
+    left_join(res_STOP_vs_untreated,
+              suffix = c("_b7h3_vs_untr",
+                         "_stop_vs_untr"),
+              by = "mirna_id") %>%
+    # define B7H3-upregulated and -downregulated miRNAs as those DE in B7H3 versus untreated ONLY, and NOT DE in STOP versus untreated comparison 
+    dplyr::mutate(status = case_when(
+      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr > 0 & padj_stop_vs_untr > 0.1 ~ "B7H3 upregulated",
+      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr < 0 & padj_stop_vs_untr > 0.1 ~ "B7H3 downregulated",
+      TRUE ~ "Not DE"
+    ))
+  
+}
+```
+
+Merge DE results by time point, and classify miRNAs based on differential expression patterns over time
+
+```{r merge res}
+
+# add "_Day28 suffix to Day28 df
+names(res[["Day28"]])[-1] <- glue::glue("{names(res[['Day28']])[-1]}_Day28")
+
+# join timepoint dfs
+res_all <- res[["Day14"]] %>%
+  left_join(res[["Day21"]],
+            by = "mirna_id",
+            suffix = c("_Day14", "_Day21")) %>%
+    left_join(res[["Day28"]],
+            by = "mirna_id") %>%
+  # group miRNAs by differential expression patterns
+  dplyr::mutate(expr_pattern = case_when(
+    status_Day14 == "B7H3 upregulated" & status_Day21 == "Not DE" & status_Day28 == "Not DE" ~ "B7H3 up, Day 14",
+    status_Day14 == "Not DE" & status_Day21 == "B7H3 upregulated" & status_Day28 == "Not DE" ~ "B7H3 up, Day 21",
+    status_Day14 == "Not DE" & status_Day21 == "Not DE" & status_Day28 == "B7H3 upregulated" ~ "B7H3 up, Day 28",
+    status_Day14 == "B7H3 downregulated" & status_Day21 == "Not DE" & status_Day28 == "Not DE" ~ "B7H3 down, Day 14",
+    status_Day14 == "Not DE" & status_Day21 == "B7H3 downregulated" & status_Day28 == "Not DE" ~ "B7H3 down, Day 21",
+    status_Day14 == "Not DE" & status_Day21 == "Not DE" & status_Day28 == "B7H3 downregulated" ~ "B7H3 down, Day 28",
+    (status_Day14 == "B7H3 upregulated" & status_Day21 == "B7H3 upregulated") | (status_Day14 == "B7H3 upregulated" & status_Day28 == "B7H3 upregulated") | (status_Day21 == "B7H3 upregulated" & status_Day28 == "B7H3 upregulated") ~ "B7H3 up, multiple",
+    (status_Day14 == "B7H3 downregulated" & status_Day21 == "B7H3 downregulated") | (status_Day14 == "B7H3 downregulated" & status_Day28 == "B7H3 downregulated") | (status_Day21 == "B7H3 downregulated" & status_Day28 == "B7H3 downregulated") ~ "B7H3 down, multiple",
+    status_Day14 != "Not DE" | status_Day21 != "Not DE" | status_Day28 != "Not DE" ~ "Other DE",
+    TRUE ~ "Not DE"
+  ))
+```
+
+Print miRNAs DE at multiple time points
+
+```{r print multi up}
+res_all %>%
+  dplyr::filter(expr_pattern == "B7H3 up, multiple") %>%
+  dplyr::select(mirna_id, status_Day14,
+                status_Day21, status_Day28)
+```
+
+```{r print multi down}
+res_all %>%
+  dplyr::filter(expr_pattern == "B7H3 down, multiple") %>%
+  dplyr::select(mirna_id, status_Day14,
+                status_Day21, status_Day28)
+```
+Print miRNAs with variable expression patterns across time points
+
+```{r print variable de}
+res_all %>%
+  dplyr::filter(expr_pattern == "Other DE") %>%
+  dplyr::select(mirna_id, status_Day14,
+                status_Day21, status_Day28)
+```
+
+Save output
+
+```{r save output}
+write_tsv(res_all,
+          file.path(results_dir,
+                    "mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv"))
+```
+
+Print session info
+
+```{r session info}
+sessionInfo()
+```
