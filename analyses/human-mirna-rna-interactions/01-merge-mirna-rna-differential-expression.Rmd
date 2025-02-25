@@ -1,0 +1,88 @@
+---
+title: 'Human miRNA-RNA interactions in DIPG/DMG'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2025"
+---
+
+This script identifies coordinated alterations in miRNA and target mRNA abundance in DIPG/DMG versus normal pons
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(ggplot2)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-rna-interactions")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+```
+
+Set file paths 
+
+```{r file paths}
+de_mirna_file <- file.path(root_dir, "analyses",
+                           "human-mirna-differential-expression",
+                           "results",
+                           "mirna-differential-expr-deseq2-dipg-dmg-versus-normal.tsv")
+
+de_rna_file <- file.path(root_dir, "analyses",
+                           "human-rna-differential-expression",
+                           "results",
+                           "mrna-differential-expression-deseq2-dipg-dmg-versus-normal.tsv")
+
+targets_file <- file.path(data_dir,
+                          "miRNA_Target_anno.csv")
+```
+
+Wrangle data
+
+```{r wrangle data}
+de_mirna_df <- read_tsv(de_mirna_file)
+
+de_rna_df <- read_tsv(de_rna_file)
+
+targets_df <- read_csv(targets_file) %>%
+  # keep only unique miRNA-gene id pairs
+  distinct(Seq1, GeneID, .keep_all = TRUE)
+```
+
+Merge miRNA DE results, miRNA gene targets, and gene DE results in a single df
+
+```{r}
+de_mirna_target_df <- de_mirna_df %>%
+  dplyr::filter(padj < 0.1) %>%
+  left_join(targets_df %>% dplyr::select(Seq1,
+                                         GeneID),
+            by = c("mirna_id" = "Seq1")) %>%
+  dplyr::rename(target_gene_id = GeneID) %>%
+  left_join(de_rna_df,
+            by = c("target_gene_id" = "gene_id"),
+            suffix = c("_miRNA", "_RNA")) %>%
+  dplyr::filter(!is.na(baseMean_target_gene),
+                !is.na(target_gene_id))
+```
+
+Save output
+
+```{r save output}
+write_tsv(de_mirna_target_df,
+          file.path(results_dir,
+                    "mirna-target-gene-differential-expr-dipg-dmg-versus-normal.tsv"))
+```
+
+Print session info
+
+```{r session info}
+sessionInfo()
+```
