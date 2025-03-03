@@ -59,10 +59,12 @@ RUN R -e 'BiocManager::install(c( \
   "msigdbr", \
   "optparse", \
   "org.Hs.eg.db", \
+  "org.Mm.eg.db", \
   "pheatmap", \
   "rtracklayer", \
   "R.utils", \
   "sva", \
+  "topGO", \
   "UpSetR" \
 ))'
 
