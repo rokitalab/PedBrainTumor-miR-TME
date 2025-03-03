@@ -14,8 +14,15 @@
 .
 ├── 01-merge-mirna-rna-differential-expression.Rmd
 ├── README.md
-├── plots
+├── input
+│   ├── miRTarBase_SE_R.csv
+│   ├── miRTarBase_SE_W.csv
+│   ├── miRTarBase_SE_WR.csv
+│   ├── miRTarBase_WE_Clip.tsv.gz
+│   └── miRTarBase_WE_Other.csv
 ├── results
-│   └── mirna-target-gene-differential-expr-dipg-dmg-versus-normal.tsv
+│   ├── human-mirna-target-predictions-miRTarBase.tsv.gz
+│   ├── known-mirna-target-gene-differential-expr-dipg-dmg-versus-normal.tsv
+│   └── novel-mirna-target-gene-differential-expr-dipg-dmg-versus-normal.tsv
 └── run_module.sh
 ```

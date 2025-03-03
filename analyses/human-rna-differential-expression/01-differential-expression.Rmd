@@ -181,24 +181,120 @@ for (i in 1:20){
                           returnData = TRUE)
   
   # Convert it into a ggplot
-  ggplot(counts_df, aes(x = group, y = count)) +
-    geom_jitter(aes(fill = group), width = 0.2, 
-                shape = 21,
-                size = 3, alpha = 0.85,
-                 show.legend = FALSE) +  # Points for individual samples
-    geom_boxplot(outlier.shape = NA, alpha = 0.05,
-             show.legend = FALSE) +  # Boxplot to show distribution
-    scale_y_log10() +  # Log-transform if necessary
-    theme_Publication() +
-    labs(title = gene_name,
-         x = "Group",
-         y = "Normalized Count")
+ plot_list[[gene]] <- ggplot(counts_df, aes(x = group, y = count)) +
+                            geom_jitter(aes(fill = group), width = 0.2, 
+                                        shape = 21,
+                                        size = 3, alpha = 0.85,
+                                         show.legend = FALSE) +  # Points for individual samples
+                            geom_boxplot(outlier.shape = NA, alpha = 0.05,
+                                     show.legend = FALSE) +  # Boxplot to show distribution
+                            scale_y_log10() +  # Log-transform if necessary
+                            theme_Publication() +
+                            labs(title = gene_name,
+                                 x = "Group",
+                                 y = "Normalized Count")
   
-  ggsave(file.path(plot_dir,
-                glue::glue("{gene_name}_cts_dipg_dmg_versus_normal.pdf")),
-      width = 5, height = 5)
+  # ggsave(file.path(plot_dir,
+  #               glue::glue("{gene_name}_cts_dipg_dmg_versus_normal.pdf")),
+  #     width = 5, height = 5)
   
 }
+```
+Create plots for immune-related genes of interest
+
+```{r}
+genes_of_interest <- c("JUNB", "JUN", "CD47",
+                       "SOCS3", "PTGS2", "CCL2", "S100A9",
+                       "VEGFA", "MMP9", "NFKBIA", "TIGIT")
+
+plot_list <- list()
+
+for (gene in genes_of_interest){
+  
+  gene_name <- gene
+  gene_id <- res %>%
+    dplyr::filter(gene_name == gene) %>%
+    pull(gene_id)
+  
+  counts_df <- plotCounts(dds,
+                          gene = gene_id,
+                          intgroup = "group",
+                          main = gene_name,
+                          returnData = TRUE)
+  
+  # Convert it into a ggplot
+  plot_list[[gene]] <- ggplot(counts_df, aes(x = group, y = count)) +
+                              geom_jitter(aes(fill = group), width = 0.2, 
+                                          shape = 21,
+                                          size = 3, alpha = 0.85,
+                                           show.legend = FALSE) +  # Points for individual samples
+                              geom_boxplot(outlier.shape = NA, alpha = 0.05,
+                                       show.legend = FALSE) +  # Boxplot to show distribution
+                              ylim(c(0,NA)) +
+                              theme_Publication() +
+                              labs(title = gene_name,
+                                   x = NULL,
+                                   y = "Normalized Count")
+  
+}
+```
+
+Group plots together based on common pathways or miRNA targeting
+
+```{r group plots} 
+immunosuppressive_plot <- ggarrange(plot_list[["CD47"]],
+                                    plot_list[["SOCS3"]])
+annotate_figure(immunosuppressive_plot,
+                top = text_grob("Immunosuppressive & Immune Evasion", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "immunosuppressive_degs_dotplots.pdf"),
+       width = 7, height = 3)
+
+
+myeloid_plot <- ggarrange(plot_list[["PTGS2"]],
+                          plot_list[["CCL2"]],
+                          plot_list[["S100A9"]],
+                          nrow = 1)
+annotate_figure(myeloid_plot,
+                top = text_grob("Myeloid-derived suppressor cell (MDSC) & macrophage recruitment", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "myeloid_recruitment_degs_dotplots.pdf"),
+       width = 10.5, height = 3)
+
+
+hypoxia_plot <- ggarrange(plot_list[["VEGFA"]],
+                          plot_list[["MMP9"]],
+                          nrow = 1)
+annotate_figure(hypoxia_plot,
+                top = text_grob("Neuronal & hypoxia-induced immune modulation", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "immune_modulation_degs_dotplots.pdf"),
+       width = 7, height = 3)
+
+
+mir330_plot <- ggarrange(plot_list[["JUN"]],
+                          plot_list[["JUNB"]],
+                          nrow = 1)
+annotate_figure(mir330_plot,
+                top = text_grob("hsa-miR-330-5p targets", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "mir330_degs_dotplots.pdf"),
+       width = 7, height = 3)
+
+
+novelmiR_plot <- ggarrange(plot_list[["NFKBIA"]],
+                          plot_list[["CCL2"]],
+                          nrow = 1)
+annotate_figure(novelmiR_plot,
+                top = text_grob("Novel miRNA targets", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "novelmiR_degs_dotplots.pdf"),
+       width = 7, height = 3)
 ```
 
 Save differential expression results
