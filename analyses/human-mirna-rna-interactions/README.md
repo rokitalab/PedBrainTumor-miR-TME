@@ -8,6 +8,10 @@
 
 1. `01-merge-mirna-rna-differential-expression.Rmd`; merges DESeq2 results from miRNA and DE miRNA target genes in DIPG/DMG versus normal pons.
 
+## Input files
+
+miRTarBase files were pulled from [this database](https://awi.cuhk.edu.cn/~miRTarBase/miRTarBase_2025/), and included predicted miRNA targets separated by strong evidence (SE) versus weak evidence (WE) and experimental evidence type (W = western blot, R = reported assay, Clip = CLIP-seq).
+
 ##Analysis module directory structure
 
 ```
