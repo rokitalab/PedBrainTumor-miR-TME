@@ -18,6 +18,7 @@ library(DESeq2)
 library(ggplot2)
 library(EnhancedVolcano)
 library(rtracklayer)
+library(ggpubr)
 ```
 
 Set directory paths
@@ -169,6 +170,8 @@ degs <- res %>%
   dplyr::filter(padj < 0.05) %>%
   dplyr::select(gene_id, gene_name)
 
+deg_plot_list <- list()
+
 for (i in 1:20){
   
   gene_id <- degs$gene_id[i]
@@ -181,7 +184,7 @@ for (i in 1:20){
                           returnData = TRUE)
   
   # Convert it into a ggplot
- plot_list[[gene]] <- ggplot(counts_df, aes(x = group, y = count)) +
+ ggplot(counts_df, aes(x = group, y = count)) +
                             geom_jitter(aes(fill = group), width = 0.2, 
                                         shape = 21,
                                         size = 3, alpha = 0.85,
@@ -194,9 +197,9 @@ for (i in 1:20){
                                  x = "Group",
                                  y = "Normalized Count")
   
-  # ggsave(file.path(plot_dir,
-  #               glue::glue("{gene_name}_cts_dipg_dmg_versus_normal.pdf")),
-  #     width = 5, height = 5)
+  ggsave(file.path(plot_dir,
+                glue::glue("{gene_name}_cts_dipg_dmg_versus_normal.pdf")),
+      width = 5, height = 5)
   
 }
 ```
@@ -207,7 +210,7 @@ genes_of_interest <- c("JUNB", "JUN", "CD47",
                        "SOCS3", "PTGS2", "CCL2", "S100A9",
                        "VEGFA", "MMP9", "NFKBIA", "TIGIT")
 
-plot_list <- list()
+goi_plot_list <- list()
 
 for (gene in genes_of_interest){
   
@@ -223,7 +226,7 @@ for (gene in genes_of_interest){
                           returnData = TRUE)
   
   # Convert it into a ggplot
-  plot_list[[gene]] <- ggplot(counts_df, aes(x = group, y = count)) +
+  goi_plot_list[[gene_name]] <- ggplot(counts_df, aes(x = group, y = count)) +
                               geom_jitter(aes(fill = group), width = 0.2, 
                                           shape = 21,
                                           size = 3, alpha = 0.85,
@@ -242,8 +245,8 @@ for (gene in genes_of_interest){
 Group plots together based on common pathways or miRNA targeting
 
 ```{r group plots} 
-immunosuppressive_plot <- ggarrange(plot_list[["CD47"]],
-                                    plot_list[["SOCS3"]])
+immunosuppressive_plot <- ggarrange(goi_plot_list[["CD47"]],
+                                    goi_plot_list[["SOCS3"]])
 annotate_figure(immunosuppressive_plot,
                 top = text_grob("Immunosuppressive & Immune Evasion", face = "bold", size = 16))
 
@@ -252,9 +255,9 @@ ggsave(file.path(plot_dir,
        width = 7, height = 3)
 
 
-myeloid_plot <- ggarrange(plot_list[["PTGS2"]],
-                          plot_list[["CCL2"]],
-                          plot_list[["S100A9"]],
+myeloid_plot <- ggarrange(goi_plot_list[["PTGS2"]],
+                          goi_plot_list[["CCL2"]],
+                          goi_plot_list[["S100A9"]],
                           nrow = 1)
 annotate_figure(myeloid_plot,
                 top = text_grob("Myeloid-derived suppressor cell (MDSC) & macrophage recruitment", face = "bold", size = 16))
@@ -264,8 +267,8 @@ ggsave(file.path(plot_dir,
        width = 10.5, height = 3)
 
 
-hypoxia_plot <- ggarrange(plot_list[["VEGFA"]],
-                          plot_list[["MMP9"]],
+hypoxia_plot <- ggarrange(goi_plot_list[["VEGFA"]],
+                          goi_plot_list[["MMP9"]],
                           nrow = 1)
 annotate_figure(hypoxia_plot,
                 top = text_grob("Neuronal & hypoxia-induced immune modulation", face = "bold", size = 16))
@@ -275,8 +278,8 @@ ggsave(file.path(plot_dir,
        width = 7, height = 3)
 
 
-mir330_plot <- ggarrange(plot_list[["JUN"]],
-                          plot_list[["JUNB"]],
+mir330_plot <- ggarrange(goi_plot_list[["JUN"]],
+                          goi_plot_list[["JUNB"]],
                           nrow = 1)
 annotate_figure(mir330_plot,
                 top = text_grob("hsa-miR-330-5p targets", face = "bold", size = 16))
@@ -286,8 +289,8 @@ ggsave(file.path(plot_dir,
        width = 7, height = 3)
 
 
-novelmiR_plot <- ggarrange(plot_list[["NFKBIA"]],
-                          plot_list[["CCL2"]],
+novelmiR_plot <- ggarrange(goi_plot_list[["NFKBIA"]],
+                          goi_plot_list[["CCL2"]],
                           nrow = 1)
 annotate_figure(novelmiR_plot,
                 top = text_grob("Novel miRNA targets", face = "bold", size = 16))
