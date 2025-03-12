@@ -47,7 +47,7 @@ mirna_cts <- read_csv(mirna_cts_file) %>%
   filter(rowSums(across(everything(), ~ . != 0)) >= 2)
 ```
 
-Create sample metaata df
+Create sample metadata df
 
 ```{r metadata}
 metadata_df <- tibble(id = names(mirna_cts)) %>%
