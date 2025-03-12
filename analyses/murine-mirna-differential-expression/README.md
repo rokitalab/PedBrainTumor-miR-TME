@@ -1,4 +1,4 @@
-# Analysis of miRNA expression in CAR-T versus untreated miRNA 
+# Analysis of miRNA expression in CAR-T versus untreated mice 
 
 This analysis module performs miRNA differential expression in mice treated with B7H3 or control CAR-T versus untreated mice over three time points (14, 21, and 28 days post-treatment)
 
