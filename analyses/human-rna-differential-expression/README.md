@@ -13,6 +13,7 @@
 ```
 .
 ├── 01-differential-expression.Rmd
+├── 01-differential-expression.html
 ├── README.md
 ├── plots
 │   ├── ACTC1_cts_dipg_dmg_versus_normal.pdf
@@ -36,6 +37,11 @@
 │   ├── TM4SF1_cts_dipg_dmg_versus_normal.pdf
 │   ├── TPT1_cts_dipg_dmg_versus_normal.pdf
 │   ├── de-mirna-dipg-dmg-versus-normal-volcano-plot.pdf
+│   ├── immune_modulation_degs_dotplots.pdf
+│   ├── immunosuppressive_degs_dotplots.pdf
+│   ├── mir330_degs_dotplots.pdf
+│   ├── myeloid_recruitment_degs_dotplots.pdf
+│   ├── novelmiR_degs_dotplots.pdf
 │   └── rna-pca-plot.pdf
 ├── results
 │   ├── dmg-downregulated-genes.tsv
