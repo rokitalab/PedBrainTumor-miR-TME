@@ -17,17 +17,9 @@ This analysis module performs miRNA differential expression in mice treated with
 ├── 01-mirna-differential-expression.Rmd
 ├── README.md
 ├── plots
-│   ├── NovelmiRNA-251-expr.pdf
-│   ├── NovelmiRNA-372.pdf
 │   ├── mirna-pca-plot-all.pdf
 │   ├── mirna-pca-plot-by-timepoint.pdf
 │   ├── mirna-pca-plot-by-treatment.pdf
-│   ├── mmu-let-7d-5p-expr.pdf
-│   ├── mmu-miR-146a-5p-expr.pdf
-│   ├── mmu-miR-1964-3p-expr.pdf
-│   ├── mmu-miR-30c-5p.pdf
-│   ├── mmu-miR-344-3p-expr.pdf
-│   ├── mmu-miR-99b-5p-expr.pdf
 │   ├── murine-mirna-deseq2-b7h3-versus-untreated-Day14.pdf
 │   ├── murine-mirna-deseq2-b7h3-versus-untreated-Day21.pdf
 │   └── murine-mirna-deseq2-b7h3-versus-untreated-Day28.pdf
