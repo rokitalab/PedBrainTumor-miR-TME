@@ -1,0 +1,335 @@
+---
+title: 'Human RNA differential expression in DIPG/DMG versus normal brain'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2025"
+---
+
+This script performs differential expression analysis of human RNA transcripts in DIPG/DMG samples versus normal pons
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(DESeq2)
+library(ggplot2)
+library(EnhancedVolcano)
+library(rtracklayer)
+library(ggpubr)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-differential-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+Set file paths 
+
+```{r file paths}
+gene_cts_file <- file.path(data_dir,
+                          "30-992989426-RNA_raw_counts.csv")
+```
+
+Wrangle data
+
+```{r wrangle data}
+gene_cts <- read_csv(gene_cts_file) %>%
+  column_to_rownames("...1")
+```
+
+Create sample metaata df
+
+```{r metadata}
+metadata_df <- tibble(id = names(gene_cts)) %>%
+  dplyr::mutate(group = case_when(
+    grepl("left-pons", id) ~ "normal pons",
+    TRUE ~ "DIPG_DMG"
+  )) %>%
+  as.data.frame()
+```
+
+Construct DESeqDataSet Object
+
+```{r create dds}
+dds <- DESeqDataSetFromMatrix(countData = gene_cts, 
+                              colData = metadata_df, 
+                              design = ~group)
+```
+
+Plot gene expression PCA
+
+```{r pca}
+vsdata <- varianceStabilizingTransformation(dds)
+
+pdf(file.path(plot_dir,
+              "rna-pca-plot.pdf"),
+    width = 5, height = 3)
+
+plotPCA(vsdata, intgroup="group") +
+  theme_Publication()
+
+dev.off()
+```
+
+Run DESeq2 function
+
+```{r deseq2}
+dds <- DESeq(dds)
+```
+
+Write results to variable
+
+```{r results}
+res <- results(dds, contrast = c("group", "DIPG_DMG", "normal pons"))
+
+summary(res)
+```
+
+Load gtf file to obtain gene symbols from ensembl gene IDs
+
+```{r get gene symbols}
+gtf <- rtracklayer::import(file.path(data_dir,
+                                     "gencode.v39.primary_assembly.annotation.gtf.gz"))
+
+gtf_df <- as.data.frame(gtf) %>%
+  dplyr::mutate(gene_id = unlist(lapply(strsplit(gene_id, "[.]"), function(x) x[[1]])))
+
+# add gene names to res
+res <- res %>%
+  as.data.frame() %>%
+  rownames_to_column("gene_id") %>%
+  left_join(gtf_df %>% dplyr::select(gene_id,
+                                     gene_name),
+            by = "gene_id") %>%
+  distinct()
+```
+
+Generate volcano plot and save
+
+```{r volcanoplot}
+volc_plot <- EnhancedVolcano(res,
+                             lab = res$gene_name, 
+                             x = "log2FoldChange",
+                             y = "pvalue",
+                             title = "DIPG/DMG versus normal pons",
+                             subtitle = NULL,
+                             caption = NULL,
+                             pCutoff = max(res$pvalue[res$padj < 0.05], na.rm = TRUE),
+                             FCcutoff = 2,
+                             pointSize = 4,
+                             labSize = 3,
+                             typeConnectors = "closed",
+                             drawConnectors = TRUE,
+                             widthConnectors = 1,
+                             colConnectors = 'black',
+                             max.overlaps = 12)
+
+pdf(file.path(plot_dir,
+              "de-mirna-dipg-dmg-versus-normal-volcano-plot.pdf"),
+    width = 6, height = 6)
+
+volc_plot
+
+dev.off()
+```
+
+Print DIPG/DMG upregulated genes
+
+```{r print up genes}
+res %>%
+  dplyr::filter(log2FoldChange > 0,
+                padj < 0.05) %>%
+  arrange(padj)
+```
+
+Print DIPG/DMG downregulated genes
+
+```{r print down genes}
+res %>%
+  dplyr::filter(log2FoldChange < 0,
+                padj < 0.05) %>%
+  arrange(padj)
+```
+
+Plot normalized counts of top 20 DE genes in DIPG/DMG and normal pons
+
+```{r plot cts}
+degs <- res %>%
+  arrange(pvalue) %>%
+  dplyr::filter(padj < 0.05) %>%
+  dplyr::select(gene_id, gene_name)
+
+deg_plot_list <- list()
+
+for (i in 1:20){
+  
+  gene_id <- degs$gene_id[i]
+  gene_name <- degs$gene_name[i]
+  
+  counts_df <- plotCounts(dds,
+                          gene = gene_id,
+                          intgroup = "group",
+                          main = gene_name,
+                          returnData = TRUE)
+  
+  # Convert it into a ggplot
+ ggplot(counts_df, aes(x = group, y = count)) +
+                            geom_jitter(aes(fill = group), width = 0.2, 
+                                        shape = 21,
+                                        size = 3, alpha = 0.85,
+                                         show.legend = FALSE) +  # Points for individual samples
+                            geom_boxplot(outlier.shape = NA, alpha = 0.05,
+                                     show.legend = FALSE) +  # Boxplot to show distribution
+                            scale_y_log10() +  # Log-transform if necessary
+                            theme_Publication() +
+                            labs(title = gene_name,
+                                 x = "Group",
+                                 y = "Normalized Count")
+  
+  ggsave(file.path(plot_dir,
+                glue::glue("{gene_name}_cts_dipg_dmg_versus_normal.pdf")),
+      width = 5, height = 5)
+  
+}
+```
+Create plots for immune-related genes of interest
+
+```{r}
+genes_of_interest <- c("JUNB", "JUN", "CD47",
+                       "SOCS3", "PTGS2", "CCL2", "S100A9",
+                       "VEGFA", "MMP9", "NFKBIA", "TIGIT")
+
+goi_plot_list <- list()
+
+for (gene in genes_of_interest){
+  
+  gene_name <- gene
+  gene_id <- res %>%
+    dplyr::filter(gene_name == gene) %>%
+    pull(gene_id)
+  
+  counts_df <- plotCounts(dds,
+                          gene = gene_id,
+                          intgroup = "group",
+                          main = gene_name,
+                          returnData = TRUE)
+  
+  # Convert it into a ggplot
+  goi_plot_list[[gene_name]] <- ggplot(counts_df, aes(x = group, y = count)) +
+                              geom_jitter(aes(fill = group), width = 0.2, 
+                                          shape = 21,
+                                          size = 3, alpha = 0.85,
+                                           show.legend = FALSE) +  # Points for individual samples
+                              geom_boxplot(outlier.shape = NA, alpha = 0.05,
+                                       show.legend = FALSE) +  # Boxplot to show distribution
+                              ylim(c(0,NA)) +
+                              theme_Publication() +
+                              labs(title = gene_name,
+                                   x = NULL,
+                                   y = "Normalized Count")
+  
+}
+```
+
+Group plots together based on common pathways or miRNA targeting
+
+```{r group plots} 
+immunosuppressive_plot <- ggarrange(goi_plot_list[["CD47"]],
+                                    goi_plot_list[["SOCS3"]])
+annotate_figure(immunosuppressive_plot,
+                top = text_grob("Immunosuppressive & Immune Evasion", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "immunosuppressive_degs_dotplots.pdf"),
+       width = 7, height = 3)
+
+
+myeloid_plot <- ggarrange(goi_plot_list[["PTGS2"]],
+                          goi_plot_list[["CCL2"]],
+                          goi_plot_list[["S100A9"]],
+                          nrow = 1)
+annotate_figure(myeloid_plot,
+                top = text_grob("Myeloid-derived suppressor cell (MDSC) & macrophage recruitment", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "myeloid_recruitment_degs_dotplots.pdf"),
+       width = 10.5, height = 3)
+
+
+hypoxia_plot <- ggarrange(goi_plot_list[["VEGFA"]],
+                          goi_plot_list[["MMP9"]],
+                          nrow = 1)
+annotate_figure(hypoxia_plot,
+                top = text_grob("Neuronal & hypoxia-induced immune modulation", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "immune_modulation_degs_dotplots.pdf"),
+       width = 7, height = 3)
+
+
+mir330_plot <- ggarrange(goi_plot_list[["JUN"]],
+                          goi_plot_list[["JUNB"]],
+                          nrow = 1)
+annotate_figure(mir330_plot,
+                top = text_grob("hsa-miR-330-5p targets", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "mir330_degs_dotplots.pdf"),
+       width = 7, height = 3)
+
+
+novelmiR_plot <- ggarrange(goi_plot_list[["NFKBIA"]],
+                          goi_plot_list[["CCL2"]],
+                          nrow = 1)
+annotate_figure(novelmiR_plot,
+                top = text_grob("Novel miRNA targets", face = "bold", size = 16))
+
+ggsave(file.path(plot_dir,
+                 "novelmiR_degs_dotplots.pdf"),
+       width = 7, height = 3)
+```
+
+Save differential expression results
+
+```{r write output}
+write_tsv(res, 
+          file.path(results_dir,
+                    "mrna-differential-expression-deseq2-dipg-dmg-versus-normal.tsv"))
+```
+
+Write upregulated and downregulated genes to text files for GSEA:
+
+```{r save gene lists}
+upregulated_genes <- res %>%
+  dplyr::filter(padj < 0.05,
+                log2FoldChange > 0) %>% 
+  pull(gene_name)
+
+write_tsv(as.data.frame(upregulated_genes),
+          file.path(results_dir, "dmg-upregulated-genes.tsv"))
+
+downregulated_genes <- res %>%
+  dplyr::filter(padj < 0.1,
+                log2FoldChange < 0) %>% 
+  pull(gene_name)
+
+write_tsv(as.data.frame(downregulated_genes),
+          file.path(results_dir, "dmg-downregulated-genes.tsv"))
+```
+
+Print session info
+
+```{r session info}
+sessionInfo()
+```
