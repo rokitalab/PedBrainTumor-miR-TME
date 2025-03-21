@@ -19,11 +19,27 @@ This analysis module performs miRNA differential expression in mice treated with
 ├── 01-mirna-differential-expression.html
 ├── 02-GO_enrichment.Rmd
 ├── 02-GO_enrichment.html
+├── 03-plot_gsea.Rmd
+├── 03-plot_gsea.html
 ├── README.md
 ├── plots
 │   ├── mirna-pca-plot-all.pdf
 │   ├── mirna-pca-plot-by-timepoint.pdf
 │   ├── mirna-pca-plot-by-treatment.pdf
+│   ├── mmu-miR-1198-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-128-3p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-146a-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-151-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-155-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-185-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-1964-3p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-1981-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-204-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-30b-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-30c-5p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-423-3p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-466i-3p-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── mmu-miR-679-5p-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── murine-mirna-deseq2-b7h3-versus-untreated-Day14.pdf
 │   ├── murine-mirna-deseq2-b7h3-versus-untreated-Day21.pdf
 │   └── murine-mirna-deseq2-b7h3-versus-untreated-Day28.pdf
