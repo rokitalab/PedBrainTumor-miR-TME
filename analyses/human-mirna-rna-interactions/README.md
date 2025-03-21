@@ -7,6 +7,7 @@
 ## Folder contents
 
 1. `01-merge-mirna-rna-differential-expression.Rmd`; merges DESeq2 results from miRNA and DE miRNA target genes in DIPG/DMG versus normal pons.
+2. `02-GO_enrichment.Rmd`; runs gene ontology enrichment analyses on DE miRNA target genes.
 
 ## Input files
 
@@ -17,6 +18,7 @@ miRTarBase files were pulled from [this database](https://awi.cuhk.edu.cn/~miRTa
 ```
 .
 ├── 01-merge-mirna-rna-differential-expression.Rmd
+├── 02-GO_enrichment.Rmd
 ├── README.md
 ├── input
 │   ├── miRTarBase_SE_R.csv
@@ -25,6 +27,10 @@ miRTarBase files were pulled from [this database](https://awi.cuhk.edu.cn/~miRTa
 │   ├── miRTarBase_WE_Clip.tsv.gz
 │   └── miRTarBase_WE_Other.csv
 ├── results
+│   ├── hsa-miR-103a-3p-target-go-enrichment.tsv
+│   ├── hsa-miR-23c-target-go-enrichment.tsv
+│   ├── hsa-miR-330-5p-target-go-enrichment.tsv
+│   ├── hsa-miR-361-3p-target-go-enrichment.tsv
 │   ├── human-mirna-target-predictions-miRTarBase.tsv.gz
 │   ├── known-mirna-target-gene-differential-expr-dipg-dmg-versus-normal.tsv
 │   └── novel-mirna-target-gene-differential-expr-dipg-dmg-versus-normal.tsv
