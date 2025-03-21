@@ -50,7 +50,7 @@ de_mrna_df <- read_tsv(de_rna_file)
 
 Pull upregulated and downregulated genes
 
-```{r get miRNAs}
+```{r get DEGs}
 upregulated_genes <- de_mrna_df %>%
   dplyr::filter(padj < 0.1,
                 log2FoldChange > 0) %>%
@@ -64,7 +64,7 @@ downregulated_genes <- de_mrna_df %>%
 
 Run GO enrichment for upregulated genes
 
-```{r known target GO}
+```{r up GO}
 all_genes <- de_mrna_df$gene_name[!is.na(de_mrna_df$gene_name)]
 
 is_upregulated <- ifelse(all_genes %in% upregulated_genes,
@@ -94,7 +94,7 @@ sig_table_up <- GO_table_up %>%
 
 Plot most significantly enriched GO terms
 
-```{r}
+```{r sig upregulated terms}
 sig_table_up %>%
   dplyr::filter(Significant > 2) %>%
   head(40) %>%
@@ -119,7 +119,7 @@ ggsave(file.path(plot_dir, "dipg-dmg-upregulated-genes-go-term-enrichment-dotplo
 ```
 Add list of genes associated with each sig GO term to df
 
-```{r}
+```{r get genes}
 genes_per_term <- genesInTerm(GO_data_up)
 
 genes_per_term_df <- enframe(genes_per_term, name = "GO.ID", value = "Genes") %>%
@@ -131,7 +131,7 @@ sig_table_up <- sig_table_up %>%
 
 Repeat for downregulated genes
 
-```{r known target GO}
+```{r down GO}
 is_downregulated <- ifelse(all_genes %in% downregulated_genes,
                          1, 0)
 names(is_downregulated) <- all_genes
