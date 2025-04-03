@@ -28,6 +28,21 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
    default-jdk \
    libxt6
 
+# Install Miniconda
+ENV PATH=/opt/conda/bin:$PATH
+
+RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh && \
+    bash miniconda.sh -b -p /opt/conda && \
+    rm miniconda.sh && \
+    /opt/conda/bin/conda clean -a
+
+# Add conda channels and install miRanda
+RUN /opt/conda/bin/conda config --add channels defaults && \
+    /opt/conda/bin/conda config --add channels bioconda && \
+    /opt/conda/bin/conda config --add channels conda-forge && \
+    /opt/conda/bin/conda install -y miranda=3.3a && \
+    /opt/conda/bin/conda clean -a
+
 # Set the Bioconductor repository as the primary repository
 RUN R -e "options(repos = BiocManager::repositories())"
 
