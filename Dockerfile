@@ -41,7 +41,10 @@ RUN /opt/conda/bin/conda config --add channels defaults && \
     /opt/conda/bin/conda config --add channels bioconda && \
     /opt/conda/bin/conda config --add channels conda-forge && \
     /opt/conda/bin/conda install -y miranda=3.3a && \
-    /opt/conda/bin/conda clean -a
+    /opt/conda/bin/conda clean -a && \
+    apt-get remove curl -y && \
+    apt-get autoclean -y && \
+    apt-get autoremove -y
 
 # Set the Bioconductor repository as the primary repository
 RUN R -e "options(repos = BiocManager::repositories())"
