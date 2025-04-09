@@ -1,0 +1,156 @@
+---
+title: 'GO enrichment analysis of DEGs in DIPG/DMG'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2025"
+---
+
+This script performs gene ontology (GO) enrichment analysis on DE genes in DIPG/DMG versus normal pons
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(ggplot2)
+library(topGO)
+library(org.Hs.eg.db)  
+library(AnnotationDbi)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-differential-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+Set file paths 
+
+```{r file paths}
+de_rna_file <- file.path(root_dir, "analyses",
+                           "human-rna-differential-expression",
+                           "results",
+                           "mrna-differential-expression-deseq2-dipg-dmg-versus-normal.tsv")
+```
+
+Wrangle data
+
+```{r wrangle data}
+de_mrna_df <- read_tsv(de_rna_file)
+```
+
+Pull upregulated and downregulated genes
+
+```{r get DEGs}
+upregulated_genes <- de_mrna_df %>%
+  dplyr::filter(padj < 0.1,
+                log2FoldChange > 0) %>%
+  pull(gene_name)
+
+downregulated_genes <- de_mrna_df %>%
+  dplyr::filter(padj < 0.1,
+                log2FoldChange < 0) %>%
+  pull(gene_name)
+```
+
+Loop through up- and downregulated genes and run/plot GO enrichment
+
+```{r up GO}
+all_genes <- de_mrna_df$gene_name[!is.na(de_mrna_df$gene_name)]
+
+gene_list <- list("upregulated genes" = upregulated_genes,
+                  "downregulated genes" = downregulated_genes)
+
+for (genes in names(gene_list)){
+  
+  # define name for output files
+  plot_name <- ifelse(genes == "upregulated genes",
+                       "upregulated-genes", "downregulated-genes")
+  
+  # assign genes as DE
+  is_de <- ifelse(all_genes %in% gene_list[[genes]],
+                         1, 0)
+  names(is_de) <- all_genes
+  
+  # Create topGO object, using biological process (BP) ontology terms
+  GO_data <- new("topGOdata", ontology = "BP", allGenes = is_de, 
+                                                   geneSel = function(x) x == 1, 
+                                                   annot = annFUN.org, mapping = "org.Hs.eg.db", ID = "symbol")
+  
+  # Run Fisher test
+  GO_results <- runTest(GO_data, algorithm = "classic", statistic = "fisher")
+  
+  # write results to go analysis list
+  GO_table <- GenTable(GO_data, classicFisher = GO_results, topNodes = length(usedGO(GO_data)),
+                                                       numChar = 100000)
+  
+  sig_table <- GO_table %>%
+    dplyr::mutate(classicFisher = as.numeric(classicFisher)) %>%
+    dplyr::mutate(fdr = p.adjust(classicFisher, method = "BH"),
+                   gene_ratio = Significant/Annotated) %>%
+    dplyr::arrange(desc(gene_ratio)) %>%
+    dplyr::filter(fdr < 0.05)
+  
+  # if sig enriched GO terms, plot top terms and save output 
+  if (nrow(sig_table) > 0){
+  
+    GO_plot <- sig_table %>%
+            dplyr::filter(Significant > 2) %>%
+            head(40) %>%
+            arrange(gene_ratio) %>%
+            dplyr::mutate(Term = fct_relevel(Term, 
+                                                unique(Term))) %>%
+          
+              ggplot(aes(x = gene_ratio, y = Term,
+                         size = Significant, colour = -log10(classicFisher))) +
+              geom_point(alpha = 0.9) + 
+              scale_color_gradient(low = "lightpink", high = "darkred") +
+              labs(y = NULL,
+                   x = "Gene Ratio",
+                   size = "Count",
+                   colour = "-log10(p)",
+                   title = glue::glue("DIPG/DMG-{genes}")) +
+              theme_Publication()
+    
+    pdf(NULL)
+  
+    pdf(file.path(plot_dir, glue::glue("dipg-dmg-{plot_name}-go-term-enrichment-dotplot.pdf")),
+         width = 10, height = 9)
+    
+    print(GO_plot)
+    
+    dev.off()
+    
+    # add genes lists to enriched GO term df
+    genes_per_term <- genesInTerm(GO_data)
+  
+    genes_per_term_df <- enframe(genes_per_term, name = "GO.ID", value = "Genes") %>%
+      mutate(Genes = sapply(Genes, function(x) paste(x, collapse = ", ")))
+    
+    sig_table <- sig_table %>%
+      left_join(genes_per_term_df)
+    
+    # write to output 
+    write_tsv(sig_table,
+            file.path(results_dir,
+                      glue::glue("enriched-go-terms-dipg-dmg-{plot_name}.tsv")))
+    
+  }
+
+}
+```
+
+Print session info
+
+```{r}
+sessionInfo()
+```
