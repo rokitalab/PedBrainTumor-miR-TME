@@ -7,7 +7,7 @@
 ## Folder contents
 
 1. `01-differential-expression.Rmd`; run differential expression analysis
-2.  `02-GO_enrichment.Rmd`; run GO enrichment on differentially expressed genes
+2. `02-GO_enrichment.Rmd`; run GO enrichment on differentially expressed genes
 
 ##Analysis module directory structure
 
@@ -16,6 +16,7 @@
 ├── 01-differential-expression.Rmd
 ├── 01-differential-expression.html
 ├── 02-GO_enrichment.Rmd
+├── 02-GO_enrichment.html
 ├── README.md
 ├── plots
 │   ├── ACTC1_cts_dipg_dmg_versus_normal.pdf
