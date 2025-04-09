@@ -58,6 +58,12 @@ for (file in go_enr_files){
     dplyr::mutate(Term = fct_relevel(Term, 
                                         unique(Term)))
   
+  # Skip to next if no matched terms
+  if (nrow(go_enr_df) == 0) {
+    message(glue::glue("No matching GO terms in {file}, skipping..."))
+    next
+  }
+  
   mirna_id <- str_replace(file, "-target-go-enrichment.tsv", "")
   
   go_enr_df %>%

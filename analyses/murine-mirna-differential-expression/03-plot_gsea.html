@@ -430,13 +430,13 @@ font-size: 0.95em;
 <p>This script plots DE miRNA target gene GO enrichment</p>
 <p>Load packages</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ─────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
+<pre><code>## ── Attaching core tidyverse packages ─────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
 ## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
 ## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
 ## ✔ purrr     1.0.2     
-## ── Conflicts ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ───────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
@@ -468,6 +468,12 @@ enrichment of terms matching keywords defined above</p>
     dplyr::mutate(Term = fct_relevel(Term, 
                                         unique(Term)))
   
+  # Skip to next if no matched terms
+  if (nrow(go_enr_df) == 0) {
+    message(glue::glue(&quot;No matching GO terms in {file}, skipping...&quot;))
+    next
+  }
+  
   mirna_id &lt;- str_replace(file, &quot;-target-go-enrichment.tsv&quot;, &quot;&quot;)
   
   go_enr_df %&gt;%
@@ -487,7 +493,7 @@ enrichment of terms matching keywords defined above</p>
   
 }</code></pre>
 <pre><code>## Rows: 474 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -495,7 +501,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 101 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -503,7 +509,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 742 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -511,7 +517,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 76 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -519,7 +525,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 560 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -527,7 +533,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 264 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -535,23 +541,27 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 11 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## No matching GO terms in mmu-miR-1964-3p-target-go-enrichment.tsv, skipping...
+## 
 ## Rows: 2 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## No matching GO terms in mmu-miR-1981-5p-target-go-enrichment.tsv, skipping...
+## 
 ## Rows: 110 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -559,15 +569,17 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 71 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## No matching GO terms in mmu-miR-30b-5p-target-go-enrichment.tsv, skipping...
+## 
 ## Rows: 151 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -575,7 +587,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 97 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -583,7 +595,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 1469 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
@@ -591,7 +603,7 @@ enrichment of terms matching keywords defined above</p>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 232 Columns: 8
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (3): GO.ID, Term, Genes
 ## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
