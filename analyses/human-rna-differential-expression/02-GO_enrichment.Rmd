@@ -62,106 +62,95 @@ downregulated_genes <- de_mrna_df %>%
   pull(gene_name)
 ```
 
-Run GO enrichment for upregulated genes
+Loop through up- and downregulated genes and run/plot GO enrichment
 
 ```{r up GO}
 all_genes <- de_mrna_df$gene_name[!is.na(de_mrna_df$gene_name)]
 
-is_upregulated <- ifelse(all_genes %in% upregulated_genes,
-                         1, 0)
-names(is_upregulated) <- all_genes
+gene_list <- list("upregulated genes" = upregulated_genes,
+                  "downregulated genes" = downregulated_genes)
 
-# Create topGO object, using biological process (BP) ontology terms
-GO_data_up <- new("topGOdata", ontology = "BP", allGenes = is_upregulated, 
-                                                 geneSel = function(x) x == 1, 
-                                                 annot = annFUN.org, mapping = "org.Hs.eg.db", ID = "symbol")
-
-# Run Fisher test
-GO_results_up <- runTest(GO_data_up, algorithm = "classic", statistic = "fisher")
-
-# write resutls to go analysis list
-GO_table_up <- GenTable(GO_data_up, classicFisher = GO_results_up, topNodes = length(usedGO(GO_data_up)),
-                                                     numChar = 100000)
-
-sig_table_up <- GO_table_up %>%
-  dplyr::mutate(classicFisher = as.numeric(classicFisher)) %>%
-  dplyr::mutate(fdr = p.adjust(classicFisher, method = "BH"),
-                 gene_ratio = Significant/Annotated) %>%
-  dplyr::arrange(desc(gene_ratio)) %>%
-  dplyr::filter(fdr < 0.05)
+for (genes in names(gene_list)){
   
-```
-
-Plot most significantly enriched GO terms
-
-```{r sig upregulated terms}
-sig_table_up %>%
-  dplyr::filter(Significant > 2) %>%
-  head(40) %>%
-  arrange(gene_ratio) %>%
-  dplyr::mutate(Term = fct_relevel(Term, 
-                                      unique(Term))) %>%
-
-    ggplot(aes(x = gene_ratio, y = Term,
-               size = Significant, colour = -log10(classicFisher))) +
-    geom_point(alpha = 0.9) + 
-    scale_color_gradient(low = "lightpink", high = "darkred") +
-    labs(y = NULL,
-         x = "Gene Ratio",
-         size = "Count",
-         colour = "-log10(p)",
-         title = "DIPG/DMG-upregulated genes") +
-    theme_Publication()
+  # define name for output files
+  plot_name <- ifelse(genes == "upregulated genes",
+                       "upregulated-genes", "downregulated-genes")
   
-
-ggsave(file.path(plot_dir, "dipg-dmg-upregulated-genes-go-term-enrichment-dotplot.pdf"),
-     width = 10, height = 9)
-```
-Add list of genes associated with each sig GO term to df
-
-```{r get genes}
-genes_per_term <- genesInTerm(GO_data_up)
-
-genes_per_term_df <- enframe(genes_per_term, name = "GO.ID", value = "Genes") %>%
-  mutate(Genes = sapply(Genes, function(x) paste(x, collapse = ", ")))
-
-sig_table_up <- sig_table_up %>%
-  left_join(genes_per_term_df)
-```
-
-Repeat for downregulated genes
-
-```{r down GO}
-is_downregulated <- ifelse(all_genes %in% downregulated_genes,
+  # assign genes as DE
+  is_de <- ifelse(all_genes %in% gene_list[[genes]],
                          1, 0)
-names(is_downregulated) <- all_genes
+  names(is_de) <- all_genes
+  
+  # Create topGO object, using biological process (BP) ontology terms
+  GO_data <- new("topGOdata", ontology = "BP", allGenes = is_de, 
+                                                   geneSel = function(x) x == 1, 
+                                                   annot = annFUN.org, mapping = "org.Hs.eg.db", ID = "symbol")
+  
+  # Run Fisher test
+  GO_results <- runTest(GO_data, algorithm = "classic", statistic = "fisher")
+  
+  # write results to go analysis list
+  GO_table <- GenTable(GO_data, classicFisher = GO_results, topNodes = length(usedGO(GO_data)),
+                                                       numChar = 100000)
+  
+  sig_table <- GO_table %>%
+    dplyr::mutate(classicFisher = as.numeric(classicFisher)) %>%
+    dplyr::mutate(fdr = p.adjust(classicFisher, method = "BH"),
+                   gene_ratio = Significant/Annotated) %>%
+    dplyr::arrange(desc(gene_ratio)) %>%
+    dplyr::filter(fdr < 0.05)
+  
+  # if sig enriched GO terms, plot top terms and save output 
+  if (nrow(sig_table) > 0){
+  
+    GO_plot <- sig_table %>%
+            dplyr::filter(Significant > 2) %>%
+            head(40) %>%
+            arrange(gene_ratio) %>%
+            dplyr::mutate(Term = fct_relevel(Term, 
+                                                unique(Term))) %>%
+          
+              ggplot(aes(x = gene_ratio, y = Term,
+                         size = Significant, colour = -log10(classicFisher))) +
+              geom_point(alpha = 0.9) + 
+              scale_color_gradient(low = "lightpink", high = "darkred") +
+              labs(y = NULL,
+                   x = "Gene Ratio",
+                   size = "Count",
+                   colour = "-log10(p)",
+                   title = glue::glue("DIPG/DMG-{genes}")) +
+              theme_Publication()
+    
+    pdf(NULL)
+  
+    pdf(file.path(plot_dir, glue::glue("dipg-dmg-{plot_name}-go-term-enrichment-dotplot.pdf")),
+         width = 10, height = 9)
+    
+    print(GO_plot)
+    
+    dev.off()
+    
+    # add genes lists to enriched GO term df
+    genes_per_term <- genesInTerm(GO_data)
+  
+    genes_per_term_df <- enframe(genes_per_term, name = "GO.ID", value = "Genes") %>%
+      mutate(Genes = sapply(Genes, function(x) paste(x, collapse = ", ")))
+    
+    sig_table <- sig_table %>%
+      left_join(genes_per_term_df)
+    
+    # write to output 
+    write_tsv(sig_table,
+            file.path(results_dir,
+                      glue::glue("enriched-go-terms-dipg-dmg-{plot_name}.tsv")))
+    
+  }
 
-# Create topGO object, using biological process (BP) ontology terms
-GO_data_down <- new("topGOdata", ontology = "BP", allGenes = is_downregulated, 
-                                                 geneSel = function(x) x == 1, 
-                                                 annot = annFUN.org, mapping = "org.Hs.eg.db", ID = "symbol")
-
-# Run Fisher test
-GO_results_down <- runTest(GO_data_down, algorithm = "classic", statistic = "fisher")
-
-# write resutls to go analysis list
-GO_table_down <- GenTable(GO_data_down, classicFisher = GO_results_down, topNodes = length(usedGO(GO_data_down)),
-                                                     numChar = 100000)
-
-sig_table_down <- GO_table_down %>%
-  dplyr::mutate(classicFisher = as.numeric(classicFisher)) %>%
-  dplyr::mutate(fdr = p.adjust(classicFisher, method = "BH"),
-                 gene_ratio = Significant/Annotated) %>%
-  dplyr::arrange(desc(gene_ratio)) %>%
-  dplyr::filter(fdr < 0.05)
+}
 ```
 
-There are currently no significantly enriched pathways among DIPG/DMG downregulated genes
-
-Save upregulated gene GO term enrichment results:
+Print session info
 
 ```{r}
-write_tsv(sig_table_up,
-          file.path(results_dir,
-                    "enriched-go-terms-dipg-dmg-upregulated-genes.tsv"))
+sessionInfo()
 ```
