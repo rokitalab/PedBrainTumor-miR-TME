@@ -9,5 +9,5 @@ Rscript -e "rmarkdown::render('01-differential-expression.Rmd')"
 # Run GO enrichment
 Rscript -e "rmarkdown::render('02-GO_enrichment.Rmd')"
 
-# Run GO enrichment
+# Run gene set variation analysis
 Rscript -e "rmarkdown::render('03-kegg_gsva.Rmd')"
