@@ -13,7 +13,7 @@
 
 <meta name="date" content="2025-01-01" />
 
-<title>GO enrichment analysis of DEGs in DIPG/DMG</title>
+<title>Plot DE miRNA target GO enrichment</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -420,16 +420,14 @@ font-size: 0.95em;
 
 
 
-<h1 class="title toc-ignore">GO enrichment analysis of DEGs in
-DIPG/DMG</h1>
+<h1 class="title toc-ignore">Plot DE miRNA target GO enrichment</h1>
 <h4 class="author">Ryan Corbett</h4>
 <h4 class="date">2025</h4>
 
 </div>
 
 
-<p>This script performs gene ontology (GO) enrichment analysis on DE
-genes in DIPG/DMG versus normal pons</p>
+<p>This script plots DE miRNA target gene GO enrichment</p>
 <p>Load packages</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
 <pre><code>## ── Attaching core tidyverse packages ─────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
@@ -442,264 +440,176 @@ genes in DIPG/DMG versus normal pons</p>
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(ggplot2)
-library(topGO)</code></pre>
-<pre><code>## Loading required package: BiocGenerics
-## 
-## Attaching package: &#39;BiocGenerics&#39;
-## 
-## The following objects are masked from &#39;package:lubridate&#39;:
-## 
-##     intersect, setdiff, union
-## 
-## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     combine, intersect, setdiff, union
-## 
-## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     IQR, mad, sd, var, xtabs
-## 
-## The following objects are masked from &#39;package:base&#39;:
-## 
-##     anyDuplicated, aperm, append, as.data.frame, basename, cbind,
-##     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
-##     get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
-##     match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-##     Position, rank, rbind, Reduce, rownames, sapply, setdiff, table,
-##     tapply, union, unique, unsplit, which.max, which.min
-## 
-## Loading required package: graph
-## 
-## Attaching package: &#39;graph&#39;
-## 
-## The following object is masked from &#39;package:stringr&#39;:
-## 
-##     boundary
-## 
-## Loading required package: Biobase
-## Welcome to Bioconductor
-## 
-##     Vignettes contain introductory material; view with
-##     &#39;browseVignettes()&#39;. To cite Bioconductor, see
-##     &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.
-## 
-## Loading required package: GO.db
-## Loading required package: AnnotationDbi
-## Loading required package: stats4
-## Loading required package: IRanges
-## Loading required package: S4Vectors
-## 
-## Attaching package: &#39;S4Vectors&#39;
-## 
-## The following objects are masked from &#39;package:lubridate&#39;:
-## 
-##     second, second&lt;-
-## 
-## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     first, rename
-## 
-## The following object is masked from &#39;package:tidyr&#39;:
-## 
-##     expand
-## 
-## The following object is masked from &#39;package:utils&#39;:
-## 
-##     findMatches
-## 
-## The following objects are masked from &#39;package:base&#39;:
-## 
-##     expand.grid, I, unname
-## 
-## 
-## Attaching package: &#39;IRanges&#39;
-## 
-## The following object is masked from &#39;package:lubridate&#39;:
-## 
-##     %within%
-## 
-## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     collapse, desc, slice
-## 
-## The following object is masked from &#39;package:purrr&#39;:
-## 
-##     reduce
-## 
-## 
-## Attaching package: &#39;AnnotationDbi&#39;
-## 
-## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     select
-## 
-## 
-## Loading required package: SparseM
-## 
-## Attaching package: &#39;SparseM&#39;
-## 
-## The following object is masked from &#39;package:base&#39;:
-## 
-##     backsolve
-## 
-## 
-## groupGOTerms:    GOBPTerm, GOMFTerm, GOCCTerm environments built.
-## 
-## Attaching package: &#39;topGO&#39;
-## 
-## The following object is masked from &#39;package:IRanges&#39;:
-## 
-##     members</code></pre>
-<pre class="r"><code>library(org.Hs.eg.db)  </code></pre>
-<pre><code>## </code></pre>
-<pre class="r"><code>library(AnnotationDbi)</code></pre>
+<pre class="r"><code>library(ggplot2)</code></pre>
 <p>Set directory paths</p>
 <pre class="r"><code>root_dir &lt;- rprojroot::find_root(rprojroot::has_dir(&quot;.git&quot;))
 
 data_dir &lt;- file.path(root_dir, &quot;data&quot;)
-analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-rna-differential-expression&quot;)
+analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;murine-mirna-differential-expression&quot;)
 results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)
 plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)
 
 source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))</code></pre>
-<p>Set file paths</p>
-<pre class="r"><code>de_rna_file &lt;- file.path(root_dir, &quot;analyses&quot;,
-                           &quot;human-rna-differential-expression&quot;,
-                           &quot;results&quot;,
-                           &quot;mrna-differential-expression-deseq2-dipg-dmg-versus-normal.tsv&quot;)</code></pre>
-<p>Wrangle data</p>
-<pre class="r"><code>de_mrna_df &lt;- read_tsv(de_rna_file)</code></pre>
-<pre><code>## Rows: 57500 Columns: 8
+<p>List go enrichment results files</p>
+<pre class="r"><code>results_files &lt;- list.files(results_dir)
+go_enr_files &lt;- results_files[grepl(&quot;target-go-enrichment.tsv&quot;, results_files)]</code></pre>
+<p>Define list of keywords to search for among enriched GO terms for
+plotting</p>
+<pre class="r"><code>keywords &lt;- &quot;immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense&quot;</code></pre>
+<p>Loop through GO enrichment files for each DE miRNA, and plot
+enrichment of terms matching keywords defined above</p>
+<pre class="r"><code>for (file in go_enr_files){
+  
+  go_enr_df &lt;- read_tsv(file.path(results_dir, file)) %&gt;%
+    dplyr::filter(grepl(keywords, Term),
+                  nchar(Term) &lt; 80) %&gt;%
+    dplyr::mutate(gene_ratio = Significant/Annotated) %&gt;%
+    arrange(gene_ratio) %&gt;%
+    dplyr::mutate(Term = fct_relevel(Term, 
+                                        unique(Term)))
+  
+  # Skip to next if no matched terms
+  if (nrow(go_enr_df) == 0) {
+    message(glue::glue(&quot;No matching GO terms in {file}, skipping...&quot;))
+    next
+  }
+  
+  mirna_id &lt;- str_replace(file, &quot;-target-go-enrichment.tsv&quot;, &quot;&quot;)
+  
+  go_enr_df %&gt;%
+    ggplot(aes(x = gene_ratio, y = Term,
+               size = Significant, colour = -log10(classicFisher))) +
+    geom_point(alpha = 0.9) + 
+    scale_color_gradient(low = &quot;lightpink&quot;, high = &quot;darkred&quot;) +
+    labs(y = NULL,
+         x = &quot;Gene Ratio&quot;,
+         size = &quot;Count&quot;,
+         colour = &quot;-log10(p)&quot;,
+         title = mirna_id) +
+    theme_Publication()
+  
+  ggsave(file.path(plot_dir, glue::glue(&quot;{mirna_id}-targets-immune-go-term-enrichment-dotplot.pdf&quot;)),
+       width = 9, height = 3 + (nrow(go_enr_df) * 0.15))
+  
+}</code></pre>
+<pre><code>## Rows: 474 Columns: 8
 ## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
-## chr (2): gene_id, gene_name
-## dbl (6): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 101 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 742 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 76 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 560 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 264 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 11 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## No matching GO terms in mmu-miR-1964-3p-target-go-enrichment.tsv, skipping...
+## 
+## Rows: 2 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## No matching GO terms in mmu-miR-1981-5p-target-go-enrichment.tsv, skipping...
+## 
+## Rows: 110 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 71 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## No matching GO terms in mmu-miR-30b-5p-target-go-enrichment.tsv, skipping...
+## 
+## Rows: 151 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 97 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 1469 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 232 Columns: 8
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (3): GO.ID, Term, Genes
+## dbl (5): Annotated, Significant, Expected, classicFisher, fdr
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<p>Pull upregulated and downregulated genes</p>
-<pre class="r"><code>upregulated_genes &lt;- de_mrna_df %&gt;%
-  dplyr::filter(padj &lt; 0.1,
-                log2FoldChange &gt; 0) %&gt;%
-  pull(gene_name)
-
-downregulated_genes &lt;- de_mrna_df %&gt;%
-  dplyr::filter(padj &lt; 0.1,
-                log2FoldChange &lt; 0) %&gt;%
-  pull(gene_name)</code></pre>
-<p>Run GO enrichment for upregulated genes</p>
-<pre class="r"><code>all_genes &lt;- de_mrna_df$gene_name[!is.na(de_mrna_df$gene_name)]
-
-gene_list &lt;- list(&quot;upregulated genes&quot; = upregulated_genes,
-                  &quot;downregulated genes&quot; = downregulated_genes)
-
-for (genes in names(gene_list)){
-  
-  plot_name &lt;- ifelse(genes == &quot;upregulated genes&quot;,
-                       &quot;upregulated-genes&quot;, &quot;downregulated-genes&quot;)
-  
-  is_de &lt;- ifelse(all_genes %in% gene_list[[genes]],
-                         1, 0)
-  names(is_de) &lt;- all_genes
-  
-  # Create topGO object, using biological process (BP) ontology terms
-  GO_data &lt;- new(&quot;topGOdata&quot;, ontology = &quot;BP&quot;, allGenes = is_de, 
-                                                   geneSel = function(x) x == 1, 
-                                                   annot = annFUN.org, mapping = &quot;org.Hs.eg.db&quot;, ID = &quot;symbol&quot;)
-  
-  # Run Fisher test
-  GO_results &lt;- runTest(GO_data, algorithm = &quot;classic&quot;, statistic = &quot;fisher&quot;)
-  
-  # write resutls to go analysis list
-  GO_table &lt;- GenTable(GO_data, classicFisher = GO_results, topNodes = length(usedGO(GO_data)),
-                                                       numChar = 100000)
-  
-  sig_table &lt;- GO_table %&gt;%
-    dplyr::mutate(classicFisher = as.numeric(classicFisher)) %&gt;%
-    dplyr::mutate(fdr = p.adjust(classicFisher, method = &quot;BH&quot;),
-                   gene_ratio = Significant/Annotated) %&gt;%
-    dplyr::arrange(desc(gene_ratio)) %&gt;%
-    dplyr::filter(fdr &lt; 0.05)
-  
-  if (nrow(sig_table) &gt; 0){
-  
-    GO_plot &lt;- sig_table %&gt;%
-            dplyr::filter(Significant &gt; 2) %&gt;%
-            head(40) %&gt;%
-            arrange(gene_ratio) %&gt;%
-            dplyr::mutate(Term = fct_relevel(Term, 
-                                                unique(Term))) %&gt;%
-          
-              ggplot(aes(x = gene_ratio, y = Term,
-                         size = Significant, colour = -log10(classicFisher))) +
-              geom_point(alpha = 0.9) + 
-              scale_color_gradient(low = &quot;lightpink&quot;, high = &quot;darkred&quot;) +
-              labs(y = NULL,
-                   x = &quot;Gene Ratio&quot;,
-                   size = &quot;Count&quot;,
-                   colour = &quot;-log10(p)&quot;,
-                   title = glue::glue(&quot;DIPG/DMG-{genes}&quot;)) +
-              theme_Publication()
-    
-    pdf(NULL)
-  
-    pdf(file.path(plot_dir, glue::glue(&quot;dipg-dmg-{plot_name}-go-term-enrichment-dotplot.pdf&quot;)),
-         width = 10, height = 9)
-    
-    print(GO_plot)
-    
-    dev.off()
-    
-    genes_per_term &lt;- genesInTerm(GO_data)
-  
-    genes_per_term_df &lt;- enframe(genes_per_term, name = &quot;GO.ID&quot;, value = &quot;Genes&quot;) %&gt;%
-      mutate(Genes = sapply(Genes, function(x) paste(x, collapse = &quot;, &quot;)))
-    
-    sig_table &lt;- sig_table %&gt;%
-      left_join(genes_per_term_df)
-    
-    write_tsv(sig_table,
-            file.path(results_dir,
-                      glue::glue(&quot;enriched-go-terms-dipg-dmg-{plot_name}.tsv&quot;)))
-    
-  }
-
-}</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12242 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15484 GO terms and 34877 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18444 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 4999 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>## Warning: There was 1 warning in `dplyr::mutate()`.
-## ℹ In argument: `classicFisher = as.numeric(classicFisher)`.
-## Caused by warning:
-## ! NAs introduced by coercion</code></pre>
-<pre><code>## 
-## Attaching package: &#39;grid&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:topGO&#39;:
-## 
-##     depth</code></pre>
-<pre><code>## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12242 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15484 GO terms and 34877 relations. )
-## Annotating nodes ...............
-## ( 18444 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 1385 nontrivial nodes parameters: test statistic: fisher</code></pre>
 <p>Print session info</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 4.4.0 (2024-04-24)
@@ -722,39 +632,27 @@ for (genes in names(gene_list)){
 ## tzcode source: system (glibc)
 ## 
 ## attached base packages:
-## [1] grid      stats4    stats     graphics  grDevices utils     datasets 
-## [8] methods   base     
+## [1] grid      stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
 ## 
 ## other attached packages:
-##  [1] ggthemes_5.1.0       org.Hs.eg.db_3.19.1  topGO_2.56.0        
-##  [4] SparseM_1.83         GO.db_3.19.1         AnnotationDbi_1.66.0
-##  [7] IRanges_2.38.1       S4Vectors_0.42.1     Biobase_2.64.0      
-## [10] graph_1.82.0         BiocGenerics_0.50.0  lubridate_1.9.3     
-## [13] forcats_1.0.0        stringr_1.5.1        dplyr_1.1.4         
-## [16] purrr_1.0.2          readr_2.1.5          tidyr_1.3.1         
-## [19] tibble_3.2.1         ggplot2_3.5.1        tidyverse_2.0.0     
+##  [1] ggthemes_5.1.0  lubridate_1.9.3 forcats_1.0.0   stringr_1.5.1  
+##  [5] dplyr_1.1.4     purrr_1.0.2     readr_2.1.5     tidyr_1.3.1    
+##  [9] tibble_3.2.1    ggplot2_3.5.1   tidyverse_2.0.0
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] KEGGREST_1.44.1         gtable_0.3.5            xfun_0.44              
-##  [4] bslib_0.7.0             lattice_0.22-6          tzdb_0.4.0             
-##  [7] vctrs_0.6.5             tools_4.4.0             generics_0.1.3         
-## [10] parallel_4.4.0          fansi_1.0.6             RSQLite_2.3.7          
-## [13] blob_1.2.4              pkgconfig_2.0.3         lifecycle_1.0.4        
-## [16] GenomeInfoDbData_1.2.12 farver_2.1.2            compiler_4.4.0         
-## [19] Biostrings_2.72.1       munsell_0.5.1           GenomeInfoDb_1.40.1    
-## [22] htmltools_0.5.8.1       sass_0.4.9              yaml_2.3.8             
-## [25] pillar_1.9.0            crayon_1.5.2            jquerylib_0.1.4        
-## [28] cachem_1.1.0            tidyselect_1.2.1        digest_0.6.35          
-## [31] stringi_1.8.4           labeling_0.4.3          rprojroot_2.0.4        
-## [34] fastmap_1.2.0           colorspace_2.1-0        cli_3.6.2              
-## [37] magrittr_2.0.3          utf8_1.2.4              withr_3.0.0            
-## [40] scales_1.3.0            UCSC.utils_1.0.0        bit64_4.0.5            
-## [43] timechange_0.3.0        rmarkdown_2.27          XVector_0.44.0         
-## [46] httr_1.4.7              matrixStats_1.3.0       bit_4.0.5              
-## [49] png_0.1-8               hms_1.1.3               memoise_2.0.1          
-## [52] evaluate_0.24.0         knitr_1.47              rlang_1.1.4            
-## [55] glue_1.7.0              DBI_1.2.3               vroom_1.6.5            
-## [58] jsonlite_1.8.8          R6_2.5.1                zlibbioc_1.50.0</code></pre>
+##  [1] sass_0.4.9        utf8_1.2.4        generics_0.1.3    stringi_1.8.4    
+##  [5] hms_1.1.3         digest_0.6.35     magrittr_2.0.3    evaluate_0.24.0  
+##  [9] timechange_0.3.0  fastmap_1.2.0     rprojroot_2.0.4   jsonlite_1.8.8   
+## [13] fansi_1.0.6       scales_1.3.0      textshaping_0.4.0 jquerylib_0.1.4  
+## [17] cli_3.6.2         rlang_1.1.4       crayon_1.5.2      bit64_4.0.5      
+## [21] munsell_0.5.1     withr_3.0.0       cachem_1.1.0      yaml_2.3.8       
+## [25] tools_4.4.0       parallel_4.4.0    tzdb_0.4.0        colorspace_2.1-0 
+## [29] vctrs_0.6.5       R6_2.5.1          lifecycle_1.0.4   bit_4.0.5        
+## [33] vroom_1.6.5       ragg_1.3.2        pkgconfig_2.0.3   pillar_1.9.0     
+## [37] bslib_0.7.0       gtable_0.3.5      glue_1.7.0        systemfonts_1.1.0
+## [41] xfun_0.44         tidyselect_1.2.1  knitr_1.47        farver_2.1.2     
+## [45] htmltools_0.5.8.1 labeling_0.4.3    rmarkdown_2.27    compiler_4.4.0</code></pre>
 
 
 
