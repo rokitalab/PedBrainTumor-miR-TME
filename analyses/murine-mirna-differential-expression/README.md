@@ -32,10 +32,7 @@ This analysis module performs miRNA differential expression in mice treated with
 │   ├── mmu-miR-151-5p-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── mmu-miR-155-5p-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── mmu-miR-185-5p-targets-immune-go-term-enrichment-dotplot.pdf
-│   ├── mmu-miR-1964-3p-targets-immune-go-term-enrichment-dotplot.pdf
-│   ├── mmu-miR-1981-5p-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── mmu-miR-204-5p-targets-immune-go-term-enrichment-dotplot.pdf
-│   ├── mmu-miR-30b-5p-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── mmu-miR-30c-5p-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── mmu-miR-423-3p-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── mmu-miR-466i-3p-targets-immune-go-term-enrichment-dotplot.pdf
