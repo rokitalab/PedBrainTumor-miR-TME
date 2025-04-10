@@ -8,6 +8,7 @@
 
 1. `01-differential-expression.Rmd`; run differential expression analysis
 2. `02-GO_enrichment.Rmd`; run GO enrichment on differentially expressed genes
+3. `03-kegg_gsva.Rmd`; run GSVA on expression data and perform pathway differential expression analysis
 
 ##Analysis module directory structure
 
@@ -17,6 +18,8 @@
 ├── 01-differential-expression.html
 ├── 02-GO_enrichment.Rmd
 ├── 02-GO_enrichment.html
+├── 03-kegg_gsva.html
+├── 03-kegg_gsva.Rmd
 ├── README.md
 ├── plots
 │   ├── ACTC1_cts_dipg_dmg_versus_normal.pdf
@@ -40,6 +43,7 @@
 │   ├── TM4SF1_cts_dipg_dmg_versus_normal.pdf
 │   ├── TPT1_cts_dipg_dmg_versus_normal.pdf
 │   ├── de-mirna-dipg-dmg-versus-normal-volcano-plot.pdf
+│   ├── de-pathway-expr-heatmap.pdf
 │   ├── dipg-dmg-upregulated-genes-go-term-enrichment-dotplot.pdf
 │   ├── immune_modulation_degs_dotplots.pdf
 │   ├── immunosuppressive_degs_dotplots.pdf
