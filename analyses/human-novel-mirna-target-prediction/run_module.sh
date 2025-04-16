@@ -7,4 +7,4 @@ set -o pipefail
 Rscript -e "rmarkdown::render('00-extract-3utr-gencode-v39')"
 
 # Run convert novel miRNA table to FASTA format
-Rscript -e "rmarkdown::render('01_convert_all_novel_miRNA_to_fasta.Rmd')"
+Rscript -e "rmarkdown::render('01-convert-all-novel-miRNA-to-fasta.Rmd')"
