@@ -40,6 +40,7 @@ echo "Checking MD5 hashes..."
 md5sum -c md5sum.txt
 cd ../../
 
+
 # Make symlinks in data/ to the files in the just downloaded release folder.
 for file in "${FILES[@]}"
 do
