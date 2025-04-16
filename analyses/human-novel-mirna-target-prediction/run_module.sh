@@ -13,5 +13,8 @@ Rscript -e "rmarkdown::render('01-convert-all-novel-miRNA-to-fasta.Rmd')"
 Rscript -e "rmarkdown::render('02-extract-de-novel-miRNAs-to-fasta.Rmd')"
 
 # Run miranda for novel miRNA target prediction
-bash  03-run-miranda.sh 
+bash  03-run-miranda.sh
+
+# Run python script to parse miranda output file
+python 04-parse-miranda-output.py 
 
