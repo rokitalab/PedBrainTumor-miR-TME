@@ -34,14 +34,6 @@ then
   curl -k -O $GENCODE39
 fi
 
-# Download GENCODE v44 transcripts FASTA
-GENCODE44_FASTA="https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/gencode.v44.transcripts.fa.gz"
-if [ ! -e ${GENCODE44_FASTA##*/} ]
-then
-  echo "Downloading ${GENCODE44_FASTA##*/}"
-  curl -k -O $GENCODE44_FASTA
-fi
-
 # Check the md5s for everything we downloaded except CHANGELOG.md
 cd $RELEASE
 echo "Checking MD5 hashes..."
