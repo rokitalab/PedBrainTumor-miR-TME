@@ -18,3 +18,6 @@ bash  03-run-miranda.sh
 # Run python script to parse miranda output file
 python 04-parse-miranda-output.py 
 
+# Run annotate miranda output with Gene ID and Gene Symbol
+Rscript -e "rmarkdown::render('05-annotate-parsed-miranda-output.Rmd')"
+
