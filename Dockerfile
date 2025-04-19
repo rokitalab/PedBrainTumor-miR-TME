@@ -83,9 +83,9 @@ RUN R -e 'BiocManager::install(c( \
   "R.utils", \
   "sva", \
   "topGO", \
-  "UpSetR" \
-  "GenomicFeatures" \
-  "Biostrings" \
+  "UpSetR", \
+  "GenomicFeatures", \
+  "Biostrings", \
   "BSgenome.Hsapiens.UCSC.hg38" \
 ))'
 
