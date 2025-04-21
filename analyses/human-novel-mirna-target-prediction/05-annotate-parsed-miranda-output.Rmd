@@ -37,9 +37,7 @@ de_mirna_file <- file.path(root_dir, "analyses",
 
 fasta_path <- file.path(results_dir, "all_novel_miRNA_mature.fa")
 output_path <- file.path(results_dir, "novel_de_miRNAs_mature.fa")
-```
 
-```{r file paths}
 miranda_file <- file.path(results_dir, "miranda_output_parsed.csv")
 gtf_file <- file.path(data_dir, "gencode.v39.primary_assembly.annotation.gtf.gz")
 output_file <- file.path(results_dir, "miranda_output_parsed_anno.csv")
