@@ -64,7 +64,7 @@ utr_seqs <- extractTranscriptSeqs(genome, three_utrs_filtered)
 utr_fasta_path <- file.path(results_dir, "gencode.v39.3utr.fa")
 ```
 
-```{r create results_dir if it doesn't exist}
+```{r create results_dir}
 if (!dir.exists(results_dir)) {
   dir.create(results_dir, recursive = TRUE)
 }
