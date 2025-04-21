@@ -1,0 +1,48 @@
+# release notes
+
+## current release (v2)
+- Data release data: 2025-04-18
+- status: available
+
+Added files: 
+- all_novel_miRNA.xls; novel predicted miRNA sequences in DIPG/DMG and normal pons
+
+```
+v2
+├── 30-931106737-miRNA-all.fpkm.csv
+├── 30-931106737-miRNA_expression.csv
+├── 30-963755216-miRNA-all.fpkm.csv
+├── 30-963755216-miRNA_expression.csv
+├── 30-992989426-RNA-TPM_values.csv
+├── 30-992989426-RNA_raw_counts.csv
+├── all_novel_miRNA.xls
+├── miRNA_Target_anno.csv
+└── release-notes.md
+```
+
+
+
+## archived release (v1)
+- Data release data: 2025-01-29
+- status: available
+
+Added files: 
+- 30-931106737-miRNA-all.fpkm.csv; Human miRNA TPMs from four DIPG samples and one normal pons
+- 30-931106737-miRNA_expression.csv; Human miRNA raw counts from four DIPG samples and one normal pons
+- 30-963755216-miRNA-all.fpkm.csv; Murine miRNA TPMs from three time points post CAR T-cell therapy (treated and untreated)
+- 30-963755216-miRNA_expression.csv; Murine miRNA raw counts from three time points post CAR T-cell therapy (treated and untreated)
+- 30-992989426-RNA-TPM_values.csv; Human RNA TPMs from two DIPG samples and one normal pons
+- 30-992989426-RNA_raw_counts.csv; Human RNA raw counts from two DIPG samples and one normal pons 
+- miRNA_Target_anno.csv; predicted miRNA gene targets 
+
+```
+v1
+├── 30-931106737-miRNA-all.fpkm.csv
+├── 30-931106737-miRNA_expression.csv
+├── 30-963755216-miRNA-all.fpkm.csv
+├── 30-963755216-miRNA_expression.csv
+├── 30-992989426-RNA-TPM_values.csv
+├── 30-992989426-RNA_raw_counts.csv
+├── miRNA_Target_anno.csv
+└── release-notes.md
+```
