@@ -28,6 +28,12 @@ input_dir <- file.path(analysis_dir, "input")
 results_dir <- file.path(analysis_dir, "results")
 ```
 
+```{r create results_dir}
+if (!dir.exists(results_dir)) {
+  dir.create(results_dir, recursive = TRUE)
+}
+```
+
 Set GTF file path 
 
 ```{r file paths}
@@ -62,12 +68,6 @@ utr_seqs <- extractTranscriptSeqs(genome, three_utrs_filtered)
 
 ```{r define output path}
 utr_fasta_path <- file.path(results_dir, "gencode.v39.3utr.fa")
-```
-
-```{r create results_dir}
-if (!dir.exists(results_dir)) {
-  dir.create(results_dir, recursive = TRUE)
-}
 ```
 
 Save the extracted 3′ UTR sequences to a FASTA file
