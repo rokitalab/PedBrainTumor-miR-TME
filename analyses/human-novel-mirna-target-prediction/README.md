@@ -29,6 +29,7 @@
 ├── README.md
 ├── results
 │   ├── all_novel_miRNA_mature.fa
-│   └── novel_de_miRNAs_mature.fa
+│   ├── novel_de_miRNAs_mature.fa
+│   └──miranda_output_parsed.csv
 └── run_module.sh
 ```
