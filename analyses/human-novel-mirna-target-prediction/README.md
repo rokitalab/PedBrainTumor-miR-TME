@@ -28,10 +28,12 @@
 ├── 03-run-miranda.sh
 ├── 04-parse-miranda-output.py
 ├── 05-annotate-parsed-miranda-output.Rmd
+├── 05-annotate-parsed-miranda-output.html
 ├── README.md
 ├── results
 │   ├── all_novel_miRNA_mature.fa
 │   ├── novel_de_miRNAs_mature.fa
-│   └── miranda_output_parsed.csv
+│   ├── miranda_output_parsed.csv
+│   └── miranda_output_parsed_anno.csv
 └── run_module.sh
 ```
