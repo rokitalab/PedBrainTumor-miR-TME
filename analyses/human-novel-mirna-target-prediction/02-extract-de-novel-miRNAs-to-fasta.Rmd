@@ -12,6 +12,8 @@ Load packages
 
 ```{r load-packages}
 library(Biostrings)
+library(readr)
+library(dplyr)
 ```
 
 Set directory paths
