@@ -1,0 +1,75 @@
+---
+title: "Extract DE Novel miRNA Sequences from FASTA"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+author: "Bicna Song"
+date: "2025-04-16"
+---
+
+Load packages
+
+```{r load-packages}
+library(Biostrings)
+library(readr)
+library(dplyr)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-novel-mirna-target-prediction")
+input_dir <- file.path(analysis_dir, "input")
+results_dir <- file.path(analysis_dir, "results")
+```
+
+Set file paths 
+
+```{r file paths}
+de_mirna_file <- file.path(root_dir, "analyses",
+                           "human-mirna-differential-expression",
+                           "results",
+                           "mirna-differential-expr-deseq2-dipg-dmg-versus-normal.tsv")
+
+fasta_path <- file.path(results_dir, "all_novel_miRNA_mature.fa")
+output_path <- file.path(results_dir, "novel_de_miRNAs_mature.fa")
+```
+
+Wrangle data
+
+```{r wrangle data}
+de_mirna_df <- read_tsv(de_mirna_file)
+
+# Read all mature sequences
+all_mirnas <- readRNAStringSet(fasta_path)
+```
+
+Pull novel DE miRNAs
+
+```{r get novel miRNAs}
+novel_de_mirnas <- de_mirna_df %>%
+  dplyr::filter(!grepl("hsa", mirna_id),
+                padj < 0.05) %>%
+  pull(mirna_id)
+```
+
+Read FASTA and extract DE novel miRNAs
+
+```{r}
+# Extract matching sequences
+de_mirnas <- all_mirnas[names(all_mirnas) %in% novel_de_mirnas]
+
+# Write to output FASTA
+writeXStringSet(de_mirnas, filepath = output_path)
+```
+
+Print session info
+
+```{r session info}
+sessionInfo()
+```
+
