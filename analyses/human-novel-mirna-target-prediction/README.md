@@ -11,6 +11,7 @@
 3. `02-extract-de-novel-miRNAs-to-fasta.Rmd`; Extracts DE Novel miRNA Sequences from FASTA.
 4. `03-run-miranda.sh`; Runs miRanda using novel DE miRNAs and 3′ UTR sequences extracted from GENCODE v39.
 5. `04-parse-miranda-output.py`; Parses the raw miRanda output file to extract predicted miRNA-target interactions and saves them in a clean CSV format.
+6. `05-annotate-parsed-miranda-output.Rmd`; Annotates the parsed miRanda output file with Ensembl Gene IDs and gene symbols using a GTF annotation file.
 
 ## Input files
 
@@ -26,10 +27,13 @@
 ├── 02-extract-de-novel-miRNAs-to-fasta.html
 ├── 03-run-miranda.sh
 ├── 04-parse-miranda-output.py
+├── 05-annotate-parsed-miranda-output.Rmd
+├── 05-annotate-parsed-miranda-output.html
 ├── README.md
 ├── results
 │   ├── all_novel_miRNA_mature.fa
 │   ├── novel_de_miRNAs_mature.fa
-│   └── miranda_output_parsed.csv
+│   ├── miranda_output_parsed.csv
+│   └── miranda_output_parsed_anno.csv
 └── run_module.sh
 ```
