@@ -23,6 +23,7 @@
 ├── 01-convert-all-novel-miRNA-to-fasta.html 
 ├── 02-extract-de-novel-miRNAs-to-fasta.Rmd
 ├── 02-extract-de-novel-miRNAs-to-fasta.html
+├── 03-run-miranda.sh
 ├── README.md
 ├── results
 │   ├── all_novel_miRNA_mature.fa
