@@ -20,8 +20,11 @@
 ├── 00-extract-3utr-gencode-v39.html
 ├── 01-convert-all-novel-miRNA-to-fasta.Rmd
 ├── 01-convert-all-novel-miRNA-to-fasta.html 
+├── 02-extract-de-novel-miRNAs-to-fasta.Rmd
+├── 02-extract-de-novel-miRNAs-to-fasta.html
 ├── README.md
 ├── results
-│   └── all_novel_miRNA_mature.fa
+│   ├── all_novel_miRNA_mature.fa
+│   └── novel_de_miRNAs_mature.fa
 └── run_module.sh
 ```
