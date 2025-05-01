@@ -17,12 +17,11 @@
 ```
 .
 ├── 00-extract-3utr-gencode-v39.Rmd
-├── 01_convert_all_novel_miRNA_to_fasta.Rmd
-├── 02-extract-de-novel-miRNAs-to-fasta.Rmd
+├── 00-extract-3utr-gencode-v39.html
+├── 01-convert-all-novel-miRNA-to-fasta.Rmd
+├── 01-convert-all-novel-miRNA-to-fasta.html 
 ├── README.md
 ├── results
-│   ├── gencode.v39.3utr.fa
-│   ├── all_novel_miRNA_mature.fa
-│   ├── novel_de_miRNAs_mature.fa
+│   └── all_novel_miRNA_mature.fa
 └── run_module.sh
 ```
