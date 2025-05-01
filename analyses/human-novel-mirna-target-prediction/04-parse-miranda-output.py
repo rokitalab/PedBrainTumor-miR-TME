@@ -1,7 +1,10 @@
 import re
 import csv
 
+# Input: raw miRanda output containing target predictions
 input_file = "results/miranda_output.txt"
+
+# Output: parsed and filtered results as CSV
 output_file = "results/miranda_output_parsed.csv"
 
 summary_data = []
@@ -9,21 +12,24 @@ summary_data = []
 with open(input_file, "r") as infile:
     for line in infile:
         line = line.strip()
+
+        # miRanda target predictions start with '>>' followed by tab-separated fields
         if line.startswith(">>"):
             fields = line[2:].split("\t")
             if len(fields) >= 10:
                 miRNA = fields[0]
                 target = fields[1]
-                max_score = float(fields[4])
-                max_energy = float(fields[5])
+                max_score = float(fields[4])  # Alignment score (higher is better)
+                max_energy = float(fields[5]) # Minimum free energy (more negative is better)
                 len1 = int(fields[7])  # miRNA length
                 len2 = int(fields[8])  # target length
-                positions = fields[9].strip()
+                positions = fields[9].strip() # Matching position string
 
                 # Extract Ensembl Transcript ID without version
                 target_parts = target.split("|")
                 ensembl_transcript_id = target_parts[0].split(".")[0] if len(target_parts) > 0 else None
 
+                # Save parsed prediction to list
                 summary_data.append({
                     "Seq1": miRNA,
                     "Seq2": ensembl_transcript_id,
@@ -45,3 +51,8 @@ with open(output_file, "w", newline="") as out:
 
 print(f"✅ Parsed {len(summary_data)} predictions into {output_file}")
 
+# NOTE:
+# All miRanda hits included in the raw output were retained for downstream analysis.
+# The default scoring threshold in miRanda is typically Score ≥ 140 and Energy ≤ -20 kcal/mol, 
+# but upon inspection, all entries in this run satisfied the score threshold. 
+# Energies ranged from -6.67 to -40.34, so users should apply a custom energy filter if higher specificity is needed.
