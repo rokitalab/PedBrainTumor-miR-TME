@@ -25,26 +25,17 @@ RUN apt-get -y --no-install-recommends install \
 
 # Install java
 RUN apt-get update && apt-get -y --no-install-recommends install \
-   default-jdk \
-   libxt6
+    default-jdk \
+    libxt6
 
-# Install Miniconda
-ENV PATH=/opt/conda/bin:$PATH
+# system deps for igraph/enrichplot and HDF5‑based Bioc packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglpk-dev \
+    libhdf5-dev \
+    zlib1g-dev
 
-RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh && \
-    bash miniconda.sh -b -p /opt/conda && \
-    rm miniconda.sh && \
-    /opt/conda/bin/conda clean -a
-
-# Add conda channels and install miRanda
-RUN /opt/conda/bin/conda config --add channels defaults && \
-    /opt/conda/bin/conda config --add channels bioconda && \
-    /opt/conda/bin/conda config --add channels conda-forge && \
-    /opt/conda/bin/conda install -y miranda=3.3a && \
-    /opt/conda/bin/conda clean -a && \
-    apt-get remove curl -y && \
-    apt-get autoclean -y && \
-    apt-get autoremove -y
+# ensure the helper package is up‑to‑date
+RUN R -e 'install.packages("yulab.utils", repos="https://cran.rstudio.com/")'
 
 # Set the Bioconductor repository as the primary repository
 RUN R -e "options(repos = BiocManager::repositories())"
@@ -53,7 +44,26 @@ RUN R -e "options(repos = BiocManager::repositories())"
 RUN R -e "install.packages('BiocManager', dependencies=TRUE)"
 RUN R -e "BiocManager::install(version = '3.19', ask = FALSE)"
 
-# Install packages
+# Install core Bioconductor infrastructure
+RUN R -e 'BiocManager::install(c( \
+  "BiocGenerics", \
+  "S4Vectors", \
+  "IRanges", \
+  "XVector", \
+  "AnnotationDbi", \
+  "GenomicRanges", \
+  "SummarizedExperiment", \
+  "DelayedArray", \
+  "DelayedMatrixStats", \
+  "rhdf5", \
+  "HDF5Array", \
+  "ScaledMatrix", \
+  "beachmat", \
+  "Rsamtools", \
+  "zlibbioc" \
+))'
+
+# Install the rest of packages
 RUN R -e 'BiocManager::install(c( \
   "AnnotationDbi", \
   "Biobase", \
@@ -83,16 +93,35 @@ RUN R -e 'BiocManager::install(c( \
   "R.utils", \
   "sva", \
   "topGO", \
-  "UpSetR" \
-  "GenomicFeatures" \
-  "Biostrings" \
+  "UpSetR", \
+  "txdbmaker", \
+  "GenomicFeatures", \
+  "Biostrings", \
   "BSgenome.Hsapiens.UCSC.hg38" \
-))'
+), ask = FALSE)'
 
 
 ## install GitHub packages
 RUN R -e "remotes::install_github('clauswilke/colorblindr', ref = '1ac3d4d62dad047b68bb66c06cee927a4517d678', dependencies = TRUE)"
 RUN R -e "remotes::install_github('thomasp85/patchwork', ref = '1cb732b129ed6a65774796dc1f618558c7498b66', dependencies = TRUE)"
+
+# Install Miniconda
+ENV PATH=/opt/conda/bin:$PATH
+
+RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh && \
+    bash miniconda.sh -b -p /opt/conda && \
+    rm miniconda.sh && \
+    /opt/conda/bin/conda clean -a
+
+# Add conda channels and install miRanda
+RUN /opt/conda/bin/conda config --add channels defaults && \
+    /opt/conda/bin/conda config --add channels bioconda && \
+    /opt/conda/bin/conda config --add channels conda-forge && \
+    /opt/conda/bin/conda install -y miranda=3.3a && \
+    /opt/conda/bin/conda clean -a && \
+    apt-get remove curl -y && \
+    apt-get autoclean -y && \
+    apt-get autoremove -y
 
 WORKDIR /rocker-build/
 
