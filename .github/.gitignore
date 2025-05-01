@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Ignore large 3' UTR FASTA file generated for novel miRNA target prediction
+analyses/human-novel-mirna-target-prediction/results/gencode.v39.3utr.fa
+
+# Ignore miranda ouput
+analyses/human-novel-mirna-target-prediction/result/miranda_output.txt
