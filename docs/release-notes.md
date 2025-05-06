@@ -8,6 +8,7 @@ Added files:
 - `30-1075661268-all_novel_miRNA.xls`; novel predicted miRNAs 
 - `30-1075661268-miRNA_expression.xls`; raw miRNA counts
 - `30-1075661268-miRNA_Target_anno.xls`; predicted miRNA gene targets 
+- 'miRNA-sample-metadata.txt'; metadata file for the miRNA-seq data
 
 ```
 v3
