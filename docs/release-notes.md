@@ -4,14 +4,27 @@
 - Data release date: 2025-05-06
 - status: available
 
-Renamed files: 
-- `all_novel_miRNA.xls --> 30-931106737-all_novel_miRNA.xls`
-- `miRNA_Target_anno.csv --> 30-931106737-miRNA_Target_anno.csv`
-
 Added files:
 - `30-1075661268-all_novel_miRNA.xls`; novel predicted miRNAs 
 - `30-1075661268-miRNA_expression.xls`; raw miRNA counts
 - `30-1075661268-miRNA_Target_anno.xls`; predicted miRNA gene targets 
+
+```
+v3
+├── 30-1075661268-all_novel_miRNA.xls
+├── 30-1075661268-miRNA_expression.xls
+├── 30-1075661268-miRNA_Target_anno.xls
+├── 30-931106737-miRNA_expression.csv
+├── 30-931106737-miRNA-all.fpkm.csv
+├── 30-963755216-miRNA_expression.csv
+├── 30-963755216-miRNA-all.fpkm.csv
+├── 30-992989426-RNA_raw_counts.csv
+├── 30-992989426-RNA-TPM_values.csv
+├── all_novel_miRNA.xls
+├── miRNA_Target_anno.csv
+├── miRNA-sample-metadata.txt
+└── release-notes.md
+```
 
 
 ## archived release (v2)
