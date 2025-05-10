@@ -1,0 +1,124 @@
+---
+title: "Merge miRNA count data"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "2025-05-09"
+---
+
+This script merges two batches of miRNA expression count data, standardizes novel miRNA IDs using mature and precurosr sequence information, and saves the merged output for downstream analysis.
+
+### Load required packages
+
+```{r load packages}
+library(readr)
+library(readxl)
+library(tidyverse)
+library(rprojroot)
+```
+
+### Set directory paths
+
+```{r dir paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-expression")
+results_dir <- file.path(analysis_dir, "results")
+```
+
+### Set file paths 
+
+```{r file paths}
+batch1_counts_file <- file.path(data_dir, "30-931106737-miRNA_expression.csv")
+batch2_counts_file <- file.path(data_dir, "30-1075661268-miRNA_expression.xls")
+batch1_novel_mirna_file <- file.path(data_dir, "all_novel_miRNA.xls")
+batch2_novel_mirna_file <- file.path(data_dir, "30-1075661268-all_novel_miRNA.xls")
+```
+
+### Load count matrices
+
+```{r load count matrices}
+batch1_counts <- read_csv(batch1_counts_file) %>%
+  rename(miRNA = "...1") %>%
+  column_to_rownames(var = "miRNA")
+
+batch2_counts <- read_delim(batch2_counts_file, delim = "\t", guess_max = 10000) %>%
+  rename(miRNA = "...1") %>%
+  column_to_rownames(var = "miRNA")
+```
+
+
+### Load and process novel miRNA annotations
+
+```{r load novel miRNA sequence}
+read_novel_mirna <- function(file) {
+  read_delim(file, delim = "\t", guess_max = 10000,
+             col_names = c("id", "mature_seq", "star_seq", "precursor_seq", "precursor_coordinate")) %>%
+    mutate(unique_id = paste0(mature_seq, "_", precursor_coordinate))
+}
+
+batch1_novel_mirna_seq <- read_novel_mirna(batch1_novel_mirna_file)
+batch2_novel_mirna_seq <- read_novel_mirna(batch2_novel_mirna_file)
+```
+
+### Replace novel miRNA IDs with unique sequences
+
+```{r replace novel miRNA ids}
+replace_novel_ids <- function(counts, novel_df) {
+  novel_lookup <- setNames(novel_df$unique_id, novel_df$id)
+  current_names <- rownames(counts)
+  is_novel <- grepl("^NovelmiRNA", current_names)
+  
+  # Warn if any novel miRNAs aren't found in the annotation
+  unmapped <- setdiff(current_names[is_novel], names(novel_lookup))
+  if (length(unmapped) > 0) {
+    warning("Unmapped NovelmiRNA IDs: ", paste(unmapped, collapse = ", "))
+  }
+  
+  current_names[is_novel] <- novel_lookup[current_names[is_novel]]
+  rownames(counts) <- current_names
+  return(counts)
+}
+
+batch1_counts <- replace_novel_ids(batch1_counts, batch1_novel_mirna_seq)
+batch2_counts <- replace_novel_ids(batch2_counts, batch2_novel_mirna_seq)
+```
+
+### Merge counts matrices
+
+```{r merge counts}
+# Get union of all miRNA IDs
+all_miRNAs <- union(rownames(batch1_counts), rownames(batch2_counts))
+
+# Create full matrices with all miRNAs 
+batch1_full <- matrix(0, nrow = length(all_miRNAs), ncol = ncol(batch1_counts),
+                      dimnames = list(all_miRNAs, colnames(batch1_counts)))
+batch2_full <- matrix(0, nrow = length(all_miRNAs), ncol = ncol(batch2_counts),
+                      dimnames = list(all_miRNAs, colnames(batch2_counts)))
+
+# Fill in actual counts
+batch1_full[rownames(batch1_counts), ] <- as.matrix(batch1_counts)
+batch2_full[rownames(batch2_counts), ] <- as.matrix(batch2_counts)
+
+# Merge matrices
+merged_counts <- as.data.frame(cbind(batch1_full, batch2_full))
+```
+
+### Save merged output
+
+```{r write output}
+# Save merged matrix with rownames as a column
+merged_counts_out <- merged_counts %>%
+  rownames_to_column(var = "miRNA")
+
+write_tsv(merged_counts_out, file.path(results_dir, "merged-miRNA-expression.tsv"))
+```
+
+### Session info
+
+```{r session info}
+sessionInfo()
+```
+
