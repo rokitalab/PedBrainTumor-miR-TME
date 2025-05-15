@@ -8,7 +8,7 @@ author: Bicna Song
 date: "2025-05-09"
 ---
 
-This script merges two batches of miRNA expression count data, standardizes novel miRNA IDs using mature and precurosr sequence information, and saves the merged output for downstream analysis.
+This script merges two batches of miRNA expression count data, standardizes novel miRNA IDs using mature and precursor sequence information, and saves the merged output for downstream analysis.
 
 ### Load required packages
 
@@ -17,6 +17,7 @@ library(readr)
 library(readxl)
 library(tidyverse)
 library(rprojroot)
+library(stringr)
 ```
 
 ### Set directory paths
@@ -50,24 +51,76 @@ batch2_counts <- read_delim(batch2_counts_file, delim = "\t", guess_max = 10000)
 ```
 
 
-### Load and process novel miRNA annotations
+### Load novel miRNA annotations
 
 ```{r load novel miRNA sequence}
 read_novel_mirna <- function(file) {
   read_delim(file, delim = "\t", guess_max = 10000,
-             col_names = c("id", "mature_seq", "star_seq", "precursor_seq", "precursor_coordinate")) %>%
-    mutate(unique_id = paste0(mature_seq, "_", precursor_coordinate))
+             col_names = c("id", "mature_seq", "star_seq", "precursor_seq", "precursor_coordinate"))
 }
 
 batch1_novel_mirna_seq <- read_novel_mirna(batch1_novel_mirna_file)
 batch2_novel_mirna_seq <- read_novel_mirna(batch2_novel_mirna_file)
 ```
 
+### Combine and annotate novel miRNAs across batches
+
+```{r combine novel miRNAs}
+merged_novel_mirna_df <- bind_rows(
+  batch1_novel_mirna_seq %>% mutate(batch = "batch1"),
+  batch2_novel_mirna_seq %>% mutate(batch = "batch2")
+)
+```
+
+### Parse precursor_coordinate and assign harmonized IDs
+
+```{r assign harmonized ids}
+merged_novel_mirna_df <- merged_novel_mirna_df %>%
+  separate(precursor_coordinate, into = c("chr", "range", "strand"), sep = "[:]", remove = FALSE) %>%
+  separate(range, into = c("start", "end"), sep = "\\.\\.", convert = TRUE) %>%
+  mutate(chr = factor(chr, levels = str_sort(unique(chr), numeric = TRUE))) %>%
+  arrange(chr, start, end) %>%
+  mutate(merged_id = paste0("NovelmiRNA-", row_number()))
+```
+
+### Map harmonized IDs back to original batch annotation tables
+
+```{r map harmonized ids}
+# Split merged metadata back to batch-specific annotation tables
+batch1_novel_mirna_seq_merged_id <- merged_novel_mirna_df %>%
+  filter(batch == "batch1") %>%
+  select(-c(chr, start, end, strand, batch))
+
+batch2_novel_mirna_seq_merged_id <- merged_novel_mirna_df %>%
+  filter(batch == "batch2") %>%
+  select(-c(chr, start, end, strand, batch))
+```
+
+### Sort novel miRNAs by original ID number
+
+```{r sort novel miRNAs}
+batch1_novel_mirna_seq_merged_id <- batch1_novel_mirna_seq_merged_id %>%
+  mutate(id_num = as.integer(str_extract(id, "\\d+"))) %>%
+  arrange(id_num) %>%
+  select(-id_num)
+
+batch2_novel_mirna_seq_merged_id <- batch2_novel_mirna_seq_merged_id %>%
+  mutate(id_num = as.integer(str_extract(id, "\\d+"))) %>%
+  arrange(id_num) %>%
+  select(-id_num)
+```
+
+
+```{r save updated annotations with harmonized ids}
+write_tsv(batch1_novel_mirna_seq_merged_id, file.path(results_dir, "30-931106737-all_novel_miRNA_merged_id.tsv"))
+write_tsv(batch2_novel_mirna_seq_merged_id, file.path(results_dir, "30-1075661268-all_novel_miRNA_merged_id.tsv"))
+```
+
 ### Replace novel miRNA IDs with unique sequences
 
 ```{r replace novel miRNA ids}
 replace_novel_ids <- function(counts, novel_df) {
-  novel_lookup <- setNames(novel_df$unique_id, novel_df$id)
+  novel_lookup <- setNames(novel_df$merged_id, novel_df$id)
   current_names <- rownames(counts)
   is_novel <- grepl("^NovelmiRNA", current_names)
   
@@ -82,8 +135,8 @@ replace_novel_ids <- function(counts, novel_df) {
   return(counts)
 }
 
-batch1_counts <- replace_novel_ids(batch1_counts, batch1_novel_mirna_seq)
-batch2_counts <- replace_novel_ids(batch2_counts, batch2_novel_mirna_seq)
+batch1_counts <- replace_novel_ids(batch1_counts, batch1_novel_mirna_seq_merged_id)
+batch2_counts <- replace_novel_ids(batch2_counts, batch2_novel_mirna_seq_merged_id)
 ```
 
 ### Merge counts matrices
