@@ -428,23 +428,24 @@ font-size: 0.95em;
 
 
 <p>This script merges two batches of miRNA expression count data,
-standardizes novel miRNA IDs using mature and precurosr sequence
+standardizes novel miRNA IDs using mature and precursor sequence
 information, and saves the merged output for downstream analysis.</p>
 <div id="load-required-packages" class="section level3">
 <h3>Load required packages</h3>
 <pre class="r"><code>library(readr)
 library(readxl)
 library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────────────────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.4     ✔ purrr     1.0.2
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
 ## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
 ## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-## ── Conflicts ──────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(rprojroot)</code></pre>
+<pre class="r"><code>library(rprojroot)
+library(stringr)</code></pre>
 </div>
 <div id="set-directory-paths" class="section level3">
 <h3>Set directory paths</h3>
@@ -468,10 +469,10 @@ batch2_novel_mirna_file &lt;- file.path(data_dir, &quot;30-1075661268-all_novel_
 <pre><code>## New names:
 ## Rows: 1831 Columns: 6
 ## ── Column specification
-## ────────────────────────────────────────────────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## ──────────────────────────────────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
 ## (1): ...1 dbl (5): 7316-9631-CC1, 7316-8049-CC1, 7316-7585-left-pons, 7316-10409-CC1, ...
-## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the column types or set `show_col_types
-## = FALSE` to quiet this message.
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the column types or set
+## `show_col_types = FALSE` to quiet this message.
 ## • `` -&gt; `...1`</code></pre>
 <pre class="r"><code>batch2_counts &lt;- read_delim(batch2_counts_file, delim = &quot;\t&quot;, guess_max = 10000) %&gt;%
   rename(miRNA = &quot;...1&quot;) %&gt;%
@@ -479,23 +480,22 @@ batch2_novel_mirna_file &lt;- file.path(data_dir, &quot;30-1075661268-all_novel_
 <pre><code>## New names:
 ## Rows: 4218 Columns: 51
 ## ── Column specification
-## ────────────────────────────────────────────────────────────────────────────────────────────────── Delimiter: &quot;\t&quot; chr
+## ──────────────────────────────────────────────────────────────────────────────────── Delimiter: &quot;\t&quot; chr
 ## (1): ...1 dbl (50): 1886-N, 2187-T, 1853-T, 1680-T, 1854-N, 1716-T, 2058-N, 1235-T, 13...
-## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the column types or set `show_col_types
-## = FALSE` to quiet this message.
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the column types or set
+## `show_col_types = FALSE` to quiet this message.
 ## • `` -&gt; `...1`</code></pre>
 </div>
-<div id="load-and-process-novel-mirna-annotations" class="section level3">
-<h3>Load and process novel miRNA annotations</h3>
+<div id="load-novel-mirna-annotations" class="section level3">
+<h3>Load novel miRNA annotations</h3>
 <pre class="r"><code>read_novel_mirna &lt;- function(file) {
   read_delim(file, delim = &quot;\t&quot;, guess_max = 10000,
-             col_names = c(&quot;id&quot;, &quot;mature_seq&quot;, &quot;star_seq&quot;, &quot;precursor_seq&quot;, &quot;precursor_coordinate&quot;)) %&gt;%
-    mutate(unique_id = paste0(mature_seq, &quot;_&quot;, precursor_coordinate))
+             col_names = c(&quot;id&quot;, &quot;mature_seq&quot;, &quot;star_seq&quot;, &quot;precursor_seq&quot;, &quot;precursor_coordinate&quot;))
 }
 
 batch1_novel_mirna_seq &lt;- read_novel_mirna(batch1_novel_mirna_file)</code></pre>
 <pre><code>## Rows: 986 Columns: 5
-## ── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (5): id, mature_seq, star_seq, precursor_seq, precursor_coordinate
 ## 
@@ -503,17 +503,58 @@ batch1_novel_mirna_seq &lt;- read_novel_mirna(batch1_novel_mirna_file)</code></p
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre class="r"><code>batch2_novel_mirna_seq &lt;- read_novel_mirna(batch2_novel_mirna_file)</code></pre>
 <pre><code>## Rows: 3062 Columns: 5
-## ── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (5): id, mature_seq, star_seq, precursor_seq, precursor_coordinate
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
+<div id="combine-and-annotate-novel-mirnas-across-batches" class="section level3">
+<h3>Combine and annotate novel miRNAs across batches</h3>
+<pre class="r"><code>merged_novel_mirna_df &lt;- bind_rows(
+  batch1_novel_mirna_seq %&gt;% mutate(batch = &quot;batch1&quot;),
+  batch2_novel_mirna_seq %&gt;% mutate(batch = &quot;batch2&quot;)
+)</code></pre>
+</div>
+<div id="parse-precursor_coordinate-and-assign-harmonized-ids" class="section level3">
+<h3>Parse precursor_coordinate and assign harmonized IDs</h3>
+<pre class="r"><code>merged_novel_mirna_df &lt;- merged_novel_mirna_df %&gt;%
+  separate(precursor_coordinate, into = c(&quot;chr&quot;, &quot;range&quot;, &quot;strand&quot;), sep = &quot;[:]&quot;, remove = FALSE) %&gt;%
+  separate(range, into = c(&quot;start&quot;, &quot;end&quot;), sep = &quot;\\.\\.&quot;, convert = TRUE) %&gt;%
+  mutate(chr = factor(chr, levels = str_sort(unique(chr), numeric = TRUE))) %&gt;%
+  arrange(chr, start, end) %&gt;%
+  mutate(merged_id = paste0(&quot;NovelmiRNA-&quot;, row_number()))</code></pre>
+</div>
+<div id="map-harmonized-ids-back-to-original-batch-annotation-tables" class="section level3">
+<h3>Map harmonized IDs back to original batch annotation tables</h3>
+<pre class="r"><code># Split merged metadata back to batch-specific annotation tables
+batch1_novel_mirna_seq_merged_id &lt;- merged_novel_mirna_df %&gt;%
+  filter(batch == &quot;batch1&quot;) %&gt;%
+  select(-c(chr, start, end, strand, batch))
+
+batch2_novel_mirna_seq_merged_id &lt;- merged_novel_mirna_df %&gt;%
+  filter(batch == &quot;batch2&quot;) %&gt;%
+  select(-c(chr, start, end, strand, batch))</code></pre>
+</div>
+<div id="sort-novel-mirnas-by-original-id-number" class="section level3">
+<h3>Sort novel miRNAs by original ID number</h3>
+<pre class="r"><code>batch1_novel_mirna_seq_merged_id &lt;- batch1_novel_mirna_seq_merged_id %&gt;%
+  mutate(id_num = as.integer(str_extract(id, &quot;\\d+&quot;))) %&gt;%
+  arrange(id_num) %&gt;%
+  select(-id_num)
+
+batch2_novel_mirna_seq_merged_id &lt;- batch2_novel_mirna_seq_merged_id %&gt;%
+  mutate(id_num = as.integer(str_extract(id, &quot;\\d+&quot;))) %&gt;%
+  arrange(id_num) %&gt;%
+  select(-id_num)</code></pre>
+<pre class="r"><code>write_tsv(batch1_novel_mirna_seq_merged_id, file.path(results_dir, &quot;30-931106737-all_novel_miRNA_merged_id.tsv&quot;))
+write_tsv(batch2_novel_mirna_seq_merged_id, file.path(results_dir, &quot;30-1075661268-all_novel_miRNA_merged_id.tsv&quot;))</code></pre>
+</div>
 <div id="replace-novel-mirna-ids-with-unique-sequences" class="section level3">
 <h3>Replace novel miRNA IDs with unique sequences</h3>
 <pre class="r"><code>replace_novel_ids &lt;- function(counts, novel_df) {
-  novel_lookup &lt;- setNames(novel_df$unique_id, novel_df$id)
+  novel_lookup &lt;- setNames(novel_df$merged_id, novel_df$id)
   current_names &lt;- rownames(counts)
   is_novel &lt;- grepl(&quot;^NovelmiRNA&quot;, current_names)
   
@@ -528,8 +569,8 @@ batch1_novel_mirna_seq &lt;- read_novel_mirna(batch1_novel_mirna_file)</code></p
   return(counts)
 }
 
-batch1_counts &lt;- replace_novel_ids(batch1_counts, batch1_novel_mirna_seq)
-batch2_counts &lt;- replace_novel_ids(batch2_counts, batch2_novel_mirna_seq)</code></pre>
+batch1_counts &lt;- replace_novel_ids(batch1_counts, batch1_novel_mirna_seq_merged_id)
+batch2_counts &lt;- replace_novel_ids(batch2_counts, batch2_novel_mirna_seq_merged_id)</code></pre>
 </div>
 <div id="merge-counts-matrices" class="section level3">
 <h3>Merge counts matrices</h3>
