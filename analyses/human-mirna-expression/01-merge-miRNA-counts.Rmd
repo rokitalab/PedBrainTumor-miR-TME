@@ -67,9 +67,10 @@ batch2_novel_mirna_seq <- read_novel_mirna(batch2_novel_mirna_file)
 
 ```{r combine novel miRNAs}
 merged_novel_mirna_df <- bind_rows(
-  batch1_novel_mirna_seq %>% mutate(batch = "batch1"),
-  batch2_novel_mirna_seq %>% mutate(batch = "batch2")
-)
+  batch1_novel_mirna_seq %>% dplyr::select(-id),
+  batch2_novel_mirna_seq %>% dplyr::select(-id)
+) %>% 
+  distinct()
 ```
 
 ### Parse precursor_coordinate and assign harmonized IDs
@@ -87,13 +88,10 @@ merged_novel_mirna_df <- merged_novel_mirna_df %>%
 
 ```{r map harmonized ids}
 # Split merged metadata back to batch-specific annotation tables
-batch1_novel_mirna_seq_merged_id <- merged_novel_mirna_df %>%
-  filter(batch == "batch1") %>%
-  select(-c(chr, start, end, strand, batch))
-
-batch2_novel_mirna_seq_merged_id <- merged_novel_mirna_df %>%
-  filter(batch == "batch2") %>%
-  select(-c(chr, start, end, strand, batch))
+batch1_novel_mirna_seq_merged_id <- batch1_novel_mirna_seq %>%
+  left_join(merged_novel_mirna_df)
+batch2_novel_mirna_seq_merged_id <- batch2_novel_mirna_seq %>%
+  left_join(merged_novel_mirna_df)
 ```
 
 ### Sort novel miRNAs by original ID number
@@ -109,7 +107,6 @@ batch2_novel_mirna_seq_merged_id <- batch2_novel_mirna_seq_merged_id %>%
   arrange(id_num) %>%
   select(-id_num)
 ```
-
 
 ```{r save updated annotations with harmonized ids}
 write_tsv(batch1_novel_mirna_seq_merged_id, file.path(results_dir, "30-931106737-all_novel_miRNA_merged_id.tsv"))
