@@ -24,7 +24,6 @@
 │   └── merged-miRNA-expression.tsv
 ├── plots
 │   ├── mirna-pca-corrected.pdf
-│   ├── mirna-pca-uncorrected.pdf
-│   └── merged-miRNA-expression.tsv
+│   └── mirna-pca-uncorrected.pdf
 └── run_module.sh
 ```
