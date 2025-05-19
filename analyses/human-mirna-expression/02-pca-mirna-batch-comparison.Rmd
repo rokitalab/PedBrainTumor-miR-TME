@@ -44,7 +44,7 @@ mirna_cts_file <- file.path(results_dir, "merged-miRNA-expression.tsv")
 ```{r wrangle data}
 mirna_cts <- read_tsv(mirna_cts_file) %>%
   column_to_rownames("miRNA") %>%
-  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+  filter(rowSums(across(everything(), ~ . != 0)) > 50)
 ```
 
 ### Load sample metadata df
@@ -121,6 +121,46 @@ p2 <- ggplot(pca_df, aes(PC1, PC2, color = condition, shape = batch)) +
 ggsave(filename = file.path(plot_dir, "mirna-pca-uncorrected.pdf"), plot = p1, width = 10, height = 6)
 ggsave(filename = file.path(plot_dir, "mirna-pca-corrected.pdf"), plot = p2, width = 10, height = 6)
 ```
+
+# Run more stringent filtering of miRNA counts, retaining only those with non-zero counts in >50 samples
+
+```{r}
+mirna_cts_n50 <- read_tsv(mirna_cts_file) %>%
+  column_to_rownames("miRNA") %>%
+  filter(rowSums(across(everything(), ~ . != 0)) > 50)
+```
+
+Create updated DESeqDataSet object
+
+```{r create dds filtered}
+# 
+dds_filtered <- DESeqDataSetFromMatrix(countData = mirna_cts_n50, 
+                              colData = metadata_df, 
+                              design = ~ batch + condition)
+```
+
+### Variance Stabilizing Transformation (VST)
+
+```{r vst-transform}
+vsdata_filtered <- varianceStabilizingTransformation(dds_filtered, blind = FALSE)
+```
+
+### PCA Plot: Uncorrected, filtered Data
+
+```{r pca-uncorrected}
+pca_uncorrected_filtered <- plotPCA(vsdata_filtered, intgroup = c("batch", "condition"), returnData = TRUE)
+percentVar_filtered <- round(100 * attr(pca_uncorrected_filtered, "percentVar"))
+
+p3 <- ggplot(pca_uncorrected_filtered, aes(PC1, PC2, color = condition, shape = batch)) +
+  geom_point(size = 3) +
+  labs(title = "PCA (Uncorrected)",
+       x = paste0("PC1: ", percentVar_filtered[1], "% variance"),
+       y = paste0("PC2: ", percentVar_filtered[2], "% variance")) +
+  theme_Publication()
+
+ggsave(filename = file.path(plot_dir, "mirna-pca-uncorrected_filtered_n50.pdf"), plot = p3, width = 10, height = 6)
+```
+
 
 ### Session info
 
