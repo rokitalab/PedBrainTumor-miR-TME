@@ -44,7 +44,7 @@ mirna_cts_file <- file.path(results_dir, "merged-miRNA-expression.tsv")
 ```{r wrangle data}
 mirna_cts <- read_tsv(mirna_cts_file) %>%
   column_to_rownames("miRNA") %>%
-  filter(rowSums(across(everything(), ~ . != 0)) > 50)
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
 ```
 
 ### Load sample metadata df
@@ -73,13 +73,13 @@ dds <- DESeqDataSetFromMatrix(countData = mirna_cts,
 
 ### Variance Stabilizing Transformation (VST)
 
-```{r vst-transform}
+```{r vst-transform-1}
 vsdata <- varianceStabilizingTransformation(dds, blind = FALSE)
 ```
 
 ### PCA Plot: Uncorrected Data
 
-```{r pca-uncorrected}
+```{r pca-uncorrected-1}
 pca_uncorrected <- plotPCA(vsdata, intgroup = c("batch", "condition"), returnData = TRUE)
 percentVar <- round(100 * attr(pca_uncorrected, "percentVar"))
 
@@ -130,7 +130,7 @@ mirna_cts_n50 <- read_tsv(mirna_cts_file) %>%
   filter(rowSums(across(everything(), ~ . != 0)) > 50)
 ```
 
-Create updated DESeqDataSet object
+### Create updated DESeqDataSet object
 
 ```{r create dds filtered}
 # 
@@ -141,13 +141,13 @@ dds_filtered <- DESeqDataSetFromMatrix(countData = mirna_cts_n50,
 
 ### Variance Stabilizing Transformation (VST)
 
-```{r vst-transform}
+```{r vst-transform-2}
 vsdata_filtered <- varianceStabilizingTransformation(dds_filtered, blind = FALSE)
 ```
 
 ### PCA Plot: Uncorrected, filtered Data
 
-```{r pca-uncorrected}
+```{r pca-uncorrected-2}
 pca_uncorrected_filtered <- plotPCA(vsdata_filtered, intgroup = c("batch", "condition"), returnData = TRUE)
 percentVar_filtered <- round(100 * attr(pca_uncorrected_filtered, "percentVar"))
 
