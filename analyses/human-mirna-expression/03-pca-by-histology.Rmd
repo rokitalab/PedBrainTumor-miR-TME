@@ -1,0 +1,235 @@
+---
+title: "PCA visualization of miRNA expression across brain tumor histologies"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "2025-05-22"
+---
+
+This script generates PCA plots of miRNA expression data to evaluate batch effects and biological variation across samples.
+
+It includes:
+- PCA on uncorrected tumor samples
+- PCA after batch correction using both removeBatchEffect() and ComBat_seq()
+- PCA plots for each tumor type, including tumor-adjacent normals and disease-free controls (B1–B5), with labeled points for visualization
+
+The analyses help assess whether histology or batch drives major variance in the dataset.
+
+### Load required packages
+
+```{r load packages, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(tidyverse)
+library(limma)
+library(ggplot2)
+library(rprojroot)
+library(patchwork)
+library(ggrepel)
+library(sva)
+```
+
+### Set directory paths
+
+```{r dir paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+### Set file paths 
+
+```{r file paths}
+mirna_cts_file <- file.path(results_dir, "merged-miRNA-expression.tsv")
+```
+
+### Wrangle data
+
+```{r wrangle data}
+mirna_cts <- read_tsv(mirna_cts_file) %>%
+  column_to_rownames("miRNA") %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+```
+
+### Load sample metadata df
+
+```{r annotate-metadata}
+# Fix annotation for specific sample
+metadata_df <- read_delim(file.path(data_dir, "miRNA-sample-metadata.txt")) %>%
+  mutate(
+    sample_type = if_else(sample_id == "7316-7585-left-pons", "Normal-Tumor Adjacent", sample_type),
+    histology = if_else(sample_id == "7316-7585-left-pons", "DIPG", histology)
+  ) %>%
+  mutate(histology = if_else(is.na(histology) | histology == "N/A", "Normal", histology)) %>%
+  filter(sample_id %in% names(mirna_cts)) %>%
+  arrange(match(sample_id, names(mirna_cts))) %>%
+  mutate(batch = if_else(row_number() <= 5, "batch1", "batch2")) %>%
+  mutate(condition = case_when(
+    sample_type %in% c("Tumor", "Normal") ~ histology,
+    sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
+    TRUE ~ NA_character_
+  ))
+```
+
+### PCA on Tumor Samples Only (No Batch Correction)
+
+```{r pca-tumor-only}
+# Subset tumor samples
+tumor_metadata <- metadata_df %>%
+  filter(sample_type == "Tumor")
+
+tumor_cts <- mirna_cts[, tumor_metadata$sample_id]
+
+# Create DESeq2 object for tumor samples only
+dds_tumor <- DESeqDataSetFromMatrix(countData = tumor_cts,
+                                    colData = tumor_metadata,
+                                    design = ~ batch + histology)
+
+vsd_tumor <- varianceStabilizingTransformation(dds_tumor, blind = FALSE)
+
+# Plot PCA
+pca_tumor <- plotPCA(vsd_tumor, intgroup = c("histology", "batch"), returnData = TRUE)
+percentVar <- round(100 * attr(pca_tumor, "percentVar"))
+
+p1 <- ggplot(pca_tumor, aes(PC1, PC2, color = histology, shape = batch)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  labs(title = "PCA: Tumor Samples Only (Uncorrected)",
+       x = paste0("PC1: ", percentVar[1], "% variance"),
+       y = paste0("PC2: ", percentVar[2], "% variance")) +
+  theme_Publication()
+
+p1
+```
+
+### PCA on Tumor Samples Only (Batch Correction)
+
+```{r pca-corrected}
+# Apply batch correction to vst data
+corrected_counts <- removeBatchEffect(assay(vsd_tumor), batch = vsd_tumor$batch)
+
+# PCA
+pca_corrected <- prcomp(t(corrected_counts))
+
+# Prepare data
+pca_df <- as.data.frame(pca_corrected$x)
+pca_df$condition <- colData(vsd_tumor)$condition
+pca_df$batch <- colData(vsd_tumor)$batch
+pca_df$histology <- colData(vsd_tumor)$histology
+
+percentVar_corrected <- round(100 * (pca_corrected$sdev^2 / sum(pca_corrected$sdev^2)))
+
+p2 <- ggplot(pca_df, aes(PC1, PC2, color = condition, shape = batch)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  labs(title = "PCA: Tumor Samples Only (Batch Corrected)",
+       x = paste0("PC1: ", percentVar_corrected[1], "% variance"),
+       y = paste0("PC2: ", percentVar_corrected[2], "% variance")) +
+  theme_Publication()
+
+p2
+```
+
+```{r}
+ggplot(pca_df, aes(PC2, PC3, color = condition, shape = batch)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  labs(title = "PCA: Tumor Samples Only (Batch Corrected)",
+       x = paste0("PC2: ", percentVar_corrected[2], "% variance"),
+       y = paste0("PC3: ", percentVar_corrected[3], "% variance")) +
+  theme_Publication()
+```
+
+```{r}
+ggplot(pca_df, aes(PC3, PC4, color = condition, shape = batch)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  labs(title = "PCA: Tumor Samples Only (Batch Corrected)",
+       x = paste0("PC3: ", percentVar_corrected[3], "% variance"),
+       y = paste0("PC4: ", percentVar_corrected[4], "% variance")) +
+  theme_Publication()
+```
+
+### PCA on Tumor Samples Only Using ComBat_seq
+
+```{r pca-tumor-combat-seq}
+# Apply ComBat_seq batch correction
+combat_tumor <- ComBat_seq(as.matrix(tumor_cts), batch = tumor_metadata$batch)
+
+# Create DESeq2 object and apply VST
+dds_combat <- DESeqDataSetFromMatrix(countData = combat_tumor,
+                                     colData = tumor_metadata,
+                                     design = ~ histology)
+vsd_combat <- varianceStabilizingTransformation(dds_combat, blind = FALSE)
+
+# Perform PCA
+pca_combat <- plotPCA(vsd_combat, intgroup = c("histology", "batch"), returnData = TRUE)
+percentVar <- round(100 * attr(pca_combat, "percentVar"))
+
+# Plot
+p3 <- ggplot(pca_combat, aes(PC1, PC2, color = histology, shape = batch)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  labs(title = "PCA: Tumor Samples Only (ComBat Corrected)",
+       x = paste0("PC1: ", percentVar[1], "% variance"),
+       y = paste0("PC2: ", percentVar[2], "% variance")) +
+  theme_Publication()
+
+p3
+```
+
+
+### Save Plots
+
+```{r save-plots}
+ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = p1, width = 10, height = 6)
+ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = p2, width = 10, height = 6)
+ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected-combat.pdf"), plot = p3, width = 10, height = 6)
+```
+
+
+### PCA by Tumor Type vs Controls
+
+```{r pca-each-tumor-vs-controls, message=FALSE, warning=FALSE}
+tumor_types <- c("ATRT", "DIPG", "Ependymoma", "HGG", "LGG", "Medulloblastoma")
+controls <- c("B1", "B2", "B3", "B4", "B5")
+
+for (tumor in tumor_types) {
+  tumor_samples <- metadata_df %>% filter(histology == tumor & sample_type == "Tumor")
+  adjacent_normals <- metadata_df %>% filter(sample_type == "Normal-Tumor Adjacent" & histology == tumor)
+  healthy_normals <- metadata_df %>% filter(sample_id %in% controls)
+
+  subset_metadata <- bind_rows(tumor_samples, adjacent_normals, healthy_normals)
+  subset_cts <- mirna_cts[, subset_metadata$sample_id]
+
+  dds_subset <- DESeqDataSetFromMatrix(countData = subset_cts,
+                                       colData = subset_metadata,
+                                       design = ~ sample_type)
+  vsd_subset <- varianceStabilizingTransformation(dds_subset, blind = FALSE)
+
+  pca_data <- plotPCA(vsd_subset, intgroup = "sample_type", returnData = TRUE)
+  percentVar <- round(100 * attr(pca_data, "percentVar"))
+  pca_data$sample_id <- rownames(pca_data)
+
+  p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type, shape = sample_type)) +
+    geom_point(size = 3) +
+    geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
+    labs(title = paste("PCA -", tumor, "vs Controls"),
+         x = paste0("PC1: ", percentVar[1], "% variance"),
+         y = paste0("PC2: ", percentVar[2], "% variance")) +
+    theme_Publication()
+
+  ggsave(filename = file.path(plot_dir, paste0("pca_", tumor, "_vs_controls.pdf")), plot = p, width = 10, height = 6)
+}
+```
+
+### Session info
+
+```{r session info}
+sessionInfo()
+```
