@@ -1,0 +1,11 @@
+Comparison,Upregulated,Downregulated
+ATRT vs adjNormal,48,4
+ATRT vs healthyNormal,4,4
+DIPG vs adjNormal,16,16
+DIPG vs healthyNormal,15,5
+Ependymoma vs adjNormal,29,18
+Ependymoma vs healthyNormal,20,12
+HGG vs adjNormal,4,3
+HGG vs healthyNormal,13,5
+Medulloblastoma vs adjNormal,37,19
+Medulloblastoma vs healthyNormal,31,10
