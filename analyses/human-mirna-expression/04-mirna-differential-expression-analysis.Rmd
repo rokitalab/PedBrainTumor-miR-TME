@@ -1,0 +1,192 @@
+---
+title: "Differential miRNA Expression Analysis"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "2025-05-23"
+---
+
+This script performs differential expression analysis of miRNA-seq data using DESeq2.
+
+The goal is to identify differentially expressed miRNAs for each brain tumor histology by comparing:
+
+- Tumor vs. Tumor-Adjacent Normal samples (e.g., DIPG vs DIPG-adjacent normal)
+- Tumor vs. Disease-Free Normal brain samples (B1–B5)
+
+### Load Required Packages
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(tidyverse)
+library(rprojroot)
+library(readr)
+library(EnhancedVolcano)
+```
+
+```{r}
+install.packages("ashr") # this will be added to Dockerfile later.
+library(ashr)
+```
+
+### Set Directories and Load Data
+
+```{r setup-paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+### Set file paths 
+
+```{r file paths}
+mirna_cts_file <- file.path(results_dir, "merged-miRNA-expression.tsv")
+```
+
+### Wrangle data
+
+```{r wrangle data}
+mirna_cts <- read_tsv(mirna_cts_file) %>%
+  column_to_rownames("miRNA") %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+```
+
+### Load sample metadata df
+
+```{r annotate-metadata}
+# Fix annotation for specific sample
+metadata_df <- read_delim(file.path(data_dir, "miRNA-sample-metadata.txt")) %>%
+  mutate(
+    sample_type = if_else(sample_id == "7316-7585-left-pons", "Normal-Tumor Adjacent", sample_type),
+    histology = if_else(sample_id == "7316-7585-left-pons", "DIPG", histology)
+  ) %>%
+  mutate(histology = if_else(is.na(histology) | histology == "N/A", "Normal", histology)) %>%
+  filter(sample_id %in% names(mirna_cts)) %>%
+  arrange(match(sample_id, names(mirna_cts))) %>%
+  mutate(batch = if_else(row_number() <= 5, "batch1", "batch2")) %>%
+  mutate(condition = case_when(
+    sample_type %in% c("Tumor", "Normal") ~ histology,
+    sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
+    TRUE ~ NA_character_
+  ))
+
+stopifnot(identical(metadata_df$sample_id, colnames(mirna_cts)))
+```
+
+### Perform Differential Expression for Each Histology
+
+```{r run-de-by-histology, message=FALSE, warning=FALSE}
+normal_ids <- c("B1", "B2", "B3", "B4", "B5")
+histologies <- c("ATRT", "DIPG", "Ependymoma", "HGG", "Medulloblastoma")
+
+for (tumor in histologies) {
+  adj_label <- paste0(tumor, "-adjacent Normal")
+
+  # Subset metadata
+  meta_adj <- metadata_df %>% filter(condition %in% c(tumor, adj_label))
+  meta_healthy <- metadata_df %>% filter(sample_id %in% c(normal_ids, sample_id[condition == tumor])) %>% 
+    filter(condition %in% c(tumor, "Normal"))
+
+  # Select count data
+  counts_adj <- mirna_cts[, meta_adj$sample_id]
+  counts_healthy <- mirna_cts[, meta_healthy$sample_id]
+
+  # Tumor vs Adjacent Normal
+  design_adj <- if (tumor == "DIPG") ~ batch + condition else ~ condition
+  dds_adj <- DESeqDataSetFromMatrix(countData = counts_adj, colData = meta_adj, design = design_adj)
+  dds_adj$condition <- droplevels(dds_adj$condition)
+  dds_adj <- DESeq(dds_adj)
+  res_adj <- results(dds_adj, contrast = c("condition", tumor, adj_label))
+  res_adj <- lfcShrink(dds_adj, contrast = c("condition", tumor, adj_label), res = res_adj, type = "ashr")
+  write_csv(as.data.frame(res_adj) %>% rownames_to_column("miRNA"),
+          file.path(results_dir, paste0("DESeq2_", tumor, "_vs_adjNormal.csv")))
+
+
+  # Tumor vs Healthy Normal
+  design_healthy <- if (tumor == "DIPG") ~ batch + condition else ~ condition
+  dds_healthy <- DESeqDataSetFromMatrix(countData = counts_healthy, colData = meta_healthy, design = design_healthy)
+  dds_healthy$condition <- droplevels(dds_healthy$condition)
+  dds_healthy <- DESeq(dds_healthy)
+  res_healthy <- results(dds_healthy, contrast = c("condition", tumor, "Normal"))
+  res_healthy <- lfcShrink(dds_healthy, contrast = c("condition", tumor, "Normal"), res = res_healthy, type = "ashr")
+  write_csv(as.data.frame(res_healthy) %>% rownames_to_column("miRNA"),
+          file.path(results_dir, paste0("DESeq2_", tumor, "_vs_healthyNormal.csv")))
+}
+```
+
+### Summary Table: Number of Up/Down-regulated miRNAs
+
+```{r summary-table}
+summary_df <- tibble()
+
+for (tumor in histologies) {
+  for (type in c("adjNormal", "healthyNormal")) {
+    file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
+    if (file.exists(file_path)) {
+      res_df <- read_csv(file_path)
+      res_df <- res_df %>%filter(!is.na(padj) & padj < 0.05)
+      write_csv(res_df, file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, "_sig.csv"))) # Save Significant DE Results Separately
+      up <- sum(res_df$log2FoldChange > 0)
+      down <- sum(res_df$log2FoldChange < 0)
+      summary_df <- bind_rows(summary_df, 
+        tibble(Comparison = paste0(tumor, " vs ", type), 
+               Upregulated = up, 
+               Downregulated = down))
+    }
+  }
+}
+
+summary_df
+```
+
+```{r}
+# Save to CSV
+write_csv(summary_df, file.path(results_dir, "DE_summary_counts.csv"))
+```
+
+### Volcano Plots for DE Comparisons
+
+```{r volcano-plots, message=FALSE, warning=FALSE}
+for (tumor in histologies) {
+  for (type in c("adjNormal", "healthyNormal")) {
+    file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
+    if (file.exists(file_path)) {
+      res_df <- read_csv(file_path)
+      rownames(res_df) <- res_df$miRNA %||% rownames(res_df)  # Fallback for rownames if included
+      p_cut <- max(res_df$pvalue[res_df$padj < 0.05], na.rm = TRUE)
+      comp_label <- paste(tumor, "vs", gsub("Normal", "normal", type))
+      
+      plot <- EnhancedVolcano(res_df,
+                              lab = rownames(res_df),
+                              x = "log2FoldChange",
+                              y = "pvalue",
+                              title = comp_label,
+                              subtitle = NULL,
+                              caption = NULL,
+                              pCutoff = p_cut,
+                              FCcutoff = 2,
+                              pointSize = 3.5,
+                              labSize = 3,
+                              typeConnectors = "closed",
+                              drawConnectors = TRUE,
+                              widthConnectors = 0.75,
+                              colConnectors = 'grey30',
+                              max.overlaps = 10)
+
+      ggsave(file.path(plot_dir, paste0("volcano_", tumor, "_vs_", type, ".pdf")),
+             plot = plot, width = 8, height = 6)
+    }
+  }
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
