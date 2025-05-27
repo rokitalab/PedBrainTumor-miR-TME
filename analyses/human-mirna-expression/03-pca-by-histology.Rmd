@@ -98,7 +98,7 @@ percentVar <- round(100 * attr(pca_tumor, "percentVar"))
 
 p1 <- ggplot(pca_tumor, aes(PC1, PC2, color = histology, shape = batch)) +
   geom_point(size = 3) +
-  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  #geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
   labs(title = "PCA: Tumor Samples Only (Uncorrected)",
        x = paste0("PC1: ", percentVar[1], "% variance"),
        y = paste0("PC2: ", percentVar[2], "% variance")) +
@@ -126,7 +126,7 @@ percentVar_corrected <- round(100 * (pca_corrected$sdev^2 / sum(pca_corrected$sd
 
 p2 <- ggplot(pca_df, aes(PC1, PC2, color = condition, shape = batch)) +
   geom_point(size = 3) +
-  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  #geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
   labs(title = "PCA: Tumor Samples Only (Batch Corrected)",
        x = paste0("PC1: ", percentVar_corrected[1], "% variance"),
        y = paste0("PC2: ", percentVar_corrected[2], "% variance")) +
@@ -136,23 +136,25 @@ p2
 ```
 
 ```{r}
-ggplot(pca_df, aes(PC2, PC3, color = condition, shape = batch)) +
+p3 <- ggplot(pca_df, aes(PC2, PC3, color = condition, shape = batch)) +
   geom_point(size = 3) +
-  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  #geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
   labs(title = "PCA: Tumor Samples Only (Batch Corrected)",
        x = paste0("PC2: ", percentVar_corrected[2], "% variance"),
        y = paste0("PC3: ", percentVar_corrected[3], "% variance")) +
   theme_Publication()
+p3
 ```
 
 ```{r}
-ggplot(pca_df, aes(PC3, PC4, color = condition, shape = batch)) +
+p4 <- ggplot(pca_df, aes(PC3, PC4, color = condition, shape = batch)) +
   geom_point(size = 3) +
-  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  #geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
   labs(title = "PCA: Tumor Samples Only (Batch Corrected)",
        x = paste0("PC3: ", percentVar_corrected[3], "% variance"),
        y = paste0("PC4: ", percentVar_corrected[4], "% variance")) +
   theme_Publication()
+p4
 ```
 
 ### PCA on Tumor Samples Only Using ComBat_seq
@@ -172,15 +174,15 @@ pca_combat <- plotPCA(vsd_combat, intgroup = c("histology", "batch"), returnData
 percentVar <- round(100 * attr(pca_combat, "percentVar"))
 
 # Plot
-p3 <- ggplot(pca_combat, aes(PC1, PC2, color = histology, shape = batch)) +
+p5 <- ggplot(pca_combat, aes(PC1, PC2, color = histology, shape = batch)) +
   geom_point(size = 3) +
-  geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
+  #geom_text_repel(aes(label = histology), size = 3, max.overlaps = 50) +
   labs(title = "PCA: Tumor Samples Only (ComBat Corrected)",
        x = paste0("PC1: ", percentVar[1], "% variance"),
        y = paste0("PC2: ", percentVar[2], "% variance")) +
   theme_Publication()
 
-p3
+p5
 ```
 
 
@@ -188,8 +190,10 @@ p3
 
 ```{r save-plots}
 ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = p1, width = 10, height = 6)
-ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = p2, width = 10, height = 6)
-ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected-combat.pdf"), plot = p3, width = 10, height = 6)
+ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected-PC1-PC2.pdf"), plot = p2, width = 10, height = 6)
+ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected-PC2-PC3.pdf"), plot = p3, width = 10, height = 6)
+ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected-PC3-PC4.pdf"), plot = p4, width = 10, height = 6)
+ggsave(filename = file.path(plot_dir, "mirna-pca-tumor-only-corrected-combat.pdf"), plot = p5, width = 10, height = 6)
 ```
 
 
