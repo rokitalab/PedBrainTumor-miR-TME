@@ -26,11 +26,13 @@
 │   ├── 30-1075661268-all_novel_miRNA_merged_id.tsv
 │   └── merged-miRNA-expression.tsv
 ├── plots
-│   ├── mirna-pca-corrected.pdf
-│   ├── mirna-pca-uncorrected_filtered_n50.pdf
 │   ├── mirna-pca-uncorrected.pdf
+│   ├── mirna-pca-uncorrected_filtered_n50.pdf
+│   ├── mirna-pca-corrected.pdf
 │   ├── mirna-pca-tumor-only-uncorrected.pdf
-│   ├── mirna-pca-tumor-only-corrected.pdf
+│   ├── mirna-pca-tumor-only-corrected-PC1-PC2.pdf
+│   ├── mirna-pca-tumor-only-corrected-PC2-PC3.pdf
+│   ├── mirna-pca-tumor-only-corrected-PC3-PC4.pdf
 │   ├── mirna-pca-tumor-only-corrected-combat.pdf
 │   ├── pca_ATRT_vs_controls.pdf
 │   ├── pca_DIPG_vs_controls.pdf
