@@ -28,6 +28,7 @@ library(rprojroot)
 library(patchwork)
 library(ggrepel)
 library(sva)
+library(matrixStats)
 ```
 
 ### Set directory paths
@@ -113,8 +114,17 @@ p1
 # Apply batch correction to vst data
 corrected_counts <- removeBatchEffect(assay(vsd_tumor), batch = vsd_tumor$batch)
 
-# PCA
-pca_corrected <- prcomp(t(corrected_counts))
+# Compute per-miRNA variance
+miRNA_vars <- rowVars(corrected_counts)
+
+# Pick the 500 miRNAs with highest variance
+top500 <- order(miRNA_vars, decreasing = TRUE)[1:500]
+
+# Subset the matrix to top 500 miRNAs
+mat_top500 <- corrected_counts[top500, ]
+
+# Run PCA on the transposed subset
+pca_corrected <- prcomp(t(mat_top500), center = TRUE, scale. = FALSE)
 
 # Prepare data
 pca_df <- as.data.frame(pca_corrected$x)
