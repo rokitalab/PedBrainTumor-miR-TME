@@ -5,9 +5,9 @@
 - status: available
 
 Added files:
-- `haydar-rnaseq.gene-counts-rsem-expected_count-collapsed.all.rds`; Human collapsed RNA-seq raw counts
-- `haydar-rnaseq.gene-expression-rsem-fpkm-collapsed.all.rds`; Human collapsed RNA-seq FPKMs 
-- `haydar-rnaseq.gene-expression-rsem-tpm-collapsed.all.rds`; Human collapsed RNA-seq TPMs 
+- `gene-counts-rsem-expected_count-collapsed.all.rds`; Human collapsed RNA-seq raw counts
+- `gene-expression-rsem-fpkm-collapsed.all.rds`; Human collapsed RNA-seq FPKMs 
+- `gene-expression-rsem-tpm-collapsed.all.rds`; Human collapsed RNA-seq TPMs 
 
 ```
 v4
@@ -21,9 +21,9 @@ v4
 ├── 30-992989426-RNA_raw_counts.csv
 ├── 30-992989426-RNA-TPM_values.csv
 ├── all_novel_miRNA.xls
-├── haydar-rnaseq.gene-counts-rsem-expected_count-collapsed.all.rds
-├── haydar-rnaseq.gene-expression-rsem-fpkm-collapsed.all.rds
-├── haydar-rnaseq.gene-expression-rsem-tpm-collapsed.all.rds
+├── gene-counts-rsem-expected_count-collapsed.all.rds
+├── gene-expression-rsem-fpkm-collapsed.all.rds
+├── gene-expression-rsem-tpm-collapsed.all.rds
 ├── miRNA_Target_anno.csv
 ├── miRNA-sample-metadata.txt
 └── release-notes.md
