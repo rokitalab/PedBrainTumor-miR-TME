@@ -8,3 +8,6 @@ Rscript -e "rmarkdown::render('01-merge-miRNA-counts.Rmd')"
 
 # Run PCA batch comparison script
 Rscript -e "rmarkdown::render('02-pca-mirna-batch-comparison.Rmd')"
+
+# Run PCA by histology script
+Rscript -e "rmarkdown::render('03-pca-by-histology.Rmd')"
