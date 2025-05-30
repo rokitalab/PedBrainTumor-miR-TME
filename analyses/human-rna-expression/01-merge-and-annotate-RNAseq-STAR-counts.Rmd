@@ -1,0 +1,112 @@
+---
+title: "Merge and annotate RNAseq STAR counts"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "2025-05-30"
+---
+
+This script merges gzipped STAR ReadsPerGene.out.tab.gz files and annotates each row with gene symbols from the Gencode v39 GTF.
+
+### Load required packages
+
+```{r load packages}
+library(rprojroot)
+library(rtracklayer)
+library(tools)
+```
+
+### Set directory paths
+
+```{r dir paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
+input_dir <- file.path(analysis_dir, "input")
+results_dir <- file.path(analysis_dir, "results")
+```
+
+```{r}
+# read + merge all STAR count files
+# prior to run this script, all START count files need to be downloaded from the S3 bucket
+# "rnaseq_star_gene_count" in data_dir should include 53 samples. 
+
+files <- list.files(file.path(input_dir, "rnaseq_star_gene_count"),
+                    pattern = "ReadsPerGene\\.out\\.tab\\.gz$",
+                    full.names = TRUE)
+
+read_counts <- function(f) {
+  df <- read.delim(gzfile(f), header=FALSE, stringsAsFactors=FALSE)
+  sample <- sub("\\_20250506\\.ReadsPerGene\\.out\\.tab\\.gz$", "", basename(f))
+  setNames(df[,c("V1","V2")], c("gene_id", sample))
+}
+lst <- lapply(files, read_counts)
+merged <- Reduce(function(x,y) merge(x,y,by="gene_id",all=TRUE), lst)
+merged[is.na(merged)] <- 0
+```
+
+```{r}
+# remove the last 4 rows (STAR’s summary lines)
+merged <- merged[1:(nrow(merged) - 4), ]
+```
+
+```{r}
+# import GTF and build ID→symbol map
+gtf   <- import(file.path(data_dir, "gencode.v39.primary_assembly.annotation.gtf.gz"), format = "gtf")
+genes <- gtf[gtf$type == "gene", ]
+map   <- unique(data.frame(
+  gene_id   = mcols(genes)$gene_id,
+  gene_name = mcols(genes)$gene_name,
+  stringsAsFactors = FALSE
+))
+```
+
+```{r}
+# join on versioned gene_id
+annotated <- merge(map,
+                   merged,
+                   by = "gene_id",
+                   all.y = TRUE)
+```
+
+```{r}
+# Load manifest and build rename map
+# adjust the path & separator to your manifest’s format
+manifest <- read.delim(file.path(input_dir, "Haydar-RNAseq-manifest_IDs_assigned.tsv"),
+                       header = TRUE,
+                       stringsAsFactors = FALSE)
+```
+
+```{r}
+# build a named vector: names = Bioassay_ID, values = external_sample_id
+id_map <- setNames(manifest$external_sample_id,
+                   manifest$Bioassay_ID)
+```
+
+```{r}
+# the object ‘annotated’ has columns: gene_id, gene_name, BA_0GVSQNSM, BA_1ABCDEF, …
+old_cols <- colnames(annotated)
+```
+
+```{r}
+# for every column that matches a Bioassay_ID in the map, replace with external ID
+new_cols <- ifelse(old_cols %in% names(id_map),
+                   id_map[old_cols],
+                   old_cols)
+
+colnames(annotated) <- new_cols
+```
+
+```{r}
+write.table(annotated,
+            file      = file.path(results_dir, "merged-RNA-rawcounts-annotated.tsv"),
+            sep       = "\t",
+            quote     = FALSE,
+            row.names = FALSE,
+            col.names = TRUE)
+```
+
+
+
