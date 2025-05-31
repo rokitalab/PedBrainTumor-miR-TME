@@ -9,6 +9,11 @@ Added files:
 - `gene-expression-rsem-fpkm-collapsed.all.rds`; Human collapsed RNA-seq FPKMs 
 - `gene-expression-rsem-tpm-collapsed.all.rds`; Human collapsed RNA-seq TPMs 
 
+Removed files:
+
+- `30-992989426-RNA-TPM_values.csv`; Human RNA TPMs from two DIPG samples and one normal pons
+- `30-992989426-RNA_raw_counts.csv`; Human RNA raw counts from two DIPG samples and one normal pons
+
 ```
 v4
 ├── 30-1075661268-all_novel_miRNA.xls
@@ -18,8 +23,6 @@ v4
 ├── 30-931106737-miRNA-all.fpkm.csv
 ├── 30-963755216-miRNA_expression.csv
 ├── 30-963755216-miRNA-all.fpkm.csv
-├── 30-992989426-RNA_raw_counts.csv
-├── 30-992989426-RNA-TPM_values.csv
 ├── all_novel_miRNA.xls
 ├── gene-counts-rsem-expected_count-collapsed.all.rds
 ├── gene-expression-rsem-fpkm-collapsed.all.rds
