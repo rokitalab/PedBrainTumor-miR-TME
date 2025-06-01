@@ -481,6 +481,7 @@ source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))</code></pr
 <pre class="r"><code># Fix annotation for specific sample
 metadata_df &lt;- read_delim(file.path(data_dir, &quot;miRNA-sample-metadata.txt&quot;)) %&gt;%
   mutate(histology = if_else(histology == &quot;N/A&quot;, &quot;Normal&quot;, histology)) %&gt;%
+  mutate(patient_id = str_remove(sample_id, &quot;-[TN]$&quot;)) %&gt;%
   filter(sample_id %in% names(mirna_cts)) %&gt;%
   arrange(match(sample_id, names(mirna_cts))) %&gt;%
   mutate(batch = if_else(row_number() &lt;= 5, &quot;batch1&quot;, &quot;batch2&quot;)) %&gt;%
@@ -820,6 +821,327 @@ write_csv(summary_df, file.path(results_dir, &quot;DE_summary_counts.csv&quot;))
     }
   }
 }</code></pre>
+<pre class="r"><code># Summarize: Count number of Tumor and Adjacent Normal per patient_id and histology
+paired_info &lt;- metadata_df %&gt;%
+  group_by(histology, patient_id) %&gt;%
+  summarize(
+    tumor = any(sample_type == &quot;Tumor&quot;),
+    adjacent_normal = any(sample_type == &quot;Normal-Tumor Adjacent&quot;),
+    .groups = &quot;drop&quot;
+  ) %&gt;%
+  mutate(pair_status = case_when(
+    tumor &amp; adjacent_normal ~ &quot;Paired&quot;,
+    TRUE ~ &quot;Unpaired&quot;
+  ))
+
+# Create table of paired/unpaired counts per histology
+summary_table &lt;- paired_info %&gt;%
+  group_by(histology, pair_status) %&gt;%
+  summarize(n = n(), .groups = &quot;drop&quot;) %&gt;%
+  pivot_wider(names_from = pair_status, values_from = n, values_fill = 0)
+
+print(summary_table)</code></pre>
+<pre><code>## # A tibble: 7 × 3
+##   histology       Paired Unpaired
+##   &lt;chr&gt;            &lt;int&gt;    &lt;int&gt;
+## 1 ATRT                 1        2
+## 2 DIPG                 5        8
+## 3 Ependymoma           2        1
+## 4 HGG                  5        0
+## 5 LGG                  0        2
+## 6 Medulloblastoma      5        1
+## 7 Normal               0        5</code></pre>
+<pre class="r"><code># Paired differential expression analysis
+for (hist in all_histologies) {
+  
+  paired_patients &lt;- paired_info %&gt;%
+    filter(histology == hist, pair_status == &quot;Paired&quot;) %&gt;%
+    pull(patient_id)
+  
+  if (length(paired_patients) &lt; 2) {
+    message(paste(&quot;Skipping&quot;, hist, &quot;due to insufficient paired patients&quot;))
+    next
+  }
+  
+  paired_samples_metadata &lt;- metadata_df %&gt;%
+    filter(histology == hist, patient_id %in% paired_patients) %&gt;%
+    filter(sample_type %in% c(&quot;Tumor&quot;, &quot;Normal-Tumor Adjacent&quot;))
+  
+  paired_sample_ids &lt;- paired_samples_metadata$sample_id
+  
+  mirna_cts_paired &lt;- mirna_cts[, paired_sample_ids]
+  
+  # Confirm sample_id matches column names
+  stopifnot(identical(paired_samples_metadata$sample_id, colnames(mirna_cts_paired)))
+  
+  # Create DESeq2 object
+  dds &lt;- DESeqDataSetFromMatrix(
+    countData = mirna_cts_paired,
+    colData = paired_samples_metadata,
+    design = ~ patient_id + sample_type
+  )
+  
+  #dds$sample_type &lt;- factor(dds$sample_type)
+  dds &lt;- DESeq(dds)
+  
+  # Run results: Tumor vs Normal-Tumor Adjacent
+  res &lt;- results(dds, contrast = c(&quot;sample_type&quot;, &quot;Tumor&quot;, &quot;Normal-Tumor Adjacent&quot;))
+  res_adj &lt;- lfcShrink(dds, contrast = c(&quot;sample_type&quot;, &quot;Tumor&quot;, &quot;Normal-Tumor Adjacent&quot;), res = res, type = &quot;ashr&quot;)
+  
+  # Save full and significant results
+  res_df &lt;- as.data.frame(res_adj) %&gt;% 
+    rownames_to_column(&quot;miRNA&quot;)
+  
+  write_csv(res_df, file.path(results_dir, paste0(&quot;DESeq2_&quot;, hist, &quot;_paired_full.csv&quot;)))
+  
+  res_sig &lt;- res_df %&gt;%
+    filter(!is.na(padj) &amp; padj &lt; 0.05)
+  
+  write_csv(res_sig, file.path(results_dir, paste0(&quot;DESeq2_&quot;, hist, &quot;_paired_sig.csv&quot;)))
+  
+  message(paste(&quot;Completed DE analysis for:&quot;, hist))
+}</code></pre>
+<pre><code>## Skipping ATRT due to insufficient paired patients</code></pre>
+<pre><code>## converting counts to integer mode</code></pre>
+<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
+## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating size factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating dispersions</code></pre>
+<pre><code>## gene-wise dispersion estimates</code></pre>
+<pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## final dispersion estimates</code></pre>
+<pre><code>## fitting model and testing</code></pre>
+<pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
+##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
+##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
+<pre><code>## Completed DE analysis for: DIPG</code></pre>
+<pre><code>## converting counts to integer mode</code></pre>
+<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
+## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating size factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating dispersions</code></pre>
+<pre><code>## gene-wise dispersion estimates</code></pre>
+<pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## final dispersion estimates</code></pre>
+<pre><code>## fitting model and testing</code></pre>
+<pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
+##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
+##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
+<pre><code>## Completed DE analysis for: Ependymoma</code></pre>
+<pre><code>## converting counts to integer mode</code></pre>
+<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
+## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating size factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating dispersions</code></pre>
+<pre><code>## gene-wise dispersion estimates</code></pre>
+<pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## final dispersion estimates</code></pre>
+<pre><code>## fitting model and testing</code></pre>
+<pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
+##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
+##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
+<pre><code>## Completed DE analysis for: HGG</code></pre>
+<pre><code>## converting counts to integer mode</code></pre>
+<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
+## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating size factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## estimating dispersions</code></pre>
+<pre><code>## gene-wise dispersion estimates</code></pre>
+<pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre><code>## final dispersion estimates</code></pre>
+<pre><code>## fitting model and testing</code></pre>
+<pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
+##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
+##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
+<pre><code>## Completed DE analysis for: Medulloblastoma</code></pre>
+<pre><code>## Skipping LGG due to insufficient paired patients</code></pre>
+</div>
+<div id="summary-table-number-of-updown-regulated-mirnas-for-paired-analysis" class="section level3">
+<h3>Summary Table: Number of Up/Down-regulated miRNAs for paired
+analysis</h3>
+<pre class="r"><code>summary_paired_df &lt;- tibble()
+
+for (hist in all_histologies) {
+  file_path &lt;- file.path(results_dir, paste0(&quot;DESeq2_&quot;, hist, &quot;_paired_full.csv&quot;))
+  
+  if (file.exists(file_path)) {
+      res_df &lt;- read_csv(file_path) %&gt;%
+        filter(!is.na(padj) &amp; padj &lt; 0.05)
+      up &lt;- sum(res_df$log2FoldChange &gt; 0)
+      down &lt;- sum(res_df$log2FoldChange &lt; 0)
+      summary_paired_df &lt;- bind_rows(summary_paired_df, 
+        tibble(Comparison = paste0(hist, &quot; vs &quot;, &quot;adjNormal&quot;), 
+               Upregulated = up, 
+               Downregulated = down))
+  } else {
+    message(paste(&quot;Result file for&quot;, hist, &quot;not found.&quot;))
+  }
+}</code></pre>
+<pre><code>## Result file for ATRT not found.</code></pre>
+<pre><code>## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Result file for LGG not found.</code></pre>
+<pre class="r"><code># View the summary table
+summary_paired_df</code></pre>
+<pre><code>## # A tibble: 4 × 3
+##   Comparison                   Upregulated Downregulated
+##   &lt;chr&gt;                              &lt;int&gt;         &lt;int&gt;
+## 1 DIPG vs adjNormal                     12             6
+## 2 Ependymoma vs adjNormal               17            11
+## 3 HGG vs adjNormal                       8             2
+## 4 Medulloblastoma vs adjNormal          23            22</code></pre>
+<pre class="r"><code># Save to CSV
+write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_paired.csv&quot;))</code></pre>
+</div>
+<div id="volcano-plots-for-paired-de-comparisons" class="section level3">
+<h3>Volcano Plots for paired DE Comparisons</h3>
+<pre class="r"><code>for (tumor in all_histologies) {
+  file_path &lt;- file.path(results_dir, paste0(&quot;DESeq2_&quot;, tumor, &quot;_paired_full.csv&quot;))
+  
+  if (file.exists(file_path)) {
+    res_df &lt;- read_csv(file_path)
+    rownames(res_df) &lt;- res_df$miRNA %||% rownames(res_df)
+    p_cut &lt;- max(res_df$pvalue[res_df$padj &lt; 0.05], na.rm = TRUE)
+    comp_label &lt;- paste(tumor, &quot;Paired Analysis&quot;)
+    plot &lt;- EnhancedVolcano(res_df,
+                             lab = rownames(res_df),
+                             x = &quot;log2FoldChange&quot;,
+                             y = &quot;pvalue&quot;,
+                             title = comp_label,
+                             subtitle = NULL,
+                             caption = NULL,
+                             pCutoff = p_cut,
+                             FCcutoff = 2,
+                             pointSize = 3.5,
+                             labSize = 3,
+                             typeConnectors = &quot;closed&quot;,
+                             drawConnectors = TRUE,
+                             widthConnectors = 0.75,
+                             colConnectors = &#39;grey30&#39;,
+                             max.overlaps = 10)
+
+    ggsave(file.path(plot_dir, paste0(&quot;volcano_&quot;, tumor, &quot;_paired.pdf&quot;)),
+           plot = plot, width = 8, height = 6)
+  }
+}</code></pre>
+<pre><code>## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
+<pre><code>## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
+<pre><code>## Warning: ggrepel: 15 unlabeled data points (too many overlaps). Consider
+## increasing max.overlaps</code></pre>
+<pre><code>## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
+<pre><code>## Rows: 2053 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): miRNA
+## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
+<pre><code>## Warning: ggrepel: 6 unlabeled data points (too many overlaps). Consider
+## increasing max.overlaps</code></pre>
 </div>
 <div id="session-info" class="section level3">
 <h3>Session Info</h3>

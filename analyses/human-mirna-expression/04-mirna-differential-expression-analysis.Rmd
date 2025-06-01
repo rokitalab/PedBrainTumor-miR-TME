@@ -62,6 +62,7 @@ mirna_cts <- read_tsv(mirna_cts_file) %>%
 # Fix annotation for specific sample
 metadata_df <- read_delim(file.path(data_dir, "miRNA-sample-metadata.txt")) %>%
   mutate(histology = if_else(histology == "N/A", "Normal", histology)) %>%
+  mutate(patient_id = str_remove(sample_id, "-[TN]$")) %>%
   filter(sample_id %in% names(mirna_cts)) %>%
   arrange(match(sample_id, names(mirna_cts))) %>%
   mutate(batch = if_else(row_number() <= 5, "batch1", "batch2")) %>%
@@ -217,6 +218,146 @@ for (tumor in all_histologies) {
       ggsave(file.path(plot_dir, paste0("volcano_", tumor, "_vs_", type, ".pdf")),
              plot = plot, width = 8, height = 6)
     }
+  }
+}
+```
+
+```{r pair-status}
+# Summarize: Count number of Tumor and Adjacent Normal per patient_id and histology
+paired_info <- metadata_df %>%
+  group_by(histology, patient_id) %>%
+  summarize(
+    tumor = any(sample_type == "Tumor"),
+    adjacent_normal = any(sample_type == "Normal-Tumor Adjacent"),
+    .groups = "drop"
+  ) %>%
+  mutate(pair_status = case_when(
+    tumor & adjacent_normal ~ "Paired",
+    TRUE ~ "Unpaired"
+  ))
+
+# Create table of paired/unpaired counts per histology
+summary_table <- paired_info %>%
+  group_by(histology, pair_status) %>%
+  summarize(n = n(), .groups = "drop") %>%
+  pivot_wider(names_from = pair_status, values_from = n, values_fill = 0)
+
+print(summary_table)
+```
+
+```{r run-paired-de-by-histology}
+# Paired differential expression analysis
+for (hist in all_histologies) {
+  
+  paired_patients <- paired_info %>%
+    filter(histology == hist, pair_status == "Paired") %>%
+    pull(patient_id)
+  
+  if (length(paired_patients) < 2) {
+    message(paste("Skipping", hist, "due to insufficient paired patients"))
+    next
+  }
+  
+  paired_samples_metadata <- metadata_df %>%
+    filter(histology == hist, patient_id %in% paired_patients) %>%
+    filter(sample_type %in% c("Tumor", "Normal-Tumor Adjacent"))
+  
+  paired_sample_ids <- paired_samples_metadata$sample_id
+  
+  mirna_cts_paired <- mirna_cts[, paired_sample_ids]
+  
+  # Confirm sample_id matches column names
+  stopifnot(identical(paired_samples_metadata$sample_id, colnames(mirna_cts_paired)))
+  
+  # Create DESeq2 object
+  dds <- DESeqDataSetFromMatrix(
+    countData = mirna_cts_paired,
+    colData = paired_samples_metadata,
+    design = ~ patient_id + sample_type
+  )
+  
+  #dds$sample_type <- factor(dds$sample_type)
+  dds <- DESeq(dds)
+  
+  # Run results: Tumor vs Normal-Tumor Adjacent
+  res <- results(dds, contrast = c("sample_type", "Tumor", "Normal-Tumor Adjacent"))
+  res_adj <- lfcShrink(dds, contrast = c("sample_type", "Tumor", "Normal-Tumor Adjacent"), res = res, type = "ashr")
+  
+  # Save full and significant results
+  res_df <- as.data.frame(res_adj) %>% 
+    rownames_to_column("miRNA")
+  
+  write_csv(res_df, file.path(results_dir, paste0("DESeq2_", hist, "_paired_full.csv")))
+  
+  res_sig <- res_df %>%
+    filter(!is.na(padj) & padj < 0.05)
+  
+  write_csv(res_sig, file.path(results_dir, paste0("DESeq2_", hist, "_paired_sig.csv")))
+  
+  message(paste("Completed DE analysis for:", hist))
+}
+
+```
+
+### Summary Table: Number of Up/Down-regulated miRNAs for paired analysis
+
+```{r}
+summary_paired_df <- tibble()
+
+for (hist in all_histologies) {
+  file_path <- file.path(results_dir, paste0("DESeq2_", hist, "_paired_full.csv"))
+  
+  if (file.exists(file_path)) {
+      res_df <- read_csv(file_path) %>%
+        filter(!is.na(padj) & padj < 0.05)
+      up <- sum(res_df$log2FoldChange > 0)
+      down <- sum(res_df$log2FoldChange < 0)
+      summary_paired_df <- bind_rows(summary_paired_df, 
+        tibble(Comparison = paste0(hist, " vs ", "adjNormal"), 
+               Upregulated = up, 
+               Downregulated = down))
+  } else {
+    message(paste("Result file for", hist, "not found."))
+  }
+}
+
+# View the summary table
+summary_paired_df
+
+# Save to CSV
+write_csv(summary_paired_df, file.path(results_dir, "DE_summary_counts_paired.csv"))
+```
+
+### Volcano Plots for paired DE Comparisons
+
+```{r}
+for (tumor in all_histologies) {
+  file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_paired_full.csv"))
+  
+  if (file.exists(file_path)) {
+    res_df <- read_csv(file_path)
+    rownames(res_df) <- res_df$miRNA %||% rownames(res_df)
+    p_cut <- max(res_df$pvalue[res_df$padj < 0.05], na.rm = TRUE)
+    comp_label <- paste(tumor, "Paired Analysis")
+    plot <- EnhancedVolcano(res_df,
+                             lab = rownames(res_df),
+                             x = "log2FoldChange",
+                             y = "pvalue",
+                             title = comp_label,
+                             subtitle = NULL,
+                             caption = NULL,
+                             pCutoff = p_cut,
+                             FCcutoff = 2,
+                             pointSize = 3.5,
+                             labSize = 3,
+                             typeConnectors = "closed",
+                             drawConnectors = TRUE,
+                             widthConnectors = 0.75,
+                             colConnectors = 'grey30',
+                             max.overlaps = 10)
+
+    ggsave(file.path(plot_dir, paste0("volcano_", tumor, "_paired.pdf")),
+           plot = plot, width = 8, height = 6)
   }
 }
 ```
