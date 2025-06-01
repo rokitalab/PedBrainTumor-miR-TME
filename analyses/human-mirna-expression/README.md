@@ -45,6 +45,8 @@
 │   ├── DESeq2_HGG_vs_adjNormal_sig.csv
 │   ├── DESeq2_HGG_vs_healthyNormal.csv
 │   ├── DESeq2_HGG_vs_healthyNormal_sig.csv
+│   ├── DESeq2_LGG_vs_healthyNormal.csv
+│   ├── DESeq2_LGG_vs_healthyNormal_sig.csv
 │   ├── DESeq2_Medulloblastoma_vs_adjNormal.csv
 │   ├── DESeq2_Medulloblastoma_vs_adjNormal_sig.csv
 │   ├── DESeq2_Medulloblastoma_vs_healthyNormal.csv
@@ -70,6 +72,7 @@
 │   ├── volcano_Ependymoma_vs_healthyNormal.pdf
 │   ├── volcano_HGG_vs_adjNormal.pdf
 │   ├── volcano_HGG_vs_healthyNormal.pdf
+│   ├── volcano_LGG_vs_healthyNormal.pdf
 │   ├── volcano_Medulloblastoma_vs_adjNormal.pdf
 │   └── volcano_Medulloblastoma_vs_healthyNormal.pdf
 └── run_module.sh
