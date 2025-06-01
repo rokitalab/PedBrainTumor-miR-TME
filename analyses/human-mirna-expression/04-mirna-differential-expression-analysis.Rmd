@@ -26,7 +26,7 @@ library(EnhancedVolcano)
 ```
 
 ```{r}
-install.packages("ashr") # this will be added to Dockerfile later.
+install.packages("ashr") # this will be added to Dockerfile later if needed.
 library(ashr)
 ```
 
@@ -61,11 +61,7 @@ mirna_cts <- read_tsv(mirna_cts_file) %>%
 ```{r annotate-metadata}
 # Fix annotation for specific sample
 metadata_df <- read_delim(file.path(data_dir, "miRNA-sample-metadata.txt")) %>%
-  mutate(
-    sample_type = if_else(sample_id == "7316-7585-left-pons", "Normal-Tumor Adjacent", sample_type),
-    histology = if_else(sample_id == "7316-7585-left-pons", "DIPG", histology)
-  ) %>%
-  mutate(histology = if_else(is.na(histology) | histology == "N/A", "Normal", histology)) %>%
+  mutate(histology = if_else(histology == "N/A", "Normal", histology)) %>%
   filter(sample_id %in% names(mirna_cts)) %>%
   arrange(match(sample_id, names(mirna_cts))) %>%
   mutate(batch = if_else(row_number() <= 5, "batch1", "batch2")) %>%
@@ -119,18 +115,58 @@ for (tumor in histologies) {
 }
 ```
 
+```{r run-de-lgg, message=FALSE, warning=FALSE}
+# Handle LGG separately: only Tumor vs Healthy Normal
+tumor <- "LGG"
+meta_lgg <- metadata_df %>%
+  filter(sample_id %in% c(normal_ids, sample_id[condition == tumor])) %>%
+  filter(condition %in% c(tumor, "Normal"))
+counts_lgg <- mirna_cts[, meta_lgg$sample_id]
+
+design_lgg <- ~ condition
+dds_lgg <- DESeqDataSetFromMatrix(countData = counts_lgg, colData = meta_lgg, design = design_lgg)
+
+dds_lgg$condition <- droplevels(dds_lgg$condition)
+dds_lgg <- DESeq(dds_lgg)
+
+res_lgg <- results(dds_lgg, contrast = c("condition", tumor, "Normal"))
+res_lgg <- lfcShrink(dds_lgg, contrast = c("condition", tumor, "Normal"), res = res_lgg, type = "ashr")
+
+write_csv(as.data.frame(res_lgg) %>% rownames_to_column("miRNA"),
+          file.path(results_dir, paste0("DESeq2_", tumor, "_vs_healthyNormal.csv")))
+```
+
+```{r save-sig-de-res}
+# Save Significant DE Results Separately
+all_histologies <- c("ATRT", "DIPG", "Ependymoma", "HGG", "Medulloblastoma", "LGG")
+
+for (tumor in all_histologies) {
+  comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
+  
+  for (type in comparison_types) {
+    file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
+    if (file.exists(file_path)) {
+      res_df <- read_csv(file_path)
+      sig_df <- res_df %>% filter(!is.na(padj) & padj < 0.05)
+      write_csv(sig_df, file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, "_sig.csv")))
+    }
+  }
+}
+```
+
 ### Summary Table: Number of Up/Down-regulated miRNAs
 
 ```{r summary-table}
 summary_df <- tibble()
 
-for (tumor in histologies) {
-  for (type in c("adjNormal", "healthyNormal")) {
+for (tumor in all_histologies) {
+  comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
+  
+  for (type in comparison_types) {
     file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
     if (file.exists(file_path)) {
-      res_df <- read_csv(file_path)
-      res_df <- res_df %>%filter(!is.na(padj) & padj < 0.05)
-      write_csv(res_df, file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, "_sig.csv"))) # Save Significant DE Results Separately
+      res_df <- read_csv(file_path) %>%
+        filter(!is.na(padj) & padj < 0.05)
       up <- sum(res_df$log2FoldChange > 0)
       down <- sum(res_df$log2FoldChange < 0)
       summary_df <- bind_rows(summary_df, 
@@ -142,9 +178,7 @@ for (tumor in histologies) {
 }
 
 summary_df
-```
 
-```{r}
 # Save to CSV
 write_csv(summary_df, file.path(results_dir, "DE_summary_counts.csv"))
 ```
@@ -152,12 +186,14 @@ write_csv(summary_df, file.path(results_dir, "DE_summary_counts.csv"))
 ### Volcano Plots for DE Comparisons
 
 ```{r volcano-plots, message=FALSE, warning=FALSE}
-for (tumor in histologies) {
-  for (type in c("adjNormal", "healthyNormal")) {
+for (tumor in all_histologies) {
+  comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
+  
+  for (type in comparison_types) {
     file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
     if (file.exists(file_path)) {
       res_df <- read_csv(file_path)
-      rownames(res_df) <- res_df$miRNA %||% rownames(res_df)  # Fallback for rownames if included
+      rownames(res_df) <- res_df$miRNA %||% rownames(res_df)
       p_cut <- max(res_df$pvalue[res_df$padj < 0.05], na.rm = TRUE)
       comp_label <- paste(tumor, "vs", gsub("Normal", "normal", type))
       
