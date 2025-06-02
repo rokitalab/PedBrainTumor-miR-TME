@@ -11,3 +11,6 @@ Rscript -e "rmarkdown::render('02-pca-mirna-batch-comparison.Rmd')"
 
 # Run PCA by histology script
 Rscript -e "rmarkdown::render('03-pca-by-histology.Rmd')"
+
+# Run miRNA DE analysis script
+Rscript -e "rmarkdown::render('04-mirna-differential-expression-analysis.Rmd')"
