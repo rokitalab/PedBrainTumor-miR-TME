@@ -9,6 +9,7 @@
 1. `01-merge-miRNA-counts.Rmd`: merges two batches of miRNA expression count data, standardizes novel miRNA IDs using mature and precurosr sequence information, and saves the merged output for downstream analysis.
 2. `02-pca-mirna-batch-comparison.Rmd`: compares PCA plots of miRNA expression data before and after batch correction.
 3. `03-pca-by-histology.Rmd`: generates PCA plots of miRNA expression data to evaluate batch effects and biological variation across samples.
+4. `04-mirna-differential-expression-analysis.Rmd`: performs differential expression analysis of miRNA-seq data using DESeq2.
 
 ## Analysis module directory structure
 
@@ -20,11 +21,36 @@
 ├── 02-pca-mirna-batch-comparison.html
 ├── 03-pca-by-histology.Rmd
 ├── 03-pca-by-histology.html
+├── 04-mirna-differential-expression-analysis.Rmd
+├── 04-mirna-differential-expression-analysis.html
 ├── README.md
 ├── results
 │   ├── 30-931106737-all_novel_miRNA_merged_id.tsv
 │   ├── 30-1075661268-all_novel_miRNA_merged_id.tsv
-│   └── merged-miRNA-expression.tsv
+│   ├── merged-miRNA-expression.tsv
+│   ├── DE_summary_counts.csv
+│   ├── DESeq2_ATRT_vs_adjNormal.csv
+│   ├── DESeq2_ATRT_vs_adjNormal_sig.csv
+│   ├── DESeq2_ATRT_vs_healthyNormal.csv
+│   ├── DESeq2_ATRT_vs_healthyNormal_sig.csv
+│   ├── DESeq2_DIPG_vs_adjNormal.csv
+│   ├── DESeq2_DIPG_vs_adjNormal_sig.csv
+│   ├── DESeq2_DIPG_vs_healthyNormal.csv
+│   ├── DESeq2_DIPG_vs_healthyNormal_sig.csv
+│   ├── DESeq2_Ependymoma_vs_adjNormal.csv
+│   ├── DESeq2_Ependymoma_vs_adjNormal_sig.csv
+│   ├── DESeq2_Ependymoma_vs_healthyNormal.csv
+│   ├── DESeq2_Ependymoma_vs_healthyNormal_sig.csv
+│   ├── DESeq2_HGG_vs_adjNormal.csv
+│   ├── DESeq2_HGG_vs_adjNormal_sig.csv
+│   ├── DESeq2_HGG_vs_healthyNormal.csv
+│   ├── DESeq2_HGG_vs_healthyNormal_sig.csv
+│   ├── DESeq2_LGG_vs_healthyNormal.csv
+│   ├── DESeq2_LGG_vs_healthyNormal_sig.csv
+│   ├── DESeq2_Medulloblastoma_vs_adjNormal.csv
+│   ├── DESeq2_Medulloblastoma_vs_adjNormal_sig.csv
+│   ├── DESeq2_Medulloblastoma_vs_healthyNormal.csv
+│   └── DESeq2_Medulloblastoma_vs_healthyNormal_sig.csv
 ├── plots
 │   ├── mirna-pca-uncorrected.pdf
 │   ├── mirna-pca-uncorrected_filtered_n50.pdf
@@ -39,6 +65,17 @@
 │   ├── pca_Ependymoma_vs_controls.pdf
 │   ├── pca_HGG_vs_controls.pdf
 │   ├── pca_LGG_vs_controls.pdf
-│   └── pca_Medulloblastoma_vs_controls.pdf
+│   ├── pca_Medulloblastoma_vs_controls.pdf
+│   ├── volcano_ATRT_vs_adjNormal.pdf
+│   ├── volcano_ATRT_vs_healthyNormal.pdf
+│   ├── volcano_DIPG_vs_adjNormal.pdf
+│   ├── volcano_DIPG_vs_healthyNormal.pdf
+│   ├── volcano_Ependymoma_vs_adjNormal.pdf
+│   ├── volcano_Ependymoma_vs_healthyNormal.pdf
+│   ├── volcano_HGG_vs_adjNormal.pdf
+│   ├── volcano_HGG_vs_healthyNormal.pdf
+│   ├── volcano_LGG_vs_healthyNormal.pdf
+│   ├── volcano_Medulloblastoma_vs_adjNormal.pdf
+│   └── volcano_Medulloblastoma_vs_healthyNormal.pdf
 └── run_module.sh
 ```
