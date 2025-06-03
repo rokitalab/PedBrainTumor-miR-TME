@@ -1,0 +1,234 @@
+---
+title: "UMAP of miRNA-seq Samples"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "2025-06-03"
+---
+  
+```{r load-packages, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(tidyverse)
+library(readr)
+library(umap)
+library(ggplot2)
+library(ggrepel)
+library(rprojroot)
+```
+
+### Set Directories
+
+```{r setup-paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+### Load Data
+
+```{r load-data}
+mirna_cts_file <- file.path(results_dir, "merged-miRNA-expression.tsv")
+metadata_file <- file.path(data_dir, "miRNA-sample-metadata.txt")
+
+# Load and filter miRNA counts
+mirna_cts <- read_tsv(mirna_cts_file) %>%
+  column_to_rownames("miRNA") %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+```
+
+### Load sample metadata df
+
+```{r annotate-metadata}
+metadata_df <- read_delim(file.path(data_dir, "miRNA-sample-metadata.txt")) %>%
+  mutate(histology = if_else(histology == "N/A", "Normal", histology)) %>%
+  mutate(patient_id = str_remove(sample_id, "-[TN]$")) %>%
+  filter(sample_id %in% names(mirna_cts)) %>%
+  arrange(match(sample_id, names(mirna_cts))) %>%
+  mutate(batch = if_else(row_number() <= 5, "batch1", "batch2")) %>%
+  mutate(condition = case_when(
+    sample_type %in% c("Tumor", "Normal") ~ histology,
+    sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
+    TRUE ~ NA_character_
+  )) %>%
+  mutate(combined_adjacent = case_when(
+    sample_type %in% c("Tumor", "Normal") ~ histology,
+    sample_type == "Normal-Tumor Adjacent" ~ "Normal-Tumor Adjacent",
+    TRUE ~ NA_character_
+  ))
+
+stopifnot(identical(metadata_df$sample_id, colnames(mirna_cts)))
+```
+
+### DESeq2 Object and VST Transformation
+
+```{r deseq2-vst}
+# Create DESeq2 object
+dds <- DESeqDataSetFromMatrix(countData = mirna_cts,
+                              colData = metadata_df,
+                              design = ~ batch + combined_adjacent)
+
+# VST transformation
+vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
+```
+
+
+### Run UMAP
+
+```{r run-umap}
+set.seed(42)
+
+# Default UMAP config
+umap_config <- umap.defaults
+umap_config$n_neighbors <- 15
+umap_config$min_dist <- 0.3
+
+# UMAP
+umap_result <- umap(t(assay(vsd)), config = umap_config)
+
+umap_df <- as.data.frame(umap_result$layout)
+colnames(umap_df) <- c("UMAP1", "UMAP2")
+umap_df$sample_id <- rownames(umap_df)
+
+# Join with metadata
+umap_df <- left_join(umap_df, metadata_df, by = "sample_id")
+```
+
+### UMAP Plot
+
+```{r define-color-shape}
+color_map <- c(
+  "DIPG" = "#1f77b4",
+  "ATRT" = "#ff7f0e",
+  "HGG" = "#2ca02c",
+  "Medulloblastoma" = "#d62728",
+  "Ependymoma" = "#9467bd",
+  "LGG" = "#8c564b",
+  "Normal-Tumor Adjacent" = "gray50",
+  "Normal" = "black"
+)
+
+shape_map <- c(
+  "DIPG" = 16, "ATRT" = 16, "HGG" = 16, "Medulloblastoma" = 16, "Ependymoma" = 16, "LGG" = 16,
+  "Normal-Tumor Adjacent" = 17,
+  "Normal" = 18
+)
+```
+
+```{r plot-umap1}
+p_umap <- ggplot(umap_df, aes(UMAP1, UMAP2, color = combined_adjacent, shape = combined_adjacent)) +
+  geom_point(size = 3) +
+  #geom_text_repel(aes(label = external_sample_id), size = 2.5, max.overlaps = 50) +
+  scale_color_manual(values = color_map) +
+  scale_shape_manual(values = shape_map) +
+  labs(title = "UMAP",
+       x = "UMAP1",
+       y = "UMAP2") +
+  theme_Publication()
+
+print(p_umap)
+
+ggsave(file.path(plot_dir, "rna_seq_umap.pdf"), plot = p_umap, width = 10, height = 6)
+```
+
+```{r plot-umap2}
+p_umap <- ggplot(umap_df, aes(UMAP1, UMAP2, color = sample_type, shape = batch)) +
+  geom_point(size = 3) +
+  #geom_text_repel(aes(label = external_sample_id), size = 2.5, max.overlaps = 50) +
+  #scale_color_manual(values = color_map) +
+  #scale_shape_manual(values = shape_map) +
+  labs(title = "UMAP",
+       x = "UMAP1",
+       y = "UMAP2") +
+  theme_Publication()
+
+print(p_umap)
+
+ggsave(file.path(plot_dir, "rna_seq_umap_sample_type.pdf"), plot = p_umap, width = 10, height = 6)
+```
+
+
+### Run more stringent filtering of miRNA counts, retaining only those with non-zero counts in >50 samples
+
+```{r}
+mirna_cts_n50 <- read_tsv(mirna_cts_file) %>%
+  column_to_rownames("miRNA") %>%
+  filter(rowSums(across(everything(), ~ . != 0)) > 50)
+```
+
+```{r deseq2-vst-n50}
+# Create DESeq2 object
+dds_filtered <- DESeqDataSetFromMatrix(countData = mirna_cts_n50,
+                              colData = metadata_df,
+                              design = ~ batch + combined_adjacent)
+
+# VST transformation
+vsd_filtered <- varianceStabilizingTransformation(dds_filtered, blind = FALSE)
+```
+
+### Run UMAP
+
+```{r run-umap1-n50}
+set.seed(42)
+
+# Default UMAP config
+umap_config <- umap.defaults
+umap_config$n_neighbors <- 15
+umap_config$min_dist <- 0.3
+
+# UMAP
+umap_result_filtered <- umap(t(assay(vsd_filtered)), config = umap_config)
+
+umap_df_filtered <- as.data.frame(umap_result_filtered$layout)
+colnames(umap_df_filtered) <- c("UMAP1", "UMAP2")
+umap_df_filtered$sample_id <- rownames(umap_df_filtered)
+
+# Join with metadata
+umap_df_filtered <- left_join(umap_df_filtered, metadata_df, by = "sample_id")
+```
+
+### UMAP Plot
+
+```{r plot-umap2-n50}
+p_umap <- ggplot(umap_df_filtered, aes(UMAP1, UMAP2, color = combined_adjacent, shape = combined_adjacent)) +
+  geom_point(size = 3) +
+  #geom_text_repel(aes(label = external_sample_id), size = 2.5, max.overlaps = 50) +
+  scale_color_manual(values = color_map) +
+  scale_shape_manual(values = shape_map) +
+  labs(title = "UMAP",
+       x = "UMAP1",
+       y = "UMAP2") +
+  theme_Publication()
+
+print(p_umap)
+
+ggsave(file.path(plot_dir, "rna_seq_umap_filtered.pdf"), plot = p_umap, width = 10, height = 6)
+```
+
+```{r plot-umap-n50}
+p_umap <- ggplot(umap_df_filtered, aes(UMAP1, UMAP2, color = sample_type, shape = batch)) +
+  geom_point(size = 3) +
+  #geom_text_repel(aes(label = external_sample_id), size = 2.5, max.overlaps = 50) +
+  #scale_color_manual(values = color_map) +
+  #scale_shape_manual(values = shape_map) +
+  labs(title = "UMAP",
+       x = "UMAP1",
+       y = "UMAP2") +
+  theme_Publication()
+
+print(p_umap)
+
+ggsave(file.path(plot_dir, "rna_seq_umap_filtered_sample_type.pdf"), plot = p_umap, width = 10, height = 6)
+```
+
+### Session Info
+
+```{r}
+sessionInfo()
+```
+
