@@ -14,6 +14,8 @@
 .
 ├── rna_seq_pca.Rmd
 ├── rna_seq_pca.html
+├── rna_seq_umap.Rmd
+├── rna_seq_umap.html
 ├── README.md
 ├── plots
 │   ├── rna_seq_pca.pdf
@@ -21,6 +23,7 @@
 │   ├── pca_DIPG_vs_controls.pdf
 │   ├── pca_Ependymoma_vs_controls.pdf
 │   ├── pca_HGG_vs_controls.pdf
-│   └── pca_Medulloblastoma_vs_controls.pdf
+│   ├── pca_Medulloblastoma_vs_controls.pdf
+│   └── rna_seq_umap.pdf
 └── run_module.sh
 ```

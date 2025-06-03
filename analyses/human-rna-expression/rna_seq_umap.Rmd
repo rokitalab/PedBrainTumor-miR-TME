@@ -1,0 +1,156 @@
+---
+title: "UMAP visualization of RNA expression across brain tumor histologies"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "2025-06-02"
+---
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(tidyverse)
+library(readr)
+library(umap)
+library(ggplot2)
+library(ggrepel)
+library(rprojroot)
+```
+
+### Set Directories
+
+```{r setup-paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+### Load Data
+
+```{r load-data}
+rnaseq_file <- file.path(data_dir, "gene-counts-rsem-expected_count-collapsed.all.rds")
+metadata_file <- file.path(data_dir, "miRNA-sample-metadata.txt")
+
+# Load RNA-seq counts
+rnaseq_counts <- readRDS(rnaseq_file) %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+
+# Round expected counts to nearest integer
+rnaseq_counts <- round(rnaseq_counts)
+
+# Load histology file
+histology_df <- read_csv(file.path(root_dir, "analyses", "histology-preprocessing", "results", "histologies.csv")) %>%
+  filter(experimental_strategy == "RNA-Seq") %>%
+  mutate(batch = if_else(external_sample_id %in% c(
+    "2-1578-CC1", "3-1890-CC1", "5-1234-left-pons"),
+    "batch1", "batch2")) %>%
+  mutate(histology = if_else(is.na(histology), "Normal", histology)) %>%
+  filter(Bioassay_ID %in% colnames(rnaseq_counts)) %>%
+  arrange(match(Bioassay_ID, colnames(rnaseq_counts))) %>%
+  mutate(condition = case_when(
+    sample_type %in% c("Tumor", "Normal") ~ histology,
+    sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
+    TRUE ~ NA_character_
+  ))
+
+stopifnot(identical(histology_df$Bioassay_ID, colnames(rnaseq_counts)))
+```
+
+### DESeq2 Object and VST Transformation
+
+```{r deseq2-vst}
+# Create DESeq2 object
+dds <- DESeqDataSetFromMatrix(countData = rnaseq_counts,
+                              colData = histology_df,
+                              design = ~ condition)
+
+# VST transformation
+dds <- estimateSizeFactors(dds)
+vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
+
+vst_mat <- assay(vsd)
+```
+
+### Run UMAP
+
+```{r run-umap}
+set.seed(42)
+
+# Default UMAP config
+umap_config <- umap.defaults
+umap_config$n_neighbors <- 15
+umap_config$min_dist <- 0.3
+
+# UMAP
+umap_result <- umap(t(vst_mat), config = umap_config)
+
+umap_df <- as.data.frame(umap_result$layout)
+colnames(umap_df) <- c("UMAP1", "UMAP2")
+umap_df$Bioassay_ID <- rownames(umap_df)
+
+# Join with metadata
+umap_df <- left_join(umap_df, histology_df, by = "Bioassay_ID")
+```
+
+### UMAP Plot
+
+```{r plot-umap}
+p_umap <- ggplot(umap_df, aes(UMAP1, UMAP2, color = condition, shape = sample_type)) +
+  geom_point(size = 3) +
+  #geom_text_repel(aes(label = external_sample_id), size = 2.5, max.overlaps = 50) +
+  labs(title = "UMAP",
+       x = "UMAP1",
+       y = "UMAP2") +
+  theme_Publication()
+
+print(p_umap)
+
+ggsave(file.path(plot_dir, "rna_seq_umap.pdf"), plot = p_umap, width = 10, height = 6)
+```
+
+```{r}
+# Define color and shape mappings
+color_map <- c(
+  "Normal" = "black",
+  "DIPG" = "blue", "DIPG-adjacent Normal" = "blue",
+  "ATRT" = "red", "ATRT-adjacent Normal" = "red",
+  "HGG" = "green", "HGG-adjacent Normal" = "green",
+  "Medulloblastoma" = "purple", "Medulloblastoma-adjacent Normal" = "purple",
+  "Ependymoma" = "orange", "Ependymoma-adjacent Normal" = "orange",
+  "LGG" = "cyan"
+)
+
+shape_map <- c(
+  "Normal" = 16,  # circle
+  "DIPG" = 15, "DIPG-adjacent Normal" = 17,
+  "ATRT" = 15, "ATRT-adjacent Normal" = 17,
+  "HGG" = 15, "HGG-adjacent Normal" = 17,
+  "Medulloblastoma" = 15, "Medulloblastoma-adjacent Normal" = 17,
+  "Ependymoma" = 15, "Ependymoma-adjacent Normal" = 17,
+  "LGG" = 15
+)
+
+# UMAP Plot Code
+p <- ggplot(umap_df, aes(UMAP1, UMAP2, color = condition, shape = condition)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = color_map) +
+  scale_shape_manual(values = shape_map) +
+  geom_text_repel(aes(label = external_sample_id), size = 3, max.overlaps = 20) +
+  theme_Publication()
+
+print(p)
+```
+
+
+
+### Session Info
+
+```{r}
+sessionInfo()
+```
+
