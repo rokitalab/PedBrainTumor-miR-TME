@@ -113,41 +113,6 @@ print(p_umap)
 ggsave(file.path(plot_dir, "rna_seq_umap.pdf"), plot = p_umap, width = 10, height = 6)
 ```
 
-```{r}
-# Define color and shape mappings
-color_map <- c(
-  "Normal" = "black",
-  "DIPG" = "blue", "DIPG-adjacent Normal" = "blue",
-  "ATRT" = "red", "ATRT-adjacent Normal" = "red",
-  "HGG" = "green", "HGG-adjacent Normal" = "green",
-  "Medulloblastoma" = "purple", "Medulloblastoma-adjacent Normal" = "purple",
-  "Ependymoma" = "orange", "Ependymoma-adjacent Normal" = "orange",
-  "LGG" = "cyan"
-)
-
-shape_map <- c(
-  "Normal" = 16,  # circle
-  "DIPG" = 15, "DIPG-adjacent Normal" = 17,
-  "ATRT" = 15, "ATRT-adjacent Normal" = 17,
-  "HGG" = 15, "HGG-adjacent Normal" = 17,
-  "Medulloblastoma" = 15, "Medulloblastoma-adjacent Normal" = 17,
-  "Ependymoma" = 15, "Ependymoma-adjacent Normal" = 17,
-  "LGG" = 15
-)
-
-# UMAP Plot Code
-p <- ggplot(umap_df, aes(UMAP1, UMAP2, color = condition, shape = condition)) +
-  geom_point(size = 3) +
-  scale_color_manual(values = color_map) +
-  scale_shape_manual(values = shape_map) +
-  geom_text_repel(aes(label = external_sample_id), size = 3, max.overlaps = 20) +
-  theme_Publication()
-
-print(p)
-```
-
-
-
 ### Session Info
 
 ```{r}
