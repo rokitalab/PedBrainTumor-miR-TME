@@ -133,7 +133,7 @@ p_umap <- ggplot(umap_df, aes(UMAP1, UMAP2, color = combined_adjacent, shape = c
 
 print(p_umap)
 
-ggsave(file.path(plot_dir, "rna_seq_umap.pdf"), plot = p_umap, width = 10, height = 6)
+ggsave(file.path(plot_dir, "mirna_umap.pdf"), plot = p_umap, width = 10, height = 6)
 ```
 
 ```{r plot-umap2}
@@ -149,7 +149,7 @@ p_umap <- ggplot(umap_df, aes(UMAP1, UMAP2, color = sample_type, shape = batch))
 
 print(p_umap)
 
-ggsave(file.path(plot_dir, "rna_seq_umap_sample_type.pdf"), plot = p_umap, width = 10, height = 6)
+ggsave(file.path(plot_dir, "mirna_umap_sample_type.pdf"), plot = p_umap, width = 10, height = 6)
 ```
 
 
@@ -207,7 +207,7 @@ p_umap <- ggplot(umap_df_filtered, aes(UMAP1, UMAP2, color = combined_adjacent, 
 
 print(p_umap)
 
-ggsave(file.path(plot_dir, "rna_seq_umap_filtered.pdf"), plot = p_umap, width = 10, height = 6)
+ggsave(file.path(plot_dir, "mirna_umap_filtered.pdf"), plot = p_umap, width = 10, height = 6)
 ```
 
 ```{r plot-umap-n50}
@@ -223,7 +223,7 @@ p_umap <- ggplot(umap_df_filtered, aes(UMAP1, UMAP2, color = sample_type, shape 
 
 print(p_umap)
 
-ggsave(file.path(plot_dir, "rna_seq_umap_filtered_sample_type.pdf"), plot = p_umap, width = 10, height = 6)
+ggsave(file.path(plot_dir, "mirna_umap_filtered_sample_type.pdf"), plot = p_umap, width = 10, height = 6)
 ```
 
 ### Session Info

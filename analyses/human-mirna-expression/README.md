@@ -10,6 +10,7 @@
 2. `02-pca-mirna-batch-comparison.Rmd`: compares PCA plots of miRNA expression data before and after batch correction.
 3. `03-pca-by-histology.Rmd`: generates PCA plots of miRNA expression data to evaluate batch effects and biological variation across samples.
 4. `04-mirna-differential-expression-analysis.Rmd`: performs differential expression analysis of miRNA-seq data using DESeq2.
+5. `05-umap-mirna.Rmd`: investigates whether miRNA-seq samples show batch effects or biological clustering based on histology and sample type. The goal is to visualize global expression patterns using UMAP.
 
 ## Analysis module directory structure
 
@@ -23,6 +24,8 @@
 ├── 03-pca-by-histology.html
 ├── 04-mirna-differential-expression-analysis.Rmd
 ├── 04-mirna-differential-expression-analysis.html
+├── 05-umap-mirna.Rmd
+├── 05-umap-mirna.html
 ├── README.md
 ├── results
 │   ├── 30-931106737-all_novel_miRNA_merged_id.tsv
@@ -60,6 +63,11 @@
 │   ├── mirna-pca-tumor-only-corrected-PC2-PC3.pdf
 │   ├── mirna-pca-tumor-only-corrected-PC3-PC4.pdf
 │   ├── mirna-pca-tumor-only-corrected-combat.pdf
+│   ├── mirna-pca-tumor-only-corrected-combat.pdf
+│   ├── mirna_umap.pdf
+│   ├── mirna_umap_sample_type.pdf
+│   ├── mirna_umap_filtered.pdf
+│   ├── mirna_umap_filtered_sample_type.pdf
 │   ├── pca_ATRT_vs_controls.pdf
 │   ├── pca_DIPG_vs_controls.pdf
 │   ├── pca_Ependymoma_vs_controls.pdf
