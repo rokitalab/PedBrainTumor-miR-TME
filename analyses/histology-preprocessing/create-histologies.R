@@ -16,6 +16,15 @@ analysis_dir <- file.path(root_dir, "analyses", "histology-preprocessing")
 input_dir <- file.path(analysis_dir, "input")
 results_dir <- file.path(analysis_dir, "results")
 
+# read in OPC v15 histologies file and obtain relevant information
+opc_hist <- read_tsv(file.path(input_dir,
+                 "histologies.tsv")) %>%
+  filter(!is.na(pathology_diagnosis),
+         composition == "Solid Tissue",
+         cohort == "PBTA") %>%
+  select(sample_id, sample_type, pathology_diagnosis, cancer_group, molecular_subtype) %>%
+  unique()
+
 # Read and adjust sample_metadata
 sample_metadata <- read_delim(
   file.path(data_dir, "miRNA-sample-metadata.txt"),
@@ -108,12 +117,14 @@ merged_hist <- merged_manifest %>%
     histology,
     primary_site,
     everything()
-  )
+  ) %>%
+  left_join(opc_hist, by = c("sample_id", "sample_type"))
+  
 
-# Write out the final CSV
-write_csv(
+# Write out the final TSV
+write_tsv(
   merged_hist,
-  file.path(results_dir, "histologies.csv")
+  file.path(results_dir, "histologies.tsv")
 )
 
 
