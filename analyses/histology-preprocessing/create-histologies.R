@@ -25,6 +25,36 @@ opc_hist <- read_tsv(file.path(input_dir,
   select(sample_id, sample_type, pathology_diagnosis, cancer_group, molecular_subtype) %>%
   unique()
 
+# add cancer group and mol subtype based on redcap entries for those missing from OPC
+redcap_dx <- read_tsv(file.path(input_dir,
+                                "redcap_dx.tsv")) %>%
+  dplyr::mutate(pathology_diagnosis = case_when(grepl("DIPG|Diffuse Midline Glioma|Diffuse midline", RedCap) ~ "Brainstem glioma- Diffuse intrinsic pontine glioma",
+                                                RedCap %in% c("High Grade Glioma",
+                                                                   "High-Grade Glioma, Diffuse pediatric-type high-grade glioma, H3-wildtype and IDH-wildtype",
+                                                                   "High Grade Glioma- WHO grade IV Glioblastoma") ~ "High-grade glioma/astrocytoma (WHO grade III/IV)",
+                                                grepl("Medullo", RedCap) ~ "Medulloblastoma",
+                                                grepl("Atypical Teratoid", RedCap) ~ "Atypical Teratoid Rhabdoid Tumor (ATRT)",
+                                                TRUE ~ NA_character_),
+                  cancer_group = case_when(RedCap %in% c("DIPG", "Diffuse Midline Glioma, H3 K27M altered",
+                                                       "High-Grade Glioma, Diffuse midline glioma, H3 K27-altered") ~ "Diffuse midline glioma",
+                                         RedCap %in% c("High Grade Glioma",
+                                                       "High-Grade Glioma, Diffuse pediatric-type high-grade glioma, H3-wildtype and IDH-wildtype",
+                                                       "High Grade Glioma- WHO grade IV Glioblastoma") ~ "High-grade glioma",
+                                         grepl("Medullo", RedCap) ~ "Medulloblastoma",
+                                         grepl("Atypical Teratoid", RedCap) ~ "Atypical Teratoid Rhabdoid Tumor",
+                                         TRUE ~ NA_character_),
+                molecular_subtype = case_when(RedCap == "Atypical Teratoid Rhabdoid Tumor (ATRT) subclass TYR CNS WHO grade IV" ~ "ATRT, TYR",
+                                              RedCap == "Medulloblastoma, SHH-activated and TP53-mutant" ~ "MB, SHH",
+                                              RedCap %in% c("High-Grade Glioma, Diffuse midline glioma, H3 K27-altered", "Diffuse Midline Glioma, H3 K27M altered") ~
+                                                            "DMG, H3 K28",
+                                                            TRUE ~ NA_character_),
+                sample_type = "Tumor") %>%
+  
+  select(-RedCap)
+
+opc_redcap <- redcap_dx %>%
+  bind_rows(opc_hist)
+
 # Read and adjust sample_metadata
 sample_metadata <- read_delim(
   file.path(data_dir, "miRNA-sample-metadata.txt"),
@@ -118,8 +148,19 @@ merged_hist <- merged_manifest %>%
     primary_site,
     everything()
   ) %>%
-  left_join(opc_hist, by = c("sample_id", "sample_type"))
-  
+  left_join(opc_redcap, by = c("sample_id", "sample_type")) %>%
+  #manually add the remaining samples
+  dplyr::mutate(pathology_diagnosis = case_when(Bioassay_ID %in% c("BA_JCM7AADD", "BA_ZYTANGCY", "BA_BXKJBWBQ") ~ "Brainstem glioma- Diffuse intrinsic pontine glioma",
+                                                Bioassay_ID == "BA_0GVSQNSM" ~ "Low-grade glioma/astrocytoma (WHO grade I/II)",
+                                                Bioassay_ID %in% c("BA_ZTM72GEM", "BA_XH5N4N4T", "BA_Z1WV5RXA", "BA_1GRDW9G2", "BA_V2F01E3Z") ~ "Medulloblastoma",
+                TRUE ~ pathology_diagnosis),
+                # create short_histology column based on now having GNTs
+                short_histology = case_when(pathology_diagnosis == "Glial-neuronal tumor NOS" ~ "GNT",
+                                      histology == "Medulloblastoma" ~ "MB",
+                                      histology == "Ependymoma" ~ "EPN",
+                                      histology == "DIPG" ~ "DIPG or DMG",
+                                      TRUE ~ histology)
+  )
 
 # Write out the final TSV
 write_tsv(
