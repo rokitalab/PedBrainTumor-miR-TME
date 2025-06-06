@@ -7,10 +7,10 @@ BA_W10E61WF	RNA-Seq	7316-7545	PID1235	1235-T	Tumor	HGG	Right Parietal	High-grade
 BA_FDFHPQR8	RNA-Seq	7316-8051	PID1271	1271-T	Tumor	LGG	NA	Low-grade glioma/astrocytoma (WHO grade I/II)	Low-grade glioma	LGG, NF1-somatic, FGFR	LGG
 BA_ARF9SP9M	RNA-Seq	7316-3411	PID1309	1309-T	Tumor	ATRT	NA	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	ATRT, To be classified	ATRT
 BA_C86A8VKR	RNA-Seq	7316-7451	PID1320	1320-T	Tumor	Ependymoma	NA	Ependymoma	Ependymoma	EPN, ST ZFTA	EPN
-BA_0GVSQNSM	RNA-Seq	7316-9624	PID1341	1341-T	Tumor	LGG	NA	Low-grade glioma/astrocytoma (WHO grade I/II)	NA	NA	LGG
+BA_0GVSQNSM	RNA-Seq	7316-9624	PID1341	1341-T	Tumor	LGG	NA	Low-grade glioma/astrocytoma (WHO grade I/II)	Low-grade glioma	NA	LGG
 BA_4Z6DJ8NJ	RNA-Seq	7316-7667	PID1401	1401-N	Normal-Tumor Adjacent	HGG	Left Frontal	NA	NA	NA	HGG
 BA_4MDHGBWM	RNA-Seq	7316-7667	PID1401	1401-T	Tumor	HGG	Right Cerebellum	Glial-neuronal tumor NOS	Glial-neuronal tumor NOS	GNT, RTK, CDKN2A/B	GNT
-BA_ZTM72GEM	RNA-Seq	NA	PID1516	1516-T	Tumor	Medulloblastoma	NA	Medulloblastoma	NA	NA	MB
+BA_ZTM72GEM	RNA-Seq	NA	PID1516	1516-T	Tumor	Medulloblastoma	NA	Medulloblastoma	Medulloblastoma	NA	MB
 BA_816NMSR6	RNA-Seq	7316-7665	PID1656	1656-T	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
 BA_5YFHXD06	RNA-Seq	7316-7678	PID1680	1680-N	Normal-Tumor Adjacent	Ependymoma	Frontal	NA	NA	NA	EPN
 BA_ZQ2T1V1P	RNA-Seq	7316-7678	PID1680	1680-T	Tumor	Ependymoma	Cerebellum	Ependymoma	Ependymoma	EPN, PF A	EPN
@@ -26,23 +26,23 @@ BA_QYAJCS1M	RNA-Seq	7316-9068	PID1853	1853-T	Tumor	DIPG	Left Occipital	Brainstem
 BA_N1BQJJ6M	RNA-Seq	7316-10411	PID1854	1854-N	Normal-Tumor Adjacent	HGG	Right Frontal	NA	NA	NA	HGG
 BA_65ST8EFH	RNA-Seq	7316-10411	PID1854	1854-T	Tumor	HGG	Left Occipital	High-grade glioma/astrocytoma (WHO grade III/IV)	High-grade glioma	NA	HGG
 BA_NJZJG5XV	RNA-Seq	7316-10409	PID1855	1855-N	Normal-Tumor Adjacent	DIPG	Right Frontal	NA	NA	NA	DIPG or DMG
-BA_7W3F2E6M	RNA-Seq	7316-10409	PID1855	1855-T	Tumor	DIPG	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	NA	DIPG or DMG
+BA_7W3F2E6M	RNA-Seq	7316-10409	PID1855	1855-T	Tumor	DIPG	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_JQQPTVAG	RNA-Seq	7316-9075	PID1886	1886-N	Normal-Tumor Adjacent	Medulloblastoma	Left Frontal	NA	NA	NA	MB
 BA_HSW4NDQ3	RNA-Seq	7316-9075	PID1886	1886-T	Tumor	Medulloblastoma	Left Cerebellum	Medulloblastoma	Medulloblastoma	MB, SHH	MB
 BA_V79W2TP0	RNA-Seq	7316-11309	PID2016	2016-T	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
 BA_KFWTGZPC	RNA-Seq	7316-11300	PID2052	2052-N	Normal-Tumor Adjacent	Medulloblastoma	Right Pons	NA	NA	NA	MB
 BA_XW17CNW9	RNA-Seq	7316-11300	PID2052	2052-T	Tumor	Medulloblastoma	Left Cerebellum	Medulloblastoma	Medulloblastoma	MB, SHH	MB
 BA_CKB010PD	RNA-Seq	7316-10415	PID2058	2058-N	Normal-Tumor Adjacent	DIPG	Left Frontal	NA	NA	NA	DIPG or DMG
-BA_0VGNXB1P	RNA-Seq	7316-10415	PID2058	2058-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	NA	DIPG or DMG
+BA_0VGNXB1P	RNA-Seq	7316-10415	PID2058	2058-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_3X3A0CX1	RNA-Seq	7316-11297	PID2187	2187-T	Tumor	ATRT	NA	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	NA	ATRT
 BA_RV9RT71G	RNA-Seq	7316-11670	PID2229	2229-N	Normal-Tumor Adjacent	ATRT	Right Frontal	NA	NA	NA	ATRT
 BA_Q0H8WD5T	RNA-Seq	7316-11670	PID2229	2229-T	Tumor	ATRT	Right Cerebellum	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	ATRT, TYR	ATRT
 BA_BJBS777G	RNA-Seq	7316-11671	PID2232	2232-N	Normal-Tumor Adjacent	DIPG	Left Occipital	NA	NA	NA	DIPG or DMG
 BA_Q3YTW9JT	RNA-Seq	7316-11671	PID2232	2232-T	Tumor	DIPG	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
 BA_FPP5ER5Q	RNA-Seq	7316-11673	PID2237	2237-N	Normal-Tumor Adjacent	Medulloblastoma	Right Occipital	NA	NA	NA	MB
-BA_Z1WV5RXA	RNA-Seq	7316-11673	PID2237	2237-T	Tumor	Medulloblastoma	Right Cerebellum	Medulloblastoma	NA	NA	MB
+BA_Z1WV5RXA	RNA-Seq	7316-11673	PID2237	2237-T	Tumor	Medulloblastoma	Right Cerebellum	Medulloblastoma	Medulloblastoma	NA	MB
 BA_F3C4R1QS	RNA-Seq	7316-11315	PID2248	2248-N	Normal-Tumor Adjacent	DIPG	Right Occipital	NA	NA	NA	DIPG or DMG
-BA_JCM7AADD	RNA-Seq	7316-11315	PID2248	2248-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	NA	NA	DIPG or DMG
+BA_JCM7AADD	RNA-Seq	7316-11315	PID2248	2248-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_KK43JS84	RNA-Seq	7316-11314	PID759	759-N	Normal-Tumor Adjacent	Medulloblastoma	Left Temporal	NA	NA	NA	MB
 BA_1B6PWXTM	RNA-Seq	7316-11314	PID759	759-T	Tumor	Medulloblastoma	Left Cerebellum	Medulloblastoma	Medulloblastoma	NA	MB
 BA_S561B8VT	RNA-Seq	7316-7442	PID981	981-N	Normal-Tumor Adjacent	Ependymoma	Right Frontal	NA	NA	NA	EPN
@@ -52,20 +52,20 @@ BA_5N9T9WPV	RNA-Seq	NA	PID2	B2	Normal	NA	Left Occipital	NA	NA	NA	NA
 BA_NKA2CT35	RNA-Seq	NA	PID3	B3	Normal	NA	Right Frontal Lobe	NA	NA	NA	NA
 BA_8QWGZKKE	RNA-Seq	NA	PID4	B4	Normal	NA	Left Parietal	NA	NA	NA	NA
 BA_JJ1S3PQQ	RNA-Seq	NA	PID5	B5	Normal	NA	Right Frontal Lobe	NA	NA	NA	NA
-BA_NXY3NWEF	miRNA-Seq	7316-10409	PID1855	1-1855-CC1	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	NA	DIPG or DMG
+BA_NXY3NWEF	miRNA-Seq	7316-10409	PID1855	1-1855-CC1	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_YCDR8P1A	miRNA-Seq	7316-8049	PID1578	2-1578-CC1	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
 BA_VRYYKC8W	miRNA-Seq	7316-9623	PID1890	3-1890-CC1	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28, TP53	DIPG or DMG
-BA_ZYTANGCY	miRNA-Seq	7316-9631	PID1958	4-1958-CC1	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	NA	NA	DIPG or DMG
+BA_ZYTANGCY	miRNA-Seq	7316-9631	PID1958	4-1958-CC1	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_2A6QQMDR	miRNA-Seq	7316-7585	PID1234	5-1234-left-pons	Normal-Tumor Adjacent	DIPG	pons	NA	NA	NA	DIPG or DMG
 BA_2T5TCXNV	miRNA-Seq	7316-7545	PID1235	1235-N	Normal-Tumor Adjacent	HGG	Right Cerebellum	NA	NA	NA	HGG
 BA_54JZ0FBN	miRNA-Seq	7316-7545	PID1235	1235-T	Tumor	HGG	Right Parietal	High-grade glioma/astrocytoma (WHO grade III/IV)	High-grade glioma	HGG, H3 wildtype	HGG
 BA_BAR4FW10	miRNA-Seq	7316-8051	PID1271	1271-T	Tumor	LGG	NA	Low-grade glioma/astrocytoma (WHO grade I/II)	Low-grade glioma	LGG, NF1-somatic, FGFR	LGG
 BA_YDBCT0VX	miRNA-Seq	7316-3411	PID1309	1309-T	Tumor	ATRT	NA	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	ATRT, To be classified	ATRT
 BA_3X0V4JY8	miRNA-Seq	7316-7451	PID1320	1320-T	Tumor	Ependymoma	NA	Ependymoma	Ependymoma	EPN, ST ZFTA	EPN
-BA_XH5N4N4T	miRNA-Seq	7316-9624	PID1341	1341-T	Tumor	LGG	NA	Medulloblastoma	NA	NA	LGG
+BA_XH5N4N4T	miRNA-Seq	7316-9624	PID1341	1341-T	Tumor	LGG	NA	Medulloblastoma	Medulloblastoma	NA	LGG
 BA_T4FGR2ZE	miRNA-Seq	7316-7667	PID1401	1401-N	Normal-Tumor Adjacent	HGG	Left Frontal	NA	NA	NA	HGG
 BA_JJV4XAQB	miRNA-Seq	7316-7667	PID1401	1401-T	Tumor	HGG	Right Cerebellum	Glial-neuronal tumor NOS	Glial-neuronal tumor NOS	GNT, RTK, CDKN2A/B	GNT
-BA_1GRDW9G2	miRNA-Seq	NA	PID1516	1516-T	Tumor	Medulloblastoma	NA	Medulloblastoma	NA	NA	MB
+BA_1GRDW9G2	miRNA-Seq	NA	PID1516	1516-T	Tumor	Medulloblastoma	NA	Medulloblastoma	Medulloblastoma	NA	MB
 BA_W80VSVGZ	miRNA-Seq	7316-7665	PID1656	1656-T	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
 BA_T6BHWMM3	miRNA-Seq	7316-7678	PID1680	1680-N	Normal-Tumor Adjacent	Ependymoma	Frontal	NA	NA	NA	EPN
 BA_TSX80RW9	miRNA-Seq	7316-7678	PID1680	1680-T	Tumor	Ependymoma	Cerebellum	Ependymoma	Ependymoma	EPN, PF A	EPN
@@ -81,23 +81,23 @@ BA_14CS19N8	miRNA-Seq	7316-9068	PID1853	1853-T	Tumor	DIPG	Left Occipital	Brainst
 BA_DFBF0BHX	miRNA-Seq	7316-10411	PID1854	1854-N	Normal-Tumor Adjacent	HGG	Right Frontal	NA	NA	NA	HGG
 BA_992E69JZ	miRNA-Seq	7316-10411	PID1854	1854-T	Tumor	HGG	Left Occipital	High-grade glioma/astrocytoma (WHO grade III/IV)	High-grade glioma	NA	HGG
 BA_S4QFKHQR	miRNA-Seq	7316-10409	PID1855	1855-N	Normal-Tumor Adjacent	DIPG	Right Frontal	NA	NA	NA	DIPG or DMG
-BA_ABYJ50FY	miRNA-Seq	7316-10409	PID1855	1855-T	Tumor	DIPG	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	NA	DIPG or DMG
+BA_ABYJ50FY	miRNA-Seq	7316-10409	PID1855	1855-T	Tumor	DIPG	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_N7TR5ABW	miRNA-Seq	7316-9075	PID1886	1886-N	Normal-Tumor Adjacent	Medulloblastoma	Left Frontal	NA	NA	NA	MB
 BA_78FWG2SC	miRNA-Seq	7316-9075	PID1886	1886-T	Tumor	Medulloblastoma	Left Cerebellum	Medulloblastoma	Medulloblastoma	MB, SHH	MB
 BA_S0SJCXM1	miRNA-Seq	7316-11309	PID2016	2016-T	Tumor	DIPG	NA	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
 BA_7VPX922C	miRNA-Seq	7316-11300	PID2052	2052-N	Normal-Tumor Adjacent	Medulloblastoma	Right Pons	NA	NA	NA	MB
 BA_49A2FRKB	miRNA-Seq	7316-11300	PID2052	2052-T	Tumor	Medulloblastoma	Left Cerebellum	Medulloblastoma	Medulloblastoma	MB, SHH	MB
 BA_8PFSWJS1	miRNA-Seq	7316-10415	PID2058	2058-N	Normal-Tumor Adjacent	DIPG	Left Frontal	NA	NA	NA	DIPG or DMG
-BA_YHKYZWZQ	miRNA-Seq	7316-10415	PID2058	2058-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	NA	DIPG or DMG
+BA_YHKYZWZQ	miRNA-Seq	7316-10415	PID2058	2058-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_F8Y6R8PW	miRNA-Seq	7316-11297	PID2187	2187-T	Tumor	ATRT	NA	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	NA	ATRT
 BA_00NW3YEK	miRNA-Seq	7316-11670	PID2229	2229-N	Normal-Tumor Adjacent	ATRT	Right Frontal	NA	NA	NA	ATRT
 BA_KA6HWN63	miRNA-Seq	7316-11670	PID2229	2229-T	Tumor	ATRT	Right Cerebellum	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	ATRT, TYR	ATRT
 BA_K09YPGMQ	miRNA-Seq	7316-11671	PID2232	2232-N	Normal-Tumor Adjacent	DIPG	Left Occipital	NA	NA	NA	DIPG or DMG
 BA_2TX1QV5Q	miRNA-Seq	7316-11671	PID2232	2232-T	Tumor	DIPG	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
 BA_90GWSERE	miRNA-Seq	7316-11673	PID2237	2237-N	Normal-Tumor Adjacent	Medulloblastoma	Right Occipital	NA	NA	NA	MB
-BA_V2F01E3Z	miRNA-Seq	7316-11673	PID2237	2237-T	Tumor	Medulloblastoma	Right Cerebellum	Medulloblastoma	NA	NA	MB
+BA_V2F01E3Z	miRNA-Seq	7316-11673	PID2237	2237-T	Tumor	Medulloblastoma	Right Cerebellum	Medulloblastoma	Medulloblastoma	NA	MB
 BA_V5E825V2	miRNA-Seq	7316-11315	PID2248	2248-N	Normal-Tumor Adjacent	DIPG	Right Occipital	NA	NA	NA	DIPG or DMG
-BA_BXKJBWBQ	miRNA-Seq	7316-11315	PID2248	2248-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	NA	NA	DIPG or DMG
+BA_BXKJBWBQ	miRNA-Seq	7316-11315	PID2248	2248-T	Tumor	DIPG	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_AZSFDWK2	miRNA-Seq	7316-11314	PID759	759-N	Normal-Tumor Adjacent	Medulloblastoma	Left Temporal	NA	NA	NA	MB
 BA_XM235RBD	miRNA-Seq	7316-11314	PID759	759-T	Tumor	Medulloblastoma	Left Cerebellum	Medulloblastoma	Medulloblastoma	NA	MB
 BA_7WAB7RBF	miRNA-Seq	7316-7442	PID981	981-N	Normal-Tumor Adjacent	Ependymoma	Right Frontal	NA	NA	NA	EPN
