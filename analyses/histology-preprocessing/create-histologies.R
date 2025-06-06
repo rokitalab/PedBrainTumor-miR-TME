@@ -35,7 +35,8 @@ redcap_dx <- read_tsv(file.path(input_dir,
                                                 grepl("Medullo", RedCap) ~ "Medulloblastoma",
                                                 grepl("Atypical Teratoid", RedCap) ~ "Atypical Teratoid Rhabdoid Tumor (ATRT)",
                                                 TRUE ~ NA_character_),
-                  cancer_group = case_when(RedCap %in% c("DIPG", "Diffuse Midline Glioma, H3 K27M altered",
+                  cancer_group = case_when(RedCap == "DIPG" ~ "Diffuse intrinsic pontine glioma",
+                                           RedCap %in% c("Diffuse Midline Glioma, H3 K27M altered",
                                                        "High-Grade Glioma, Diffuse midline glioma, H3 K27-altered") ~ "Diffuse midline glioma",
                                          RedCap %in% c("High Grade Glioma",
                                                        "High-Grade Glioma, Diffuse pediatric-type high-grade glioma, H3-wildtype and IDH-wildtype",
@@ -159,7 +160,11 @@ merged_hist <- merged_manifest %>%
                                       histology == "Medulloblastoma" ~ "MB",
                                       histology == "Ependymoma" ~ "EPN",
                                       histology == "DIPG" ~ "DIPG or DMG",
-                                      TRUE ~ histology)
+                                      TRUE ~ histology),
+                cancer_group = case_when(is.na(cancer_group) & pathology_diagnosis == "Low-grade glioma/astrocytoma (WHO grade I/II)" ~ "Low-grade glioma",
+                                         is.na(cancer_group) & pathology_diagnosis == "Medulloblastoma" ~ "Medulloblastoma",
+                                         is.na(cancer_group) & pathology_diagnosis == "Brainstem glioma- Diffuse intrinsic pontine glioma" ~ "Diffuse intrinsic pontine glioma",
+                                         TRUE ~ cancer_group) 
   )
 
 # Write out the final TSV
