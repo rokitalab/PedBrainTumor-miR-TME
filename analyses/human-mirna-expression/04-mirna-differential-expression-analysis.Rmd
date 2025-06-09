@@ -56,6 +56,22 @@ mirna_cts <- read_tsv(mirna_cts_file) %>%
   filter(rowSums(across(everything(), ~ . != 0)) >= 2)
 ```
 
+```{r}
+# Get current column names
+current_colnames <- colnames(mirna_cts)
+
+# Find the indices of the two samples
+idx_T <- which(current_colnames == "2058-T")
+idx_N <- which(current_colnames == "2058-N")
+
+colnames(mirna_cts)[c(idx_T, idx_N)] <- colnames(mirna_cts)[c(idx_N, idx_T)]
+```
+
+```{r}
+# Remove 5-1234-left-pons showing significant tumor infiltration
+mirna_cts <- mirna_cts[, !(colnames(mirna_cts) == "7316-7585-left-pons")]
+```
+
 ### Load sample metadata df
 
 ```{r annotate-metadata}
