@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 })
 
 # Set path to module and results directories
-root_dir <- "haydar-mirna/"
+root_dir <- "haydar-mirna"
 data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "histology-preprocessing")
 input_dir <- file.path(analysis_dir, "input")
@@ -69,10 +69,6 @@ sample_metadata$sample_id[53] <- "1-1855-CC1"
 sample_metadata$sample_id[54] <- "3-1890-CC1"
 sample_metadata$sample_id[55] <- "5-1234-left-pons"
 
-# Subset only the columns needed for merging
-metadata_sub <- sample_metadata %>%
-  select(sample_id, sample_type, histology, primary_site)
-
 # Read RNA-seq and miRNA-seq manifests
 rna_manifest <- read_tsv(
   file.path(input_dir, "Haydar-RNAseq-manifest_IDs_assigned.tsv"),
@@ -93,46 +89,13 @@ merged_manifest <- merged_manifest %>%
     Bioassay_ID,
     experimental_strategy,
     sample_id,
-    external_patient_id,
     external_sample_id
-  )
-
-# Identify and swap Bioassay_IDs for 2058-N / 2058-T within each strategy
-
-# RNA‐seq pair:
-rna_2058N_id <- merged_manifest %>%
-  filter(experimental_strategy == "RNA-Seq", external_sample_id == "2058-N") %>%
-  pull(Bioassay_ID)
-
-rna_2058T_id <- merged_manifest %>%
-  filter(experimental_strategy == "RNA-Seq", external_sample_id == "2058-T") %>%
-  pull(Bioassay_ID)
-
-# miRNA‐seq pair:
-mirna_2058N_id <- merged_manifest %>%
-  filter(experimental_strategy == "miRNA-Seq", external_sample_id == "2058-N") %>%
-  pull(Bioassay_ID)
-
-mirna_2058T_id <- merged_manifest %>%
-  filter(experimental_strategy == "miRNA-Seq", external_sample_id == "2058-T") %>%
-  pull(Bioassay_ID)
-
-# Perform swapping within each cohort
-merged_manifest <- merged_manifest %>%
-  mutate(
-    Bioassay_ID = case_when(
-      experimental_strategy == "RNA-Seq"   & external_sample_id == "2058-N" ~ rna_2058T_id,
-      experimental_strategy == "RNA-Seq"   & external_sample_id == "2058-T" ~ rna_2058N_id,
-      experimental_strategy == "miRNA-Seq" & external_sample_id == "2058-N" ~ mirna_2058T_id,
-      experimental_strategy == "miRNA-Seq" & external_sample_id == "2058-T" ~ mirna_2058N_id,
-      TRUE ~ Bioassay_ID
-    )
   )
 
 # Join histology-related metadata onto merged_manifest
 merged_hist <- merged_manifest %>%
   left_join(
-    metadata_sub,
+    sample_metadata,
     by = c("external_sample_id" = "sample_id")
   ) %>%
   mutate(
@@ -142,7 +105,6 @@ merged_hist <- merged_manifest %>%
     Bioassay_ID,
     experimental_strategy,
     sample_id,
-    external_patient_id,
     external_sample_id,
     sample_type,
     histology,
