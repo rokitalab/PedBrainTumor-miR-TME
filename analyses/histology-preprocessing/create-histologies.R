@@ -118,7 +118,7 @@ merged_hist <- merged_manifest %>%
                                                 Bioassay_ID %in% c("BA_ZTM72GEM", "BA_XH5N4N4T", "BA_Z1WV5RXA", "BA_1GRDW9G2", "BA_V2F01E3Z") ~ "Medulloblastoma",
                 TRUE ~ pathology_diagnosis),
                 # create short_histology column based on now having GNTs
-                short_histology = case_when(pathology_diagnosis == "Glial-neuronal tumor NOS" ~ "GNT",
+                short_histology = case_when(pathology_diagnosis == "Glial-neuronal tumor NOS" | Bioassay_ID %in% c("BA_T4FGR2ZE", "BA_4Z6DJ8NJ") ~ "GNT",
                                       histology == "Medulloblastoma" ~ "MB",
                                       histology == "Ependymoma" ~ "EPN",
                                       histology == "DIPG" ~ "DIPG or DMG",
@@ -126,8 +126,10 @@ merged_hist <- merged_manifest %>%
                 cancer_group = case_when(is.na(cancer_group) & pathology_diagnosis == "Low-grade glioma/astrocytoma (WHO grade I/II)" ~ "Low-grade glioma",
                                          is.na(cancer_group) & pathology_diagnosis == "Medulloblastoma" ~ "Medulloblastoma",
                                          is.na(cancer_group) & pathology_diagnosis == "Brainstem glioma- Diffuse intrinsic pontine glioma" ~ "Diffuse intrinsic pontine glioma",
-                                         TRUE ~ cancer_group) 
-  )
+                                         TRUE ~ cancer_group)
+  ) %>%
+  dplyr::select(-histology) %>%
+  rename(histology = short_histology)
 
 # Write out the final TSV
 write_tsv(
