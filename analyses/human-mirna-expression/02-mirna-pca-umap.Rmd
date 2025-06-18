@@ -283,7 +283,7 @@ for (tumor in tumor_types) {
   healthy_normals  <- histology_df %>% filter(external_sample_id %in% controls)
 
   subset_metadata <- bind_rows(tumor_samples, adjacent_normals, healthy_normals)
-  subset_cts      <- mirna_cts[, subset_metadata$external_sample_id]
+  subset_cts      <- mirna_cts_n50[, subset_metadata$external_sample_id]
 
   dds_subset <- DESeqDataSetFromMatrix(
     countData = subset_cts,
