@@ -1,0 +1,391 @@
+---
+title: "miRNA Expression Analysis: PCA and UMAP"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+author: Bicna Song
+date: "2025-06-16"
+---
+
+### Setup
+```{r setup, message=FALSE, warning=FALSE}
+# Load libraries
+suppressPackageStartupMessages({
+  library(DESeq2)
+  library(tidyverse)
+  library(limma)
+  library(ggplot2)
+  library(ggrepel)
+  library(patchwork)
+  library(sva)
+  library(matrixStats)
+  library(umap)
+  library(rprojroot)
+  library(ggsci)
+})
+
+# Define directories
+root_dir     <- find_root(has_dir(".git"))
+data_dir     <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-expression")
+results_dir  <- file.path(analysis_dir, "results")
+plot_dir     <- file.path(analysis_dir, "plots")
+
+# Source custom theme
+source(file.path(root_dir, "figures", "theme.R"))
+
+# File path for counts
+mirna_cts_file <- file.path(results_dir, "merged-miRNA-expression.tsv")
+
+# File path for histology
+histology_file <- file.path(root_dir, "analyses", "histology-preprocessing", "results", "histologies.tsv")
+```
+
+### Data Wrangling
+```{r data-wrangle}
+# Load and filter miRNA counts
+mirna_cts <- read_tsv(mirna_cts_file) %>%
+  column_to_rownames("miRNA") %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+```
+
+```{r rename-sample}
+names(mirna_cts)[1] <- "4-1958-CC1"
+names(mirna_cts)[2] <- "2-1578-CC1"
+names(mirna_cts)[3] <- "5-1234-left-pons"
+names(mirna_cts)[4] <- "1-1855-CC1"
+names(mirna_cts)[5] <- "3-1890-CC1"
+```
+
+```{r remove-tumor-infiltrated-sample}
+# Remove 5-1234-left-pons showing significant tumor infiltration
+mirna_cts <- mirna_cts[, !(colnames(mirna_cts) == "5-1234-left-pons")]
+```
+
+```{r fix-tumor-normal-swap}
+# Get current column names
+current_colnames <- colnames(mirna_cts)
+
+# Find the indices of the two samples
+idx_T <- which(current_colnames == "2058-T")
+idx_N <- which(current_colnames == "2058-N")
+
+colnames(mirna_cts)[c(idx_T, idx_N)] <- colnames(mirna_cts)[c(idx_N, idx_T)]
+```
+
+```{r load-histology}
+# Load and annotate histology file
+histology_df <- read_delim(histology_file) %>%
+  filter(experimental_strategy == "miRNA-Seq") %>%
+  filter(external_sample_id %in% names(mirna_cts)) %>%
+  arrange(match(external_sample_id, names(mirna_cts))) %>%
+  # Fill in any missing histology with "Normal"
+  mutate(histology = if_else(is.na(histology), "Normal", histology)) %>%
+  mutate(
+    batch             = if_else(row_number() <= 4, "batch1", "batch2"),
+    condition         = case_when(
+      sample_type %in% c("Tumor", "Normal") ~ histology,
+      sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
+      TRUE ~ NA_character_
+    ),
+    histology_condition = case_when(
+      sample_type %in% c("Tumor", "Normal") ~ histology,
+      sample_type == "Normal-Tumor Adjacent" ~ "Normal-Tumor Adjacent",
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+```{r}
+histology_df <- histology_df %>%
+  mutate(
+    sample_id = case_when(
+      external_sample_id == "1516-T" ~ "7316-NA",
+      external_sample_id == "B1"      ~ "B1",
+      external_sample_id == "B2"      ~ "B2",
+      external_sample_id == "B3"      ~ "B3",
+      external_sample_id == "B4"      ~ "B4",
+      external_sample_id == "B5"      ~ "B5",
+      TRUE                            ~ sample_id  # leave all others alone
+    )
+  )
+```
+
+### PCA: Uncorrected vs Batch-Corrected
+```{r get-vsd}
+# DESeq2 dataset and VST
+dds <- DESeqDataSetFromMatrix(countData = mirna_cts,
+                              colData   = histology_df,
+                              design    = ~ batch + histology_condition)
+vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
+```
+
+```{r uncorrected-pca}
+# Uncorrected PCA
+p_uncorr <- plotPCA(vsd, intgroup = c("batch", "histology_condition"), returnData = TRUE)
+var_unc  <- round(100 * attr(p_uncorr, "percentVar"))
+P1 <- ggplot(p_uncorr, aes(PC1, PC2, color=histology_condition, shape=batch)) +
+  geom_point(size=3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "PCA (Uncorrected)",
+       x = paste0("PC1: ", var_unc[1], "%"),
+       y = paste0("PC2: ", var_unc[2], "%")) +
+  theme_Publication()
+print(P1)
+```
+
+```{r batch-corrected-pca}
+# Batch-corrected PCA
+corrected_counts <- removeBatchEffect(assay(vsd), batch = histology_df$batch)
+
+# PCA
+pca_corrected <- prcomp(t(corrected_counts))
+
+# Compute per-miRNA variance
+miRNA_vars <- rowVars(corrected_counts)
+
+# Pick the 500 miRNAs with highest variance
+top500 <- order(miRNA_vars, decreasing = TRUE)[1:500]
+
+# Subset the matrix to top 500 miRNAs
+mat_top500 <- corrected_counts[top500, ]
+
+# Run PCA on the transposed subset
+pca_corrected <- prcomp(t(mat_top500), center = TRUE, scale. = FALSE)
+
+pc_df    <- as.data.frame(pca_corrected$x) %>%
+  mutate(histology_condition = histology_df$histology_condition,
+         batch     = histology_df$batch)
+
+percentVar_corrected <- round(100 * (pca_corrected$sdev^2 / sum(pca_corrected$sdev^2)))
+
+P2 <- ggplot(pc_df, aes(PC1, PC2, color=histology_condition, shape=batch)) +
+  geom_point(size=3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "PCA (Batch Corrected)",
+       x=paste0("PC1: ", percentVar_corrected[1], "%"),
+       y=paste0("PC2: ", percentVar_corrected[2], "%")) +
+  theme_Publication()
+
+print(P2)
+```
+
+### Run more stringent filtering of miRNA counts
+```{r filtering-mirna-counts}
+# Run more stringent filtering of miRNA counts, retaining only those with non-zero counts in >50 samples
+mirna_cts_n50 <- mirna_cts %>%
+  filter(rowSums(across(everything(), ~ . != 0)) > 50)
+```
+
+```{r create-dds-filtered}
+dds_filtered <- DESeqDataSetFromMatrix(countData = mirna_cts_n50, 
+                              colData = histology_df, 
+                              design = ~ batch + histology_condition)
+```
+
+```{r vst-transform-2}
+vsdata_filtered <- varianceStabilizingTransformation(dds_filtered, blind = FALSE)
+```
+
+```{r uncorrected-pca-filtered}
+p_uncorr_filtered <- plotPCA(vsdata_filtered, intgroup = c("batch", "histology_condition"), returnData = TRUE)
+var_unc_filtered  <- round(100 * attr(p_uncorr, "percentVar"))
+p_uncorr_filtered$external_sample_id <- rownames(p_uncorr_filtered)
+
+P3 <- ggplot(p_uncorr_filtered, aes(PC1, PC2, color = histology_condition, shape = batch)) +
+  geom_point(size=3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "PCA (Uncorrected)",
+       x = paste0("PC1: ", var_unc_filtered[1], "%"),
+       y = paste0("PC2: ", var_unc_filtered[2], "%")) +
+  theme_Publication()
+print(P3)
+```
+
+```{r remove-outlier}
+outlier <- "1886-N"
+
+# Subset counts and metadata to exclude outlier
+mirna_cts_n50_rm_outlier   <- mirna_cts_n50[, setdiff(colnames(mirna_cts_n50), outlier)]
+histology_df_filt <- histology_df   %>% filter(external_sample_id != outlier)
+
+# sanity check
+stopifnot(identical(colnames(mirna_cts_n50_rm_outlier), histology_df_filt$external_sample_id))
+
+# Re-create DESeqDataSet and VST
+dds_filt <- DESeqDataSetFromMatrix(
+  countData = mirna_cts_n50_rm_outlier,
+  colData   = histology_df_filt,
+  design    = ~ batch + condition
+)
+vsd_filt <- varianceStabilizingTransformation(dds_filt, blind = FALSE)
+
+# Run PCA as before on vsd_filt
+pca_uncorr_filt <- plotPCA(vsd_filt, intgroup = c("batch","histology_condition"), returnData = TRUE)
+percentVar_filt <- round(100 * attr(pca_uncorr_filt, "percentVar"))
+P4 <- ggplot(pca_uncorr_filt, aes(PC1, PC2, color = histology_condition, shape = batch)) +
+  geom_point(size = 3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "PCA (Uncorrected, outlier removed)",
+       x = paste0("PC1: ", percentVar_filt[1], "%"),
+       y = paste0("PC2: ", percentVar_filt[2], "%")) +
+  theme_Publication()
+print(P4)
+```
+
+### Save PCA plots
+```{r save-pca-plots}
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected.pdf"), plot = P1, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-corrected.pdf"), plot = P2, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered.pdf"), plot = P3, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered-outlier-removed.pdf"), plot = P4, width = 8, height = 5)
+```
+
+### PCA: Tumor-Only Analyses
+```{r pca-tumor-only-uncorrected}
+# Subset tumor samples
+tum_df  <- histology_df %>% filter(sample_type == "Tumor")
+tum_cts <- mirna_cts[, tum_df$external_sample_id]
+
+# Uncorrected tumor PCA
+dds_tum <- DESeqDataSetFromMatrix(tum_cts, colData = tum_df, design = ~ histology)
+vsd_tum <- varianceStabilizingTransformation(dds_tum, blind = FALSE)
+pca_tum <- plotPCA(vsd_tum, intgroup = c("histology","batch"), returnData = TRUE)
+var_tum <- round(100 * attr(pca_tum, "percentVar"))
+P5 <- ggplot(pca_tum, aes(PC1, PC2, color=histology, shape=batch)) +
+  geom_point(size=3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "PCA: Tumor Only (Uncorrected)",
+       x=paste0("PC1: ", var_tum[1], "%"),
+       y=paste0("PC2: ", var_tum[2], "%")) +
+  theme_Publication()
+print(P5)
+```
+
+```{r pca-tumor-only-batch-corrected}
+# Batch-corrected tumor PCA (top 500 miRNAs)
+v_vars   <- rowVars(removeBatchEffect(assay(vsd_tum), batch = tum_df$batch))
+top500   <- order(v_vars, decreasing=TRUE)[1:500]
+pc_top   <- prcomp(t(assay(vsd_tum)[top500, ]))
+pc_df2   <- as.data.frame(pc_top$x) %>%
+  mutate(histology = tum_df$histology, batch = tum_df$batch)
+var2     <- round(100 * (pc_top$sdev^2 / sum(pc_top$sdev^2)))
+P6 <- ggplot(pc_df2, aes(PC1, PC2, color=histology, shape=batch)) +
+  geom_point(size=3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "PCA: Tumor Only (Batch Corrected)",
+       x=paste0("PC1: ", var2[1], "%"),
+       y=paste0("PC2: ", var2[2], "%")) +
+  theme_Publication()
+print(P6)
+```
+
+### Save PCA plots
+```{r save-pca-tumor-only-plots}
+ggsave(file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = P5, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = P6, width = 8, height = 5)
+```
+
+### PCA by Tumor Type vs Controls
+```{r pca-each-tumor-vs-controls, message=FALSE, warning=FALSE}
+tumor_types <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB", "GNT")
+controls    <- c("B1", "B2", "B3", "B4", "B5")
+
+for (tumor in tumor_types) {
+  tumor_samples    <- histology_df %>% filter(histology == tumor & sample_type == "Tumor")
+  adjacent_normals <- histology_df %>% filter(sample_type == "Normal-Tumor Adjacent" & histology == tumor)
+  healthy_normals  <- histology_df %>% filter(external_sample_id %in% controls)
+
+  subset_metadata <- bind_rows(tumor_samples, adjacent_normals, healthy_normals)
+  subset_cts      <- mirna_cts_n50[, subset_metadata$external_sample_id]
+
+  dds_subset <- DESeqDataSetFromMatrix(
+    countData = subset_cts,
+    colData   = subset_metadata,
+    design    = ~ sample_type
+  )
+  vsd_subset <- varianceStabilizingTransformation(dds_subset, blind = FALSE)
+
+  pca_data    <- plotPCA(vsd_subset, intgroup = "sample_type", returnData = TRUE)
+  percentVar  <- round(100 * attr(pca_data, "percentVar"))
+  pca_data$external_sample_id <- rownames(pca_data)
+  
+  # look up the matching sample_id in histology_df
+  pca_data$sample_id <- histology_df$sample_id[
+  match(pca_data$external_sample_id, histology_df$external_sample_id)
+  ]
+
+  p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type)) +
+    geom_point(size = 3) +
+    scale_color_jco(name = "sample_type") +
+    geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
+    labs(
+      title = paste("PCA -", tumor, "vs Controls"),
+      x     = paste0("PC1: ", percentVar[1], "% variance"),
+      y     = paste0("PC2: ", percentVar[2], "% variance")
+    ) +
+    theme_Publication()
+  
+  print(p)
+
+  ggsave(
+    filename = file.path(plot_dir, paste0("mirna-pca-", tumor, "-vs-controls.pdf")),
+    plot     = p,
+    width    = 8,
+    height   = 5
+  )
+}
+```
+
+### UMAP Analyses
+```{r umap, message=FALSE, warning=FALSE}
+# Select top 500 most variable miRNAs
+miRNA_vars <- rowVars(assay(vsd))
+top500     <- order(miRNA_vars, decreasing = TRUE)[1:500]
+umap_input <- t(assay(vsd)[top500, ])
+
+# Configure and run UMAP
+set.seed(42)
+umap_cfg <- umap.defaults
+umap_cfg$n_neighbors <- 15
+umap_cfg$min_dist    <- 0.3
+
+umap_res <- umap(umap_input, config = umap_cfg)
+umap_df  <- as_tibble(umap_res$layout) %>%
+  set_names(c("UMAP1","UMAP2")) %>%
+  mutate(external_sample_id = rownames(umap_res$layout)) %>%
+  left_join(histology_df, by = "external_sample_id")
+
+# Plot: condition
+p_umap1 <- ggplot(umap_df, aes(UMAP1, UMAP2, color = histology_condition, shape = batch)) +
+  geom_point(size = 3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "UMAP: Condition",
+       x = "UMAP1", y = "UMAP2") +
+  theme_Publication()
+print(p_umap1)
+
+# Plot: sample type
+p_umap2 <- ggplot(umap_df, aes(UMAP1, UMAP2, color = sample_type, shape = batch)) +
+  geom_point(size = 3) +
+  scale_color_jco(name = "Sample Type") +
+  labs(title = "UMAP: Sample Type",
+       x = "UMAP1", y = "UMAP2") +
+  theme_Publication()
+print(p_umap2)
+```
+
+### Save UMAP plots
+
+```{r save-umap-plots}
+ggsave(file.path(plot_dir, "mirna-umap-condition.pdf"), plot = p_umap1, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-umap-sample-type.pdf"), plot = p_umap2, width = 8, height = 5)
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+

@@ -7,9 +7,8 @@
 ## Folder contents
 
 1. `01-merge-miRNA-counts.Rmd`: merges two batches of miRNA expression count data, standardizes novel miRNA IDs using mature and precurosr sequence information, and saves the merged output for downstream analysis.
-2. `02-pca-mirna-batch-comparison.Rmd`: compares PCA plots of miRNA expression data before and after batch correction.
-3. `03-pca-by-histology.Rmd`: generates PCA plots of miRNA expression data to evaluate batch effects and biological variation across samples.
-4. `04-mirna-differential-expression-analysis.Rmd`: performs differential expression analysis of miRNA-seq data using DESeq2.
+2. `02-mirna-pca-umap.Rmd`: generates PCA (batch comparison, histology, tumor-only) and UMAP plots using top 500 most variable miRNAs across samples.
+3. `04-mirna-differential-expression-analysis.Rmd`: performs differential expression analysis of miRNA-seq data using DESeq2.
 
 ## Analysis module directory structure
 
@@ -17,10 +16,8 @@
 .
 ├── 01-merge-miRNA-counts.Rmd
 ├── 01-merge-miRNA-counts.html
-├── 02-pca-mirna-batch-comparison.Rmd
-├── 02-pca-mirna-batch-comparison.html
-├── 03-pca-by-histology.Rmd
-├── 03-pca-by-histology.html
+├── 02-mirna-pca-umap.Rmd
+├── 02-mirna-pca-umap.html
 ├── 04-mirna-differential-expression-analysis.Rmd
 ├── 04-mirna-differential-expression-analysis.html
 ├── README.md
@@ -53,19 +50,20 @@
 │   └── DESeq2_Medulloblastoma_vs_healthyNormal_sig.csv
 ├── plots
 │   ├── mirna-pca-uncorrected.pdf
-│   ├── mirna-pca-uncorrected_filtered_n50.pdf
 │   ├── mirna-pca-corrected.pdf
+│   ├── mirna-pca-uncorrected-filtered.pdf
+│   ├── mirna-pca-uncorrected-filtered-outlier-removed.pdf
+│   ├── mirna-pca-tumor-only-corrected.pdf
 │   ├── mirna-pca-tumor-only-uncorrected.pdf
-│   ├── mirna-pca-tumor-only-corrected-PC1-PC2.pdf
-│   ├── mirna-pca-tumor-only-corrected-PC2-PC3.pdf
-│   ├── mirna-pca-tumor-only-corrected-PC3-PC4.pdf
-│   ├── mirna-pca-tumor-only-corrected-combat.pdf
-│   ├── pca_ATRT_vs_controls.pdf
-│   ├── pca_DIPG_vs_controls.pdf
-│   ├── pca_Ependymoma_vs_controls.pdf
-│   ├── pca_HGG_vs_controls.pdf
-│   ├── pca_LGG_vs_controls.pdf
-│   ├── pca_Medulloblastoma_vs_controls.pdf
+│   ├── mirna-pca-ATRT-vs-controls.pdf
+│   ├── mirna-pca-DIPG or DMG-vs-controls.pdf
+│   ├── mirna-pca-EPN-vs-controls.pdf
+│   ├── mirna-pca-GNT-vs-controls.pdf
+│   ├── mirna-pca-HGG-vs-controls.pdf
+│   ├── mirna-pca-LGG-vs-controls.pdf
+│   ├── mirna-pca-MB-vs-controls.pdf
+│   ├── mirna-umap-condition.pdf
+│   ├── mirna-umap-sample-type.pdf
 │   ├── volcano_ATRT_vs_adjNormal.pdf
 │   ├── volcano_ATRT_vs_healthyNormal.pdf
 │   ├── volcano_DIPG_vs_adjNormal.pdf
