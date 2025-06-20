@@ -97,6 +97,21 @@ histology_df <- read_delim(histology_file) %>%
   )
 ```
 
+```{r}
+histology_df <- histology_df %>%
+  mutate(
+    sample_id = case_when(
+      external_sample_id == "1516-T" ~ "7316-NA",
+      external_sample_id == "B1"      ~ "B1",
+      external_sample_id == "B2"      ~ "B2",
+      external_sample_id == "B3"      ~ "B3",
+      external_sample_id == "B4"      ~ "B4",
+      external_sample_id == "B5"      ~ "B5",
+      TRUE                            ~ sample_id  # leave all others alone
+    )
+  )
+```
+
 ### PCA: Uncorrected vs Batch-Corrected
 ```{r get-vsd}
 # DESeq2 dataset and VST
@@ -221,10 +236,10 @@ print(P4)
 
 ### Save PCA plots
 ```{r save-pca-plots}
-ggsave(file.path(plot_dir, "mirna-pca-uncorrected.pdf"), plot = P1, width = 10, height = 6)
-ggsave(file.path(plot_dir, "mirna-pca-corrected.pdf"), plot = P2, width = 10, height = 6)
-ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered.pdf"), plot = P3, width = 10, height = 6)
-ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered-outlier-removed.pdf"), plot = P4, width = 10, height = 6)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected.pdf"), plot = P1, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-corrected.pdf"), plot = P2, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered.pdf"), plot = P3, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered-outlier-removed.pdf"), plot = P4, width = 8, height = 5)
 ```
 
 ### PCA: Tumor-Only Analyses
@@ -268,8 +283,8 @@ print(P6)
 
 ### Save PCA plots
 ```{r save-pca-tumor-only-plots}
-ggsave(file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = P5, width = 10, height = 6)
-ggsave(file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = P6, width = 10, height = 6)
+ggsave(file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = P5, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = P6, width = 8, height = 5)
 ```
 
 ### PCA by Tumor Type vs Controls
@@ -295,10 +310,16 @@ for (tumor in tumor_types) {
   pca_data    <- plotPCA(vsd_subset, intgroup = "sample_type", returnData = TRUE)
   percentVar  <- round(100 * attr(pca_data, "percentVar"))
   pca_data$external_sample_id <- rownames(pca_data)
+  
+  # look up the matching sample_id in histology_df
+  pca_data$sample_id <- histology_df$sample_id[
+  match(pca_data$external_sample_id, histology_df$external_sample_id)
+  ]
 
   p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type)) +
     geom_point(size = 3) +
     scale_color_jco(name = "sample_type") +
+    geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
     labs(
       title = paste("PCA -", tumor, "vs Controls"),
       x     = paste0("PC1: ", percentVar[1], "% variance"),
@@ -311,8 +332,8 @@ for (tumor in tumor_types) {
   ggsave(
     filename = file.path(plot_dir, paste0("mirna-pca-", tumor, "-vs-controls.pdf")),
     plot     = p,
-    width    = 10,
-    height   = 6
+    width    = 8,
+    height   = 5
   )
 }
 ```
@@ -358,8 +379,8 @@ print(p_umap2)
 ### Save UMAP plots
 
 ```{r save-umap-plots}
-ggsave(file.path(plot_dir, "mirna-umap-condition.pdf"), plot = p_umap1, width = 10, height = 6)
-ggsave(file.path(plot_dir, "mirna-umap-sample-type.pdf"), plot = p_umap2, width = 10, height = 6)
+ggsave(file.path(plot_dir, "mirna-umap-condition.pdf"), plot = p_umap1, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-umap-sample-type.pdf"), plot = p_umap2, width = 8, height = 5)
 ```
 
 ### Session Info
