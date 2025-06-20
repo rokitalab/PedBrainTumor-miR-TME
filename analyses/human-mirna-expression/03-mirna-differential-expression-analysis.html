@@ -436,34 +436,36 @@ brain tumor histology by comparing:</p>
 normal)</li>
 <li>Tumor vs. Disease-Free Normal brain samples (B1–B5)</li>
 </ul>
-<div id="load-required-packages" class="section level3">
-<h3>Load Required Packages</h3>
-<pre class="r"><code>library(DESeq2)
+<div id="setup" class="section level3">
+<h3>Setup</h3>
+<pre class="r"><code># Load libraries
+library(DESeq2)
 library(tidyverse)
 library(rprojroot)
 library(readr)
-library(EnhancedVolcano)</code></pre>
-<pre class="r"><code>install.packages(&quot;ashr&quot;) # this will be added to Dockerfile later if needed.</code></pre>
-<pre><code>## Installing package into &#39;/usr/local/lib/R/site-library&#39;
-## (as &#39;lib&#39; is unspecified)</code></pre>
-<pre class="r"><code>library(ashr)</code></pre>
-</div>
-<div id="set-directories-and-load-data" class="section level3">
-<h3>Set Directories and Load Data</h3>
-<pre class="r"><code>root_dir &lt;- find_root(has_dir(&quot;.git&quot;))
+library(EnhancedVolcano)
+
+#install.packages(&quot;ashr&quot;) # this will be added to Dockerfile later if needed.
+library(ashr)
+
+# Define directories
+root_dir &lt;- find_root(has_dir(&quot;.git&quot;))
 data_dir &lt;- file.path(root_dir, &quot;data&quot;)
 analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;)
 results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)
 plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)
 
-source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))</code></pre>
+# Source custom theme
+source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))
+
+# File path for counts
+mirna_cts_file &lt;- file.path(results_dir, &quot;merged-miRNA-expression.tsv&quot;)
+
+# File path for histology
+histology_file &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;histology-preprocessing&quot;, &quot;results&quot;, &quot;histologies.tsv&quot;)</code></pre>
 </div>
-<div id="set-file-paths" class="section level3">
-<h3>Set file paths</h3>
-<pre class="r"><code>mirna_cts_file &lt;- file.path(results_dir, &quot;merged-miRNA-expression.tsv&quot;)</code></pre>
-</div>
-<div id="wrangle-data" class="section level3">
-<h3>Wrangle data</h3>
+<div id="data-wrangling" class="section level3">
+<h3>Data Wrangling</h3>
 <pre class="r"><code>mirna_cts &lt;- read_tsv(mirna_cts_file) %&gt;%
   column_to_rownames(&quot;miRNA&quot;) %&gt;%
   filter(rowSums(across(everything(), ~ . != 0)) &gt;= 2)</code></pre>
@@ -475,49 +477,68 @@ source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))</code></pr
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
-<div id="load-sample-metadata-df" class="section level3">
-<h3>Load sample metadata df</h3>
-<pre class="r"><code># Fix annotation for specific sample
-metadata_df &lt;- read_delim(file.path(data_dir, &quot;miRNA-sample-metadata.txt&quot;)) %&gt;%
-  mutate(histology = if_else(histology == &quot;N/A&quot;, &quot;Normal&quot;, histology)) %&gt;%
-  mutate(patient_id = str_remove(sample_id, &quot;-[TN]$&quot;)) %&gt;%
-  filter(sample_id %in% names(mirna_cts)) %&gt;%
-  arrange(match(sample_id, names(mirna_cts))) %&gt;%
-  mutate(batch = if_else(row_number() &lt;= 5, &quot;batch1&quot;, &quot;batch2&quot;)) %&gt;%
-  mutate(condition = case_when(
-    sample_type %in% c(&quot;Tumor&quot;, &quot;Normal&quot;) ~ histology,
-    sample_type == &quot;Normal-Tumor Adjacent&quot; ~ paste0(histology, &quot;-adjacent Normal&quot;),
-    TRUE ~ NA_character_
-  ))</code></pre>
-<pre><code>## Rows: 55 Columns: 5
+<pre class="r"><code>names(mirna_cts)[1] &lt;- &quot;4-1958-CC1&quot;
+names(mirna_cts)[2] &lt;- &quot;2-1578-CC1&quot;
+names(mirna_cts)[3] &lt;- &quot;5-1234-left-pons&quot;
+names(mirna_cts)[4] &lt;- &quot;1-1855-CC1&quot;
+names(mirna_cts)[5] &lt;- &quot;3-1890-CC1&quot;</code></pre>
+<pre class="r"><code># Remove 5-1234-left-pons showing significant tumor infiltration
+mirna_cts &lt;- mirna_cts[, !(colnames(mirna_cts) == &quot;5-1234-left-pons&quot;)]</code></pre>
+<pre class="r"><code># Get current column names
+current_colnames &lt;- colnames(mirna_cts)
+
+# Find the indices of the two samples
+idx_T &lt;- which(current_colnames == &quot;2058-T&quot;)
+idx_N &lt;- which(current_colnames == &quot;2058-N&quot;)
+
+colnames(mirna_cts)[c(idx_T, idx_N)] &lt;- colnames(mirna_cts)[c(idx_N, idx_T)]</code></pre>
+<pre class="r"><code># Load and annotate histology file
+histology_df &lt;- read_delim(histology_file) %&gt;%
+  filter(experimental_strategy == &quot;miRNA-Seq&quot;) %&gt;%
+  filter(external_sample_id %in% names(mirna_cts)) %&gt;%
+  arrange(match(external_sample_id, names(mirna_cts))) %&gt;%
+  # Fill in any missing histology with &quot;Normal&quot;
+  mutate(histology = if_else(is.na(histology), &quot;Normal&quot;, histology)) %&gt;%
+  mutate(
+    batch             = if_else(row_number() &lt;= 4, &quot;batch1&quot;, &quot;batch2&quot;),
+    condition         = case_when(
+      sample_type %in% c(&quot;Tumor&quot;, &quot;Normal&quot;) ~ histology,
+      sample_type == &quot;Normal-Tumor Adjacent&quot; ~ paste0(histology, &quot;-adjacent Normal&quot;),
+      TRUE ~ NA_character_
+    ),
+    histology_condition = case_when(
+      sample_type %in% c(&quot;Tumor&quot;, &quot;Normal&quot;) ~ histology,
+      sample_type == &quot;Normal-Tumor Adjacent&quot; ~ &quot;Normal-Tumor Adjacent&quot;,
+      TRUE ~ NA_character_
+    )
+  )</code></pre>
+<pre><code>## Rows: 108 Columns: 10
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
-## chr (5): external_patient_id, sample_id, sample_type, histology, primary_site
+## chr (10): Bioassay_ID, experimental_strategy, sample_id, external_sample_id,...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>stopifnot(identical(metadata_df$sample_id, colnames(mirna_cts)))</code></pre>
 </div>
 <div id="perform-differential-expression-for-each-histology" class="section level3">
 <h3>Perform Differential Expression for Each Histology</h3>
 <pre class="r"><code>normal_ids &lt;- c(&quot;B1&quot;, &quot;B2&quot;, &quot;B3&quot;, &quot;B4&quot;, &quot;B5&quot;)
-histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG&quot;, &quot;Ependymoma&quot;, &quot;HGG&quot;, &quot;Medulloblastoma&quot;)
+histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;MB&quot;)
 
 for (tumor in histologies) {
   adj_label &lt;- paste0(tumor, &quot;-adjacent Normal&quot;)
 
   # Subset metadata
-  meta_adj &lt;- metadata_df %&gt;% filter(condition %in% c(tumor, adj_label))
-  meta_healthy &lt;- metadata_df %&gt;% filter(sample_id %in% c(normal_ids, sample_id[condition == tumor])) %&gt;% 
+  meta_adj &lt;- histology_df %&gt;% filter(condition %in% c(tumor, adj_label))
+  meta_healthy &lt;- histology_df %&gt;% filter(external_sample_id %in% c(normal_ids, external_sample_id[condition == tumor])) %&gt;% 
     filter(condition %in% c(tumor, &quot;Normal&quot;))
 
   # Select count data
-  counts_adj &lt;- mirna_cts[, meta_adj$sample_id]
-  counts_healthy &lt;- mirna_cts[, meta_healthy$sample_id]
+  counts_adj &lt;- mirna_cts[, meta_adj$external_sample_id]
+  counts_healthy &lt;- mirna_cts[, meta_healthy$external_sample_id]
 
   # Tumor vs Adjacent Normal
-  design_adj &lt;- if (tumor == &quot;DIPG&quot;) ~ batch + condition else ~ condition
+  design_adj &lt;- if (tumor == &quot;DIPG or DMG&quot;) ~ batch + condition else ~ condition
   dds_adj &lt;- DESeqDataSetFromMatrix(countData = counts_adj, colData = meta_adj, design = design_adj)
   dds_adj$condition &lt;- droplevels(dds_adj$condition)
   dds_adj &lt;- DESeq(dds_adj)
@@ -526,9 +547,8 @@ for (tumor in histologies) {
   write_csv(as.data.frame(res_adj) %&gt;% rownames_to_column(&quot;miRNA&quot;),
           file.path(results_dir, paste0(&quot;DESeq2_&quot;, tumor, &quot;_vs_adjNormal.csv&quot;)))
 
-
   # Tumor vs Healthy Normal
-  design_healthy &lt;- if (tumor == &quot;DIPG&quot;) ~ batch + condition else ~ condition
+  design_healthy &lt;- if (tumor == &quot;DIPG or DMG&quot;) ~ batch + condition else ~ condition
   dds_healthy &lt;- DESeqDataSetFromMatrix(countData = counts_healthy, colData = meta_healthy, design = design_healthy)
   dds_healthy$condition &lt;- droplevels(dds_healthy$condition)
   dds_healthy &lt;- DESeq(dds_healthy)
@@ -539,10 +559,10 @@ for (tumor in histologies) {
 }</code></pre>
 <pre class="r"><code># Handle LGG separately: only Tumor vs Healthy Normal
 tumor &lt;- &quot;LGG&quot;
-meta_lgg &lt;- metadata_df %&gt;%
-  filter(sample_id %in% c(normal_ids, sample_id[condition == tumor])) %&gt;%
+meta_lgg &lt;- histology_df %&gt;%
+  filter(external_sample_id %in% c(normal_ids, external_sample_id[condition == tumor])) %&gt;%
   filter(condition %in% c(tumor, &quot;Normal&quot;))
-counts_lgg &lt;- mirna_cts[, meta_lgg$sample_id]
+counts_lgg &lt;- mirna_cts[, meta_lgg$external_sample_id]
 
 design_lgg &lt;- ~ condition
 dds_lgg &lt;- DESeqDataSetFromMatrix(countData = counts_lgg, colData = meta_lgg, design = design_lgg)
@@ -556,7 +576,7 @@ res_lgg &lt;- lfcShrink(dds_lgg, contrast = c(&quot;condition&quot;, tumor, &quo
 write_csv(as.data.frame(res_lgg) %&gt;% rownames_to_column(&quot;miRNA&quot;),
           file.path(results_dir, paste0(&quot;DESeq2_&quot;, tumor, &quot;_vs_healthyNormal.csv&quot;)))</code></pre>
 <pre class="r"><code># Save Significant DE Results Separately
-all_histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG&quot;, &quot;Ependymoma&quot;, &quot;HGG&quot;, &quot;Medulloblastoma&quot;, &quot;LGG&quot;)
+all_histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;MB&quot;, &quot;LGG&quot;)
 
 for (tumor in all_histologies) {
   comparison_types &lt;- if (tumor == &quot;LGG&quot;) &quot;healthyNormal&quot; else c(&quot;adjNormal&quot;, &quot;healthyNormal&quot;)
@@ -770,19 +790,19 @@ for (tumor in all_histologies) {
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre class="r"><code>summary_df</code></pre>
 <pre><code>## # A tibble: 11 × 3
-##    Comparison                       Upregulated Downregulated
-##    &lt;chr&gt;                                  &lt;int&gt;         &lt;int&gt;
-##  1 ATRT vs adjNormal                         48             4
-##  2 ATRT vs healthyNormal                      4             4
-##  3 DIPG vs adjNormal                         16            16
-##  4 DIPG vs healthyNormal                     15             5
-##  5 Ependymoma vs adjNormal                   29            18
-##  6 Ependymoma vs healthyNormal               20            12
-##  7 HGG vs adjNormal                           4             3
-##  8 HGG vs healthyNormal                      13             5
-##  9 Medulloblastoma vs adjNormal              37            19
-## 10 Medulloblastoma vs healthyNormal          31            10
-## 11 LGG vs healthyNormal                      36            52</code></pre>
+##    Comparison                   Upregulated Downregulated
+##    &lt;chr&gt;                              &lt;int&gt;         &lt;int&gt;
+##  1 ATRT vs adjNormal                     48             4
+##  2 ATRT vs healthyNormal                  4             4
+##  3 DIPG or DMG vs adjNormal              97            48
+##  4 DIPG or DMG vs healthyNormal          44            25
+##  5 EPN vs adjNormal                      29            18
+##  6 EPN vs healthyNormal                  20            12
+##  7 HGG vs adjNormal                       4             1
+##  8 HGG vs healthyNormal                  12             9
+##  9 MB vs adjNormal                       37            19
+## 10 MB vs healthyNormal                   31            10
+## 11 LGG vs healthyNormal                  36            52</code></pre>
 <pre class="r"><code># Save to CSV
 write_csv(summary_df, file.path(results_dir, &quot;DE_summary_counts.csv&quot;))</code></pre>
 </div>
@@ -821,9 +841,9 @@ write_csv(summary_df, file.path(results_dir, &quot;DE_summary_counts.csv&quot;))
     }
   }
 }</code></pre>
-<pre class="r"><code># Summarize: Count number of Tumor and Adjacent Normal per patient_id and histology
-paired_info &lt;- metadata_df %&gt;%
-  group_by(histology, patient_id) %&gt;%
+<pre class="r"><code># Summarize: Count number of Tumor and Adjacent Normal per sample_id and histology
+paired_info &lt;- histology_df %&gt;%
+  group_by(histology, sample_id) %&gt;%
   summarize(
     tumor = any(sample_type == &quot;Tumor&quot;),
     adjacent_normal = any(sample_type == &quot;Normal-Tumor Adjacent&quot;),
@@ -841,44 +861,45 @@ summary_table &lt;- paired_info %&gt;%
   pivot_wider(names_from = pair_status, values_from = n, values_fill = 0)
 
 print(summary_table)</code></pre>
-<pre><code>## # A tibble: 7 × 3
-##   histology       Paired Unpaired
-##   &lt;chr&gt;            &lt;int&gt;    &lt;int&gt;
-## 1 ATRT                 1        2
-## 2 DIPG                 5        8
-## 3 Ependymoma           2        1
-## 4 HGG                  5        0
-## 5 LGG                  0        2
-## 6 Medulloblastoma      5        1
-## 7 Normal               0        5</code></pre>
+<pre><code>## # A tibble: 8 × 3
+##   histology   Paired Unpaired
+##   &lt;chr&gt;        &lt;int&gt;    &lt;int&gt;
+## 1 ATRT             1        2
+## 2 DIPG or DMG      5        6
+## 3 EPN              2        1
+## 4 GNT              1        0
+## 5 HGG              4        0
+## 6 LGG              0        2
+## 7 MB               5        1
+## 8 Normal           0        1</code></pre>
 <pre class="r"><code># Paired differential expression analysis
 for (hist in all_histologies) {
   
   paired_patients &lt;- paired_info %&gt;%
     filter(histology == hist, pair_status == &quot;Paired&quot;) %&gt;%
-    pull(patient_id)
+    pull(sample_id)
   
   if (length(paired_patients) &lt; 2) {
     message(paste(&quot;Skipping&quot;, hist, &quot;due to insufficient paired patients&quot;))
     next
   }
   
-  paired_samples_metadata &lt;- metadata_df %&gt;%
-    filter(histology == hist, patient_id %in% paired_patients) %&gt;%
+  paired_samples_metadata &lt;- histology_df %&gt;%
+    filter(histology == hist, sample_id %in% paired_patients) %&gt;%
     filter(sample_type %in% c(&quot;Tumor&quot;, &quot;Normal-Tumor Adjacent&quot;))
   
-  paired_sample_ids &lt;- paired_samples_metadata$sample_id
+  paired_external_sample_ids &lt;- paired_samples_metadata$external_sample_id
   
-  mirna_cts_paired &lt;- mirna_cts[, paired_sample_ids]
+  mirna_cts_paired &lt;- mirna_cts[, paired_external_sample_ids]
   
-  # Confirm sample_id matches column names
-  stopifnot(identical(paired_samples_metadata$sample_id, colnames(mirna_cts_paired)))
+  # Confirm external_sample_id matches column names
+  stopifnot(identical(paired_samples_metadata$external_sample_id, colnames(mirna_cts_paired)))
   
   # Create DESeq2 object
   dds &lt;- DESeqDataSetFromMatrix(
     countData = mirna_cts_paired,
     colData = paired_samples_metadata,
-    design = ~ patient_id + sample_type
+    design = ~ sample_id + sample_type
   )
   
   #dds$sample_type &lt;- factor(dds$sample_type)
@@ -926,7 +947,7 @@ for (hist in all_histologies) {
 <pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
 ##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
 ##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
-<pre><code>## Completed DE analysis for: DIPG</code></pre>
+<pre><code>## Completed DE analysis for: DIPG or DMG</code></pre>
 <pre><code>## converting counts to integer mode</code></pre>
 <pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
 ## design formula are characters, converting to factors</code></pre>
@@ -951,7 +972,7 @@ for (hist in all_histologies) {
 <pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
 ##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
 ##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
-<pre><code>## Completed DE analysis for: Ependymoma</code></pre>
+<pre><code>## Completed DE analysis for: EPN</code></pre>
 <pre><code>## converting counts to integer mode</code></pre>
 <pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
 ## design formula are characters, converting to factors</code></pre>
@@ -1001,7 +1022,7 @@ for (hist in all_histologies) {
 <pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
 ##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
 ##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
-<pre><code>## Completed DE analysis for: Medulloblastoma</code></pre>
+<pre><code>## Completed DE analysis for: MB</code></pre>
 <pre><code>## Skipping LGG due to insufficient paired patients</code></pre>
 </div>
 <div id="summary-table-number-of-updown-regulated-mirnas-for-paired-analysis" class="section level3">
@@ -1062,12 +1083,12 @@ for (hist in all_histologies) {
 <pre class="r"><code># View the summary table
 summary_paired_df</code></pre>
 <pre><code>## # A tibble: 4 × 3
-##   Comparison                   Upregulated Downregulated
-##   &lt;chr&gt;                              &lt;int&gt;         &lt;int&gt;
-## 1 DIPG vs adjNormal                     12             6
-## 2 Ependymoma vs adjNormal               17            11
-## 3 HGG vs adjNormal                       8             2
-## 4 Medulloblastoma vs adjNormal          23            22</code></pre>
+##   Comparison               Upregulated Downregulated
+##   &lt;chr&gt;                          &lt;int&gt;         &lt;int&gt;
+## 1 DIPG or DMG vs adjNormal          81            41
+## 2 EPN vs adjNormal                  17            11
+## 3 HGG vs adjNormal                   1             1
+## 4 MB vs adjNormal                   22            19</code></pre>
 <pre class="r"><code># Save to CSV
 write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_paired.csv&quot;))</code></pre>
 </div>
@@ -1111,6 +1132,8 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
+<pre><code>## Warning: ggrepel: 70 unlabeled data points (too many overlaps). Consider
+## increasing max.overlaps</code></pre>
 <pre><code>## Rows: 2053 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
@@ -1140,8 +1163,6 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
-<pre><code>## Warning: ggrepel: 6 unlabeled data points (too many overlaps). Consider
-## increasing max.overlaps</code></pre>
 </div>
 <div id="session-info" class="section level3">
 <h3>Session Info</h3>

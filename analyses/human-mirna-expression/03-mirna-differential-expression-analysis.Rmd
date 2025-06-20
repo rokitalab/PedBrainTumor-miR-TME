@@ -15,86 +15,110 @@ The goal is to identify differentially expressed miRNAs for each brain tumor his
 - Tumor vs. Tumor-Adjacent Normal samples (e.g., DIPG vs DIPG-adjacent normal)
 - Tumor vs. Disease-Free Normal brain samples (B1–B5)
 
-### Load Required Packages
-
+### Setup
 ```{r load-packages, message=FALSE, warning=FALSE}
+# Load libraries
 library(DESeq2)
 library(tidyverse)
 library(rprojroot)
 library(readr)
 library(EnhancedVolcano)
-```
 
-```{r}
-install.packages("ashr") # this will be added to Dockerfile later if needed.
+#install.packages("ashr") # this will be added to Dockerfile later if needed.
 library(ashr)
-```
 
-### Set Directories and Load Data
-
-```{r setup-paths}
+# Define directories
 root_dir <- find_root(has_dir(".git"))
 data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "human-mirna-expression")
 results_dir <- file.path(analysis_dir, "results")
 plot_dir <- file.path(analysis_dir, "plots")
 
+# Source custom theme
 source(file.path(root_dir, "figures", "theme.R"))
-```
 
-### Set file paths 
-
-```{r file paths}
+# File path for counts
 mirna_cts_file <- file.path(results_dir, "merged-miRNA-expression.tsv")
+
+# File path for histology
+histology_file <- file.path(root_dir, "analyses", "histology-preprocessing", "results", "histologies.tsv")
 ```
 
-### Wrangle data
+### Data Wrangling
 
-```{r wrangle data}
+```{r data-wrangle}
 mirna_cts <- read_tsv(mirna_cts_file) %>%
   column_to_rownames("miRNA") %>%
   filter(rowSums(across(everything(), ~ . != 0)) >= 2)
 ```
 
-### Load sample metadata df
+```{r rename-sample}
+names(mirna_cts)[1] <- "4-1958-CC1"
+names(mirna_cts)[2] <- "2-1578-CC1"
+names(mirna_cts)[3] <- "5-1234-left-pons"
+names(mirna_cts)[4] <- "1-1855-CC1"
+names(mirna_cts)[5] <- "3-1890-CC1"
+```
 
-```{r annotate-metadata}
-# Fix annotation for specific sample
-metadata_df <- read_delim(file.path(data_dir, "miRNA-sample-metadata.txt")) %>%
-  mutate(histology = if_else(histology == "N/A", "Normal", histology)) %>%
-  mutate(patient_id = str_remove(sample_id, "-[TN]$")) %>%
-  filter(sample_id %in% names(mirna_cts)) %>%
-  arrange(match(sample_id, names(mirna_cts))) %>%
-  mutate(batch = if_else(row_number() <= 5, "batch1", "batch2")) %>%
-  mutate(condition = case_when(
-    sample_type %in% c("Tumor", "Normal") ~ histology,
-    sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
-    TRUE ~ NA_character_
-  ))
+```{r remove-tumor-infiltrated-sample}
+# Remove 5-1234-left-pons showing significant tumor infiltration
+mirna_cts <- mirna_cts[, !(colnames(mirna_cts) == "5-1234-left-pons")]
+```
 
-stopifnot(identical(metadata_df$sample_id, colnames(mirna_cts)))
+```{r fix-tumor-normal-swap}
+# Get current column names
+current_colnames <- colnames(mirna_cts)
+
+# Find the indices of the two samples
+idx_T <- which(current_colnames == "2058-T")
+idx_N <- which(current_colnames == "2058-N")
+
+colnames(mirna_cts)[c(idx_T, idx_N)] <- colnames(mirna_cts)[c(idx_N, idx_T)]
+```
+
+```{r load-histology}
+# Load and annotate histology file
+histology_df <- read_delim(histology_file) %>%
+  filter(experimental_strategy == "miRNA-Seq") %>%
+  filter(external_sample_id %in% names(mirna_cts)) %>%
+  arrange(match(external_sample_id, names(mirna_cts))) %>%
+  # Fill in any missing histology with "Normal"
+  mutate(histology = if_else(is.na(histology), "Normal", histology)) %>%
+  mutate(
+    batch             = if_else(row_number() <= 4, "batch1", "batch2"),
+    condition         = case_when(
+      sample_type %in% c("Tumor", "Normal") ~ histology,
+      sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
+      TRUE ~ NA_character_
+    ),
+    histology_condition = case_when(
+      sample_type %in% c("Tumor", "Normal") ~ histology,
+      sample_type == "Normal-Tumor Adjacent" ~ "Normal-Tumor Adjacent",
+      TRUE ~ NA_character_
+    )
+  )
 ```
 
 ### Perform Differential Expression for Each Histology
 
 ```{r run-de-by-histology, message=FALSE, warning=FALSE}
 normal_ids <- c("B1", "B2", "B3", "B4", "B5")
-histologies <- c("ATRT", "DIPG", "Ependymoma", "HGG", "Medulloblastoma")
+histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "MB")
 
 for (tumor in histologies) {
   adj_label <- paste0(tumor, "-adjacent Normal")
 
   # Subset metadata
-  meta_adj <- metadata_df %>% filter(condition %in% c(tumor, adj_label))
-  meta_healthy <- metadata_df %>% filter(sample_id %in% c(normal_ids, sample_id[condition == tumor])) %>% 
+  meta_adj <- histology_df %>% filter(condition %in% c(tumor, adj_label))
+  meta_healthy <- histology_df %>% filter(external_sample_id %in% c(normal_ids, external_sample_id[condition == tumor])) %>% 
     filter(condition %in% c(tumor, "Normal"))
 
   # Select count data
-  counts_adj <- mirna_cts[, meta_adj$sample_id]
-  counts_healthy <- mirna_cts[, meta_healthy$sample_id]
+  counts_adj <- mirna_cts[, meta_adj$external_sample_id]
+  counts_healthy <- mirna_cts[, meta_healthy$external_sample_id]
 
   # Tumor vs Adjacent Normal
-  design_adj <- if (tumor == "DIPG") ~ batch + condition else ~ condition
+  design_adj <- if (tumor == "DIPG or DMG") ~ batch + condition else ~ condition
   dds_adj <- DESeqDataSetFromMatrix(countData = counts_adj, colData = meta_adj, design = design_adj)
   dds_adj$condition <- droplevels(dds_adj$condition)
   dds_adj <- DESeq(dds_adj)
@@ -103,9 +127,8 @@ for (tumor in histologies) {
   write_csv(as.data.frame(res_adj) %>% rownames_to_column("miRNA"),
           file.path(results_dir, paste0("DESeq2_", tumor, "_vs_adjNormal.csv")))
 
-
   # Tumor vs Healthy Normal
-  design_healthy <- if (tumor == "DIPG") ~ batch + condition else ~ condition
+  design_healthy <- if (tumor == "DIPG or DMG") ~ batch + condition else ~ condition
   dds_healthy <- DESeqDataSetFromMatrix(countData = counts_healthy, colData = meta_healthy, design = design_healthy)
   dds_healthy$condition <- droplevels(dds_healthy$condition)
   dds_healthy <- DESeq(dds_healthy)
@@ -119,10 +142,10 @@ for (tumor in histologies) {
 ```{r run-de-lgg, message=FALSE, warning=FALSE}
 # Handle LGG separately: only Tumor vs Healthy Normal
 tumor <- "LGG"
-meta_lgg <- metadata_df %>%
-  filter(sample_id %in% c(normal_ids, sample_id[condition == tumor])) %>%
+meta_lgg <- histology_df %>%
+  filter(external_sample_id %in% c(normal_ids, external_sample_id[condition == tumor])) %>%
   filter(condition %in% c(tumor, "Normal"))
-counts_lgg <- mirna_cts[, meta_lgg$sample_id]
+counts_lgg <- mirna_cts[, meta_lgg$external_sample_id]
 
 design_lgg <- ~ condition
 dds_lgg <- DESeqDataSetFromMatrix(countData = counts_lgg, colData = meta_lgg, design = design_lgg)
@@ -139,7 +162,7 @@ write_csv(as.data.frame(res_lgg) %>% rownames_to_column("miRNA"),
 
 ```{r save-sig-de-res}
 # Save Significant DE Results Separately
-all_histologies <- c("ATRT", "DIPG", "Ependymoma", "HGG", "Medulloblastoma", "LGG")
+all_histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "MB", "LGG")
 
 for (tumor in all_histologies) {
   comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
@@ -223,9 +246,9 @@ for (tumor in all_histologies) {
 ```
 
 ```{r pair-status}
-# Summarize: Count number of Tumor and Adjacent Normal per patient_id and histology
-paired_info <- metadata_df %>%
-  group_by(histology, patient_id) %>%
+# Summarize: Count number of Tumor and Adjacent Normal per sample_id and histology
+paired_info <- histology_df %>%
+  group_by(histology, sample_id) %>%
   summarize(
     tumor = any(sample_type == "Tumor"),
     adjacent_normal = any(sample_type == "Normal-Tumor Adjacent"),
@@ -251,29 +274,29 @@ for (hist in all_histologies) {
   
   paired_patients <- paired_info %>%
     filter(histology == hist, pair_status == "Paired") %>%
-    pull(patient_id)
+    pull(sample_id)
   
   if (length(paired_patients) < 2) {
     message(paste("Skipping", hist, "due to insufficient paired patients"))
     next
   }
   
-  paired_samples_metadata <- metadata_df %>%
-    filter(histology == hist, patient_id %in% paired_patients) %>%
+  paired_samples_metadata <- histology_df %>%
+    filter(histology == hist, sample_id %in% paired_patients) %>%
     filter(sample_type %in% c("Tumor", "Normal-Tumor Adjacent"))
   
-  paired_sample_ids <- paired_samples_metadata$sample_id
+  paired_external_sample_ids <- paired_samples_metadata$external_sample_id
   
-  mirna_cts_paired <- mirna_cts[, paired_sample_ids]
+  mirna_cts_paired <- mirna_cts[, paired_external_sample_ids]
   
-  # Confirm sample_id matches column names
-  stopifnot(identical(paired_samples_metadata$sample_id, colnames(mirna_cts_paired)))
+  # Confirm external_sample_id matches column names
+  stopifnot(identical(paired_samples_metadata$external_sample_id, colnames(mirna_cts_paired)))
   
   # Create DESeq2 object
   dds <- DESeqDataSetFromMatrix(
     countData = mirna_cts_paired,
     colData = paired_samples_metadata,
-    design = ~ patient_id + sample_type
+    design = ~ sample_id + sample_type
   )
   
   #dds$sample_type <- factor(dds$sample_type)
