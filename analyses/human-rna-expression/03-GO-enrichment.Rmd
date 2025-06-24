@@ -1,0 +1,202 @@
+---
+title: 'GO enrichment analysis of DEGs'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2025"
+---
+
+This script performs gene ontology (GO) enrichment analysis on DE genes in tumors versus healthy and tumor-adjacent normal brain
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(topGO)
+library(org.Hs.eg.db)  
+library(AnnotationDbi)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+Identify key words in GO terms for plotting (provided by Dalia)
+
+```{r keywords}
+keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense"
+```
+
+Loop through tumors and contrasts to run GO enrichment analyses and plot sig results
+
+```{r run GO enrichment}
+# define hist groups
+histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+
+# loop through histologies
+for (hist in histologies){
+  
+  # define contrasts for each hist
+  #only healthy normal contrast in ATRT, LGG
+  if (hist %in% c("ATRT", "LGG")){
+    contrasts <- "healthyNormal"
+    
+    # healthy normal and tumor-adjacent normal in other contrasts
+  } else {
+    
+    contrasts <- c("healthyNormal", "paired")
+    
+  }
+  
+  # loop through contrasts
+  for (contrast in contrasts){
+    
+    # load DE results file
+    if (contrast == "healthyNormal"){
+      
+      de_df <- read_csv(file.path(results_dir,
+                                glue::glue("DESeq2_{hist}_vs_healthyNormal.csv")))
+      
+    } else {
+    
+      de_df <- read_csv(file.path(results_dir,
+                          glue::glue("DESeq2_{hist}_paired_full.csv")))
+    
+    }
+    
+    # extract up- and downregulated genes in tumor vs. normal
+    
+    upregulated_genes <- de_df %>%
+      dplyr::filter(padj < 0.05,
+                    log2FoldChange > 1) %>%
+      dplyr::pull(gene_symbol)
+
+    downregulated_genes <- de_df %>%
+      dplyr::filter(padj < 0.05,
+                    log2FoldChange < -1) %>%
+      pull(gene_symbol)
+    
+    # define list of all genes
+    all_genes <- de_df$gene_symbol[!is.na(de_df$gene_symbol)]
+
+    # create list of genes
+    gene_list <- list("upregulated genes" = upregulated_genes,
+                      "downregulated genes" = downregulated_genes)
+    
+    # loop through gene lists
+    for (genes in names(gene_list)){
+  
+      # define name for output files
+      plot_name <- ifelse(genes == "upregulated genes",
+                           "upregulated-genes", "downregulated-genes")
+      
+      # assign genes as DE
+      is_de <- ifelse(all_genes %in% gene_list[[genes]],
+                             1, 0)
+      names(is_de) <- all_genes
+      
+      # Create topGO object, using biological process (BP) ontology terms
+      GO_data <- new("topGOdata", ontology = "BP", allGenes = is_de, 
+                                                       geneSel = function(x) x == 1, 
+                                                       annot = annFUN.org, mapping = "org.Hs.eg.db", ID = "symbol")
+      
+      # Run Fisher test
+      GO_results <- runTest(GO_data, algorithm = "classic", statistic = "fisher")
+      
+      # write results to go analysis list
+      GO_table <- GenTable(GO_data, classicFisher = GO_results, topNodes = length(usedGO(GO_data)),
+                                                           numChar = 100000)
+      
+      # modify GO table to include FDR, gene ratio
+      sig_table <- GO_table %>%
+        mutate(classicFisher = case_when(
+          grepl("<", classicFisher) ~ 1e-30,
+          TRUE ~ as.numeric(classicFisher))) %>%
+        dplyr::mutate(fdr = p.adjust(classicFisher, method = "BH"),
+                       gene_ratio = Significant/Annotated) %>%
+        dplyr::arrange(desc(gene_ratio)) %>%
+        # filter for sig terms with keywords
+        dplyr::filter(fdr < 0.05,
+                      Significant > 2)
+      
+      # filter further for plotting; only terms with keywords, rm terms w/ long names
+      plot_table <- sig_table %>% 
+        dplyr::filter(grepl(keywords, Term),
+                      nchar(Term) < 60) %>%
+        head(40)
+      
+      # if sig enriched GO terms, plot top terms and save output 
+      if (nrow(plot_table) >= 5){
+      
+        GO_plot <- plot_table %>%
+                arrange(gene_ratio) %>%
+                dplyr::mutate(Term = fct_relevel(Term, 
+                                                    unique(Term))) %>%
+              
+                  ggplot(aes(x = gene_ratio, y = Term,
+                             size = Significant, colour = -log10(classicFisher))) +
+                  geom_point(alpha = 0.9) + 
+                  scale_color_gradient(low = "lightpink", high = "darkred") +
+                  labs(y = NULL,
+                       x = "Gene Ratio",
+                       size = "Count",
+                       colour = "-log10(p)",
+                       title = glue::glue("{hist}-{genes}")) +
+                  theme_Publication()
+        
+        pdf(NULL)
+      
+        pdf(file.path(plot_dir, glue::glue("{hist}-{plot_name}-{contrast}-go-term-enrichment-dotplot.pdf")),
+             width = 10, height = 2 + (nrow(plot_table)/6))
+        
+        print(GO_plot)
+        
+        dev.off()
+        
+        # add genes lists to enriched GO term df
+        genes_per_term <- genesInTerm(GO_data)
+        
+        de_genes_per_term <- lapply(genes_per_term,
+                                    function(x) x[x %in% gene_list[[genes]]])
+      
+        # create df of degs per terms
+        de_genes_per_term_df <- enframe(de_genes_per_term, name = "GO.ID", value = "DEGs") %>%
+          mutate(DEGs = sapply(DEGs, function(x) paste(x, collapse = ", ")))
+        
+        # add to sig_table
+        sig_table <- sig_table %>%
+          left_join(de_genes_per_term_df, by = "GO.ID")
+        
+        # write to output 
+        write_tsv(sig_table,
+                file.path(results_dir,
+                          glue::glue("{hist}-{plot_name}-{contrast}-enriched-go-terms.tsv")))
+        
+      }
+      
+    }
+    
+  }
+  
+}
+
+```
+
+Print session info
+
+```{r}
+sessionInfo()
+```
