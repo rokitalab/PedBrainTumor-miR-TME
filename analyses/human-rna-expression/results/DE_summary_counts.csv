@@ -1,0 +1,12 @@
+Comparison,Upregulated,Downregulated
+ATRT vs adjNormal,48,0
+ATRT vs healthyNormal,3,2
+DIPG or DMG vs adjNormal,3067,2794
+DIPG or DMG vs healthyNormal,1540,1866
+EPN vs adjNormal,779,1325
+EPN vs healthyNormal,952,1468
+HGG vs adjNormal,5,1
+HGG vs healthyNormal,97,93
+MB vs adjNormal,1356,1029
+MB vs healthyNormal,787,783
+LGG vs healthyNormal,649,1096
