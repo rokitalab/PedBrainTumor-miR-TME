@@ -1,0 +1,34 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0051252	regulation of RNA metabolic process	3847	84	49.69	1.9e-07	0.002560305
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	88	53.69	3.3e-07	0.002560305
+GO:0044271	cellular nitrogen compound biosynthetic process	4855	97	62.71	9.2e-07	0.0031033999999999996
+GO:0006351	DNA-templated transcription	3554	77	45.9	1.1e-06	0.0031033999999999996
+GO:0006355	regulation of DNA-templated transcription	3431	75	44.32	1.2e-06	0.0031033999999999996
+GO:0006366	transcription by RNA polymerase II	2701	63	34.89	1.4e-06	0.0031033999999999996
+GO:2001141	regulation of RNA biosynthetic process	3450	75	44.56	1.4e-06	0.0031033999999999996
+GO:0032774	RNA biosynthetic process	3585	77	46.3	1.6e-06	0.0031033999999999996
+GO:0051171	regulation of nitrogen compound metabolic process	5614	107	72.51	1.8e-06	0.0031033999999999996
+GO:0006357	regulation of transcription by RNA polymerase II	2581	60	33.34	3.0e-06	0.004396483333333333
+GO:0080090	regulation of primary metabolic process	5756	108	74.35	3.4e-06	0.004396483333333333
+GO:0065007	biological regulation	12701	196	164.05	3.4e-06	0.004396483333333333
+GO:0051253	negative regulation of RNA metabolic process	1395	39	18.02	3.9e-06	0.0046551
+GO:0060255	regulation of macromolecule metabolic process	6596	119	85.2	5.2e-06	0.005763457142857143
+GO:0050789	regulation of biological process	12273	190	158.52	7.5e-06	0.007758500000000001
+GO:0034654	nucleobase-containing compound biosynthetic process	4012	81	51.82	8.8e-06	0.00853435
+GO:0018130	heterocycle biosynthetic process	4088	82	52.8	9.6e-06	0.008620555555555557
+GO:0050794	regulation of cellular process	11713	183	151.29	1.0e-05	0.008620555555555557
+GO:0019438	aromatic compound biosynthetic process	4101	82	52.97	1.1e-05	0.008983526315789475
+GO:0045934	negative regulation of nucleobase-containing compound metabolic process	1523	40	19.67	1.3e-05	0.01008605
+GO:0010556	regulation of macromolecule biosynthetic process	5582	103	72.1	1.6e-05	0.01182247619047619
+GO:0010468	regulation of gene expression	5454	101	70.44	1.7e-05	0.011990409090909092
+GO:0006807	nitrogen compound metabolic process	10169	163	131.34	2.3e-05	0.015517000000000001
+GO:1901362	organic cyclic compound biosynthetic process	4257	83	54.98	2.5e-05	0.016137679999999998
+GO:0031326	regulation of cellular biosynthetic process	5714	104	73.8	2.6e-05	0.016137679999999998
+GO:0009889	regulation of biosynthetic process	5745	104	74.2	3.3e-05	0.019694653846153848
+GO:0090304	nucleic acid metabolic process	5683	103	73.4	3.5e-05	0.019950428571428574
+GO:0016070	RNA metabolic process	5123	95	66.17	3.6e-05	0.019950428571428574
+GO:0045892	negative regulation of DNA-templated transcription	1264	34	16.33	3.8e-05	0.020332620689655172
+GO:1902679	negative regulation of RNA biosynthetic process	1279	34	16.52	4.9e-05	0.025344433333333333
+GO:0019222	regulation of metabolic process	7117	122	91.92	5.3e-05	0.026529064516129033
+GO:0048522	positive regulation of cellular process	5861	104	75.7	8.0e-05	0.0387925
+GO:0031323	regulation of cellular metabolic process	6611	114	85.39	9.6e-05	0.04514036363636364

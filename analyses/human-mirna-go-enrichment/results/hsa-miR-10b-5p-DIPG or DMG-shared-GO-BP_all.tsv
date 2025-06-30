@@ -1,0 +1,183 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0045935	positive regulation of nucleobase-containing compound metabolic process	2145	63	31	2.5e-08	3.5467428571428575e-4
+GO:0031325	positive regulation of cellular metabolic process	3440	86	49.71	6.6e-08	3.5467428571428575e-4
+GO:0051254	positive regulation of RNA metabolic process	1937	57	27.99	1.3e-07	3.5467428571428575e-4
+GO:0044249	cellular biosynthetic process	8687	168	125.54	1.4e-07	3.5467428571428575e-4
+GO:0031326	regulation of cellular biosynthetic process	5714	123	82.57	1.5e-07	3.5467428571428575e-4
+GO:0044271	cellular nitrogen compound biosynthetic process	4855	109	70.16	1.6e-07	3.5467428571428575e-4
+GO:1901576	organic substance biosynthetic process	8768	169	126.71	1.6e-07	3.5467428571428575e-4
+GO:0009889	regulation of biosynthetic process	5745	123	83.02	2.0e-07	3.8792499999999996e-4
+GO:0009058	biosynthetic process	8825	169	127.53	2.7e-07	4.49993e-4
+GO:0010557	positive regulation of macromolecule biosynthetic process	2611	69	37.73	2.9e-07	4.49993e-4
+GO:0044237	cellular metabolic process	10978	198	158.65	4.5e-07	6.347863636363637e-4
+GO:0007049	cell cycle	1816	53	26.24	5.2e-07	6.724033333333333e-4
+GO:0008283	cell population proliferation	2090	58	30.2	7.1e-07	7.680915000000001e-4
+GO:0009887	animal organ morphogenesis	1025	36	14.81	7.5e-07	7.680915000000001e-4
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	95	60.07	7.5e-07	7.680915000000001e-4
+GO:0006807	nitrogen compound metabolic process	10169	186	146.96	8.8e-07	7.680915000000001e-4
+GO:0010468	regulation of gene expression	5454	116	78.82	9.3e-07	7.680915000000001e-4
+GO:0071704	organic substance metabolic process	11820	208	170.81	9.4e-07	7.680915000000001e-4
+GO:0010556	regulation of macromolecule biosynthetic process	5582	118	80.67	9.5e-07	7.680915000000001e-4
+GO:0031328	positive regulation of cellular biosynthetic process	2698	69	38.99	9.9e-07	7.680915000000001e-4
+GO:1901362	organic cyclic compound biosynthetic process	4257	96	61.52	1.2e-06	8.06884e-4
+GO:0048522	positive regulation of cellular process	5861	122	84.7	1.2e-06	8.06884e-4
+GO:0009891	positive regulation of biosynthetic process	2719	69	39.29	1.3e-06	8.06884e-4
+GO:0044238	primary metabolic process	10655	192	153.98	1.3e-06	8.06884e-4
+GO:0010604	positive regulation of macromolecule metabolic process	3506	83	50.67	1.3e-06	8.06884e-4
+GO:0019438	aromatic compound biosynthetic process	4101	93	59.26	1.5e-06	8.312678571428572e-4
+GO:0080090	regulation of primary metabolic process	5756	120	83.18	1.5e-06	8.312678571428572e-4
+GO:0042127	regulation of cell population proliferation	1780	51	25.72	1.5e-06	8.312678571428572e-4
+GO:2000108	positive regulation of leukocyte apoptotic process	26	6	0.38	1.6e-06	8.561103448275862e-4
+GO:0045893	positive regulation of DNA-templated transcription	1685	49	24.35	1.7e-06	8.792966666666668e-4
+GO:1902680	positive regulation of RNA biosynthetic process	1688	49	24.39	1.8e-06	8.934030303030302e-4
+GO:0031323	regulation of cellular metabolic process	6611	133	95.54	1.9e-06	8.934030303030302e-4
+GO:0051173	positive regulation of nitrogen compound metabolic process	3083	75	44.55	1.9e-06	8.934030303030302e-4
+GO:0048523	negative regulation of cellular process	5471	115	79.06	2.0e-06	9.127647058823529e-4
+GO:0051252	regulation of RNA metabolic process	3847	88	55.59	2.4e-06	0.001064022857142857
+GO:0018130	heterocycle biosynthetic process	4088	92	59.08	2.5e-06	0.0010775694444444446
+GO:0001738	morphogenesis of a polarized epithelium	61	8	0.88	2.6e-06	0.0010903837837837839
+GO:0043069	negative regulation of programmed cell death	948	33	13.7	2.8e-06	0.0011433578947368421
+GO:0043067	regulation of programmed cell death	1571	46	22.7	3.1e-06	0.001211082926829268
+GO:0042981	regulation of apoptotic process	1522	45	21.99	3.2e-06	0.001211082926829268
+GO:0009893	positive regulation of metabolic process	3816	87	55.15	3.2e-06	0.001211082926829268
+GO:0043066	negative regulation of apoptotic process	917	32	13.25	3.7e-06	0.001349304347826087
+GO:2000134	negative regulation of G1/S transition of mitotic cell cycle	85	9	1.23	3.8e-06	0.001349304347826087
+GO:0034654	nucleobase-containing compound biosynthetic process	4012	90	57.98	3.9e-06	0.001349304347826087
+GO:0031570	DNA integrity checkpoint signaling	134	11	1.94	4.0e-06	0.001349304347826087
+GO:0006793	phosphorus metabolic process	2585	65	37.36	4.0e-06	0.001349304347826087
+GO:1901564	organonitrogen compound metabolic process	5992	122	86.59	4.2e-06	0.0013866255319148935
+GO:0051171	regulation of nitrogen compound metabolic process	5614	116	81.13	4.3e-06	0.0013900645833333333
+GO:0048519	negative regulation of biological process	5819	119	84.09	5.0e-06	0.001582734
+GO:0044774	mitotic DNA integrity checkpoint signaling	88	9	1.27	5.1e-06	0.001582734
+GO:0048585	negative regulation of response to stimulus	1764	49	25.49	6.1e-06	0.0018559549019607842
+GO:0034641	cellular nitrogen compound metabolic process	6887	135	99.53	6.7e-06	0.0019908603773584905
+GO:0006915	apoptotic process	1979	53	28.6	6.8e-06	0.0019908603773584905
+GO:0045786	negative regulation of cell cycle	405	19	5.85	7.4e-06	0.0021264037037037036
+GO:1902807	negative regulation of cell cycle G1/S phase transition	94	9	1.36	8.8e-06	0.00248272
+GO:0045944	positive regulation of transcription by RNA polymerase II	1243	38	17.96	9.7e-06	0.0026877660714285717
+GO:0008152	metabolic process	12343	211	178.37	1.1e-05	0.002844783333333333
+GO:1901988	negative regulation of cell cycle phase transition	273	15	3.95	1.1e-05	0.002844783333333333
+GO:0048729	tissue morphogenesis	616	24	8.9	1.1e-05	0.002844783333333333
+GO:0021953	central nervous system neuron differentiation	178	12	2.57	1.1e-05	0.002844783333333333
+GO:0006796	phosphate-containing compound metabolic process	2559	63	36.98	1.2e-05	0.0030525245901639347
+GO:0051128	regulation of cellular component organization	2459	61	35.54	1.3e-05	0.0032535645161290323
+GO:0019222	regulation of metabolic process	7117	137	102.85	1.5e-05	0.0036945238095238094
+GO:0060255	regulation of macromolecule metabolic process	6596	129	95.32	1.6e-05	0.00387925
+GO:2000045	regulation of G1/S transition of mitotic cell cycle	185	12	2.67	1.7e-05	0.004058292307692307
+GO:0012501	programmed cell death	2055	53	29.7	2.0e-05	0.004702121212121212
+GO:0008219	cell death	2059	53	29.76	2.1e-05	0.0048635373134328355
+GO:0048468	cell development	2838	67	41.01	2.3e-05	0.0052483970588235295
+GO:0006355	regulation of DNA-templated transcription	3431	77	49.58	2.7e-05	0.006071869565217391
+GO:1901991	negative regulation of mitotic cell cycle phase transition	195	12	2.82	2.8e-05	0.0062068
+GO:0060740	prostate gland epithelium morphogenesis	26	5	0.38	3.1e-05	0.006775028169014085
+GO:0051726	regulation of cell cycle	1116	34	16.13	3.2e-05	0.006896444444444444
+GO:2001141	regulation of RNA biosynthetic process	3450	77	49.86	3.3e-05	0.007014534246575344
+GO:0000082	G1/S transition of mitotic cell cycle	234	13	3.38	3.8e-05	0.007758500000000001
+GO:0048715	negative regulation of oligodendrocyte differentiation	14	4	0.2	3.8e-05	0.007758500000000001
+GO:0090175	regulation of establishment of planar polarity	14	4	0.2	3.8e-05	0.007758500000000001
+GO:0060429	epithelium development	1228	36	17.75	4.1e-05	0.008262298701298701
+GO:1901360	organic cyclic compound metabolic process	6720	129	97.11	4.3e-05	0.008515426829268292
+GO:0014014	negative regulation of gliogenesis	45	6	0.65	4.4e-05	0.008515426829268292
+GO:0002009	morphogenesis of an epithelium	501	20	7.24	4.4e-05	0.008515426829268292
+GO:0023057	negative regulation of signaling	1485	41	21.46	4.5e-05	0.008515426829268292
+GO:0060512	prostate gland morphogenesis	28	5	0.4	4.5e-05	0.008515426829268292
+GO:0006725	cellular aromatic compound metabolic process	6468	125	93.47	4.6e-05	0.00859978313253012
+GO:0048518	positive regulation of biological process	6411	124	92.65	4.9e-05	0.009051583333333333
+GO:0006468	protein phosphorylation	1289	37	18.63	5.0e-05	0.009096172413793104
+GO:1901566	organonitrogen compound biosynthetic process	1806	47	26.1	5.1e-05	0.009096172413793104
+GO:0042249	establishment of planar polarity of embryonic epithelium	15	4	0.22	5.1e-05	0.009096172413793104
+GO:0046483	heterocycle metabolic process	6421	124	92.79	5.3e-05	0.00934546590909091
+GO:0016310	phosphorylation	1550	42	22.4	5.6e-05	0.009763505617977529
+GO:0006139	nucleobase-containing compound metabolic process	6241	121	90.19	6.0e-05	0.009904468085106383
+GO:0009888	tissue development	2032	51	29.37	6.0e-05	0.009904468085106383
+GO:0030097	hemopoiesis	959	30	13.86	6.0e-05	0.009904468085106383
+GO:0010948	negative regulation of cell cycle process	316	15	4.57	6.0e-05	0.009904468085106383
+GO:1902806	regulation of cell cycle G1/S phase transition	211	12	3.05	6.0e-05	0.009904468085106383
+GO:0031571	mitotic G1 DNA damage checkpoint signaling	30	5	0.43	6.4e-05	0.010344666666666665
+GO:0044819	mitotic G1/S transition checkpoint signaling	30	5	0.43	6.4e-05	0.010344666666666665
+GO:0007389	pattern specification process	474	19	6.85	6.5e-05	0.010397989690721648
+GO:0045930	negative regulation of mitotic cell cycle	248	13	3.58	6.9e-05	0.010925234693877552
+GO:0030850	prostate gland development	49	6	0.71	7.2e-05	0.01128509090909091
+GO:0035556	intracellular signal transduction	2721	63	39.32	7.7e-05	0.01194809
+GO:0008285	negative regulation of cell population proliferation	791	26	11.43	8.6e-05	0.013212495049504952
+GO:0060253	negative regulation of glial cell proliferation	17	4	0.25	8.8e-05	0.013387215686274509
+GO:0006351	DNA-templated transcription	3554	77	51.36	9.3e-05	0.013875778846153845
+GO:0043009	chordate embryonic development	659	23	9.52	9.3e-05	0.013875778846153845
+GO:0009968	negative regulation of signal transduction	1381	38	19.96	9.5e-05	0.014039190476190478
+GO:0010648	negative regulation of cell communication	1484	40	21.45	9.6e-05	0.014053132075471698
+GO:1900117	regulation of execution phase of apoptosis	33	5	0.48	0.00010	0.014367592592592593
+GO:1902893	regulation of miRNA transcription	75	7	1.08	0.00010	0.014367592592592593
+GO:0000075	cell cycle checkpoint signaling	191	11	2.76	0.00011	0.015377207207207208
+GO:0008284	positive regulation of cell population proliferation	994	30	14.36	0.00011	0.015377207207207208
+GO:0061614	miRNA transcription	76	7	1.1	0.00011	0.015377207207207208
+GO:0044843	cell cycle G1/S phase transition	262	13	3.79	0.00012	0.016478230088495575
+GO:0032774	RNA biosynthetic process	3585	77	51.81	0.00012	0.016478230088495575
+GO:0002244	hematopoietic progenitor cell differentiation	133	9	1.92	0.00014	0.018890260869565217
+GO:0009059	macromolecule biosynthetic process	7816	143	112.95	0.00014	0.018890260869565217
+GO:0009792	embryo development ending in birth or egg hatching	680	23	9.83	0.00015	0.02006508620689655
+GO:0033034	positive regulation of myeloid cell apoptotic process	8	3	0.12	0.00016	0.021040000000000003
+GO:0090400	stress-induced premature senescence	8	3	0.12	0.00016	0.021040000000000003
+GO:2000269	regulation of fibroblast apoptotic process	20	4	0.29	0.00017	0.022167142857142857
+GO:0003002	regionalization	429	17	6.2	0.00018	0.022524677419354842
+GO:0019538	protein metabolic process	4915	98	71.03	0.00018	0.022524677419354842
+GO:0001736	establishment of planar polarity	37	5	0.53	0.00018	0.022524677419354842
+GO:0007164	establishment of tissue polarity	37	5	0.53	0.00018	0.022524677419354842
+GO:0007405	neuroblast proliferation	82	7	1.19	0.00018	0.022524677419354842
+GO:0006357	regulation of transcription by RNA polymerase II	2581	59	37.3	0.00020	0.0248272
+GO:0009790	embryo development	1128	32	16.3	0.00021	0.02526023255813954
+GO:0046398	UDP-glucuronate metabolic process	2	2	0.03	0.00021	0.02526023255813954
+GO:0006366	transcription by RNA polymerase II	2701	61	39.03	0.00021	0.02526023255813954
+GO:0044773	mitotic DNA damage checkpoint signaling	84	7	1.21	0.00021	0.02526023255813954
+GO:0009987	cellular process	17647	268	255.02	0.00022	0.02605908396946565
+GO:0033043	regulation of organelle organization	1183	33	17.1	0.00022	0.02605908396946565
+GO:0007093	mitotic cell cycle checkpoint signaling	143	9	2.07	0.00024	0.0280006015037594
+GO:0050673	epithelial cell proliferation	482	18	6.97	0.00024	0.0280006015037594
+GO:1900118	negative regulation of execution phase of apoptosis	22	4	0.32	0.00025	0.028949626865671645
+GO:0022402	cell cycle process	1294	35	18.7	0.00026	0.029234927536231883
+GO:0051172	negative regulation of nitrogen compound metabolic process	2266	53	32.75	0.00026	0.029234927536231883
+GO:0002262	myeloid cell homeostasis	177	10	2.56	0.00026	0.029234927536231883
+GO:0071396	cellular response to lipid	617	21	8.92	0.00026	0.029234927536231883
+GO:0036211	protein modification process	2958	65	42.75	0.00027	0.02992564285714286
+GO:1902531	regulation of intracellular signal transduction	1828	45	26.42	0.00027	0.02992564285714286
+GO:1903047	mitotic cell cycle process	761	24	11	0.00030	0.03301489361702127
+GO:2000106	regulation of leukocyte apoptotic process	89	7	1.29	0.00031	0.033638251748251746
+GO:0048732	gland development	449	17	6.49	0.00031	0.033638251748251746
+GO:0035148	tube formation	149	9	2.15	0.00032	0.03424441379310345
+GO:0050768	negative regulation of neurogenesis	149	9	2.15	0.00032	0.03424441379310345
+GO:2000628	regulation of miRNA metabolic process	90	7	1.3	0.00033	0.034366510067114095
+GO:0030522	intracellular receptor signaling pathway	369	15	5.33	0.00033	0.034366510067114095
+GO:0060525	prostate glandular acinus development	10	3	0.14	0.00033	0.034366510067114095
+GO:0090179	planar cell polarity pathway involved in neural tube closure	10	3	0.14	0.00033	0.034366510067114095
+GO:0045934	negative regulation of nucleobase-containing compound metabolic process	1523	39	22.01	0.00034	0.034709078947368424
+GO:0000278	mitotic cell cycle	911	27	13.17	0.00034	0.034709078947368424
+GO:0033554	cellular response to stress	1847	45	26.69	0.00034	0.034709078947368424
+GO:1901987	regulation of cell cycle phase transition	455	17	6.58	0.00036	0.03580846153846154
+GO:0007265	Ras protein signal transduction	120	8	1.73	0.00036	0.03580846153846154
+GO:0009952	anterior/posterior pattern specification	219	11	3.16	0.00036	0.03580846153846154
+GO:0009653	anatomical structure morphogenesis	2757	61	39.84	0.00036	0.03580846153846154
+GO:0001655	urogenital system development	66	6	0.95	0.00038	0.0373193670886076
+GO:0030154	cell differentiation	4448	89	64.28	0.00038	0.0373193670886076
+GO:0048869	cellular developmental process	4450	89	64.31	0.00039	0.038060566037735846
+GO:0007423	sensory organ development	592	20	8.56	0.00041	0.03903049079754601
+GO:0048511	rhythmic process	297	13	4.29	0.00041	0.03903049079754601
+GO:0030010	establishment of cell polarity	154	9	2.23	0.00041	0.03903049079754601
+GO:0000122	negative regulation of transcription by RNA polymerase II	923	27	13.34	0.00041	0.03903049079754601
+GO:0021879	forebrain neuron differentiation	44	5	0.64	0.00042	0.03949781818181818
+GO:0045936	negative regulation of phosphate metabolic process	378	15	5.46	0.00042	0.03949781818181818
+GO:0051961	negative regulation of nervous system development	155	9	2.24	0.00043	0.03995395209580838
+GO:0010563	negative regulation of phosphorus metabolic process	379	15	5.48	0.00043	0.03995395209580838
+GO:0045596	negative regulation of cell differentiation	735	23	10.62	0.00045	0.04059680232558139
+GO:0043412	macromolecule modification	3191	68	46.11	0.00045	0.04059680232558139
+GO:0007406	negative regulation of neuroblast proliferation	11	3	0.16	0.00045	0.04059680232558139
+GO:0060742	epithelial cell differentiation involved in prostate gland development	11	3	0.16	0.00045	0.04059680232558139
+GO:0090178	regulation of establishment of planar polarity involved in neural tube closure	11	3	0.16	0.00045	0.04059680232558139
+GO:0000077	DNA damage checkpoint signaling	125	8	1.81	0.00047	0.04143744318181818
+GO:0001952	regulation of cell-matrix adhesion	125	8	1.81	0.00047	0.04143744318181818
+GO:0002065	columnar/cuboidal epithelial cell differentiation	125	8	1.81	0.00047	0.04143744318181818
+GO:0021761	limbic system development	125	8	1.81	0.00047	0.04143744318181818
+GO:0071840	cellular component organization or biogenesis	6791	125	98.14	0.00048	0.042080000000000006
+GO:0044346	fibroblast apoptotic process	26	4	0.38	0.00050	0.043587078651685394
+GO:0140747	regulation of ncRNA transcription	97	7	1.4	0.00052	0.04482688888888888
+GO:0003206	cardiac chamber morphogenesis	127	8	1.84	0.00052	0.04482688888888888
+GO:0048608	reproductive structure development	307	13	4.44	0.00056	0.048008397790055245
+GO:0099173	postsynapse organization	196	10	2.83	0.00058	0.049449780219780214

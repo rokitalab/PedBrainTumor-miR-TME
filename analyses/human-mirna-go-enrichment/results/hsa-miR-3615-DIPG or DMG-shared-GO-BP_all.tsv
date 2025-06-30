@@ -1,0 +1,5 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0150117	positive regulation of cell-substrate junction organization	31	8	0.32	7.2e-10	1.117224e-5
+GO:0150116	regulation of cell-substrate junction organization	68	9	0.7	3.2e-08	2.48272e-4
+GO:0150115	cell-substrate junction organization	103	9	1.06	1.2e-06	0.006206799999999999
+GO:0051894	positive regulation of focal adhesion assembly	26	5	0.27	6.1e-06	0.023663425000000002

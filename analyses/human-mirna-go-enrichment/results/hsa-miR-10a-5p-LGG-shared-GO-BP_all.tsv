@@ -1,0 +1,121 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0044238	primary metabolic process	10655	283	227.87	8.5e-09	9.3102e-5
+GO:0006793	phosphorus metabolic process	2585	97	55.28	1.2e-08	9.3102e-5
+GO:0009893	positive regulation of metabolic process	3816	128	81.61	2.5e-08	1.2025675e-4
+GO:0006796	phosphate-containing compound metabolic process	2559	95	54.73	3.1e-08	1.2025675e-4
+GO:0010604	positive regulation of macromolecule metabolic process	3506	119	74.98	5.3e-08	1.4408642857142857e-4
+GO:0051173	positive regulation of nitrogen compound metabolic process	3083	108	65.93	5.7e-08	1.4408642857142857e-4
+GO:0031325	positive regulation of cellular metabolic process	3440	117	73.57	6.5e-08	1.4408642857142857e-4
+GO:0006807	nitrogen compound metabolic process	10169	268	217.47	1.7e-07	3.1034e-4
+GO:0071704	organic substance metabolic process	11820	301	252.78	1.8e-07	3.1034e-4
+GO:0044237	cellular metabolic process	10978	284	234.77	2.1e-07	3.2444636363636363e-4
+GO:0080090	regulation of primary metabolic process	5756	171	123.1	2.3e-07	3.2444636363636363e-4
+GO:0071840	cellular component organization or biogenesis	6791	194	145.23	3.3e-07	4.267175e-4
+GO:0051171	regulation of nitrogen compound metabolic process	5614	166	120.06	5.8e-07	6.760978571428572e-4
+GO:0044271	cellular nitrogen compound biosynthetic process	4855	148	103.83	6.1e-07	6.760978571428572e-4
+GO:0048518	positive regulation of biological process	6411	184	137.1	6.9e-07	7.137819999999999e-4
+GO:0008152	metabolic process	12343	308	263.97	1.1e-06	0.0010040411764705884
+GO:0051128	regulation of cellular component organization	2459	87	52.59	1.1e-06	0.0010040411764705884
+GO:0048522	positive regulation of cellular process	5861	170	125.34	1.4e-06	0.0012068777777777778
+GO:0006188	IMP biosynthetic process	11	5	0.24	1.8e-06	0.0014700315789473685
+GO:1901564	organonitrogen compound metabolic process	5992	172	128.14	2.3e-06	0.0017844550000000001
+GO:1901362	organic cyclic compound biosynthetic process	4257	131	91.04	2.5e-06	0.001847261904761905
+GO:0016043	cellular component organization	6581	185	140.74	2.8e-06	0.0019564913043478263
+GO:1901576	organic substance biosynthetic process	8768	233	187.51	2.9e-06	0.0019564913043478263
+GO:0007049	cell cycle	1816	68	38.84	3.3e-06	0.0021335875
+GO:0009891	positive regulation of biosynthetic process	2719	92	58.15	3.5e-06	0.00217238
+GO:0010557	positive regulation of macromolecule biosynthetic process	2611	89	55.84	3.9e-06	0.00232755
+GO:0031328	positive regulation of cellular biosynthetic process	2698	91	57.7	4.6e-06	0.002643637037037037
+GO:0019438	aromatic compound biosynthetic process	4101	126	87.7	4.8e-06	0.0026600571428571427
+GO:0030522	intracellular receptor signaling pathway	369	23	7.89	5.1e-06	0.0026896133333333336
+GO:0009058	biosynthetic process	8825	233	188.73	5.2e-06	0.0026896133333333336
+GO:0031323	regulation of cellular metabolic process	6611	184	141.38	6.3e-06	0.003153454838709677
+GO:0018130	heterocycle biosynthetic process	4088	125	87.43	6.8e-06	0.0032973625
+GO:0019222	regulation of metabolic process	7117	195	152.2	7.4e-06	0.003325071428571429
+GO:0034654	nucleobase-containing compound biosynthetic process	4012	123	85.8	7.4e-06	0.003325071428571429
+GO:0090175	regulation of establishment of planar polarity	14	5	0.3	7.5e-06	0.003325071428571429
+GO:0044249	cellular biosynthetic process	8687	229	185.78	8.4e-06	0.0036066540540540546
+GO:0006915	apoptotic process	1979	71	42.32	8.6e-06	0.0036066540540540546
+GO:0012501	programmed cell death	2055	73	43.95	8.9e-06	0.003634244736842105
+GO:0008219	cell death	2059	73	44.03	9.5e-06	0.0037797820512820513
+GO:0034641	cellular nitrogen compound metabolic process	6887	189	147.28	1.1e-05	0.004163097560975609
+GO:0042249	establishment of planar polarity of embryonic epithelium	15	5	0.32	1.1e-05	0.004163097560975609
+GO:0044346	fibroblast apoptotic process	26	6	0.56	1.5e-05	0.005412906976744186
+GO:0007059	chromosome segregation	423	24	9.05	1.5e-05	0.005412906976744186
+GO:0044085	cellular component biogenesis	3368	105	72.03	2.3e-05	0.00811115909090909
+GO:0046040	IMP metabolic process	18	5	0.38	3.0e-05	0.010119782608695652
+GO:1901360	organic cyclic compound metabolic process	6720	183	143.71	3.0e-05	0.010119782608695652
+GO:0006468	protein phosphorylation	1289	50	27.57	3.2e-05	0.010344666666666665
+GO:0031326	regulation of cellular biosynthetic process	5714	160	122.2	3.2e-05	0.010344666666666665
+GO:0045935	positive regulation of nucleobase-containing compound metabolic process	2145	73	45.87	3.8e-05	0.011865941176470588
+GO:0016310	phosphorylation	1550	57	33.15	3.9e-05	0.011865941176470588
+GO:0090179	planar cell polarity pathway involved in neural tube closure	10	4	0.21	3.9e-05	0.011865941176470588
+GO:0009168	purine ribonucleoside monophosphate biosynthetic process	19	5	0.41	4.0e-05	0.011936153846153846
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	123	88.9	4.1e-05	0.012003716981132074
+GO:0006996	organelle organization	3623	110	77.48	4.3e-05	0.012191928571428572
+GO:0080134	regulation of response to stress	1412	53	30.2	4.4e-05	0.012191928571428572
+GO:0009889	regulation of biosynthetic process	5745	160	122.86	4.4e-05	0.012191928571428572
+GO:0001738	morphogenesis of a polarized epithelium	61	8	1.3	4.5e-05	0.012250263157894736
+GO:2000269	regulation of fibroblast apoptotic process	20	5	0.43	5.2e-05	0.013911793103448275
+GO:0006725	cellular aromatic compound metabolic process	6468	176	138.32	5.3e-05	0.013939
+GO:0090178	regulation of establishment of planar polarity involved in neural tube closure	11	4	0.24	6.0e-05	0.015517000000000001
+GO:0009127	purine nucleoside monophosphate biosynthetic process	21	5	0.45	6.7e-05	0.01704326229508197
+GO:0046483	heterocycle metabolic process	6421	174	137.32	7.8e-05	0.019521387096774194
+GO:0051252	regulation of RNA metabolic process	3847	114	82.27	8.5e-05	0.02085096875
+GO:0042981	regulation of apoptotic process	1522	55	32.55	8.6e-05	0.02085096875
+GO:0009156	ribonucleoside monophosphate biosynthetic process	35	6	0.75	8.8e-05	0.02092443939393939
+GO:0090177	establishment of planar polarity involved in neural tube closure	12	4	0.26	8.9e-05	0.02092443939393939
+GO:0048519	negative regulation of biological process	5819	160	124.44	9.1e-05	0.021075328358208956
+GO:0032264	IMP salvage	5	3	0.11	9.4e-05	0.021449970588235293
+GO:0036211	protein modification process	2958	92	63.26	9.6e-05	0.021502128571428573
+GO:0019538	protein metabolic process	4915	139	105.11	9.7e-05	0.021502128571428573
+GO:0043067	regulation of programmed cell death	1571	56	33.6	0.00011	0.023065810810810813
+GO:0046033	AMP metabolic process	23	5	0.49	0.00011	0.023065810810810813
+GO:0050794	regulation of cellular process	11713	286	250.49	0.00011	0.023065810810810813
+GO:0060255	regulation of macromolecule metabolic process	6596	177	141.06	0.00011	0.023065810810810813
+GO:0006139	nucleobase-containing compound metabolic process	6241	169	133.47	0.00012	0.023570126582278483
+GO:0051246	regulation of protein metabolic process	2223	73	47.54	0.00012	0.023570126582278483
+GO:0032101	regulation of response to external stimulus	1144	44	24.47	0.00012	0.023570126582278483
+GO:0001736	establishment of planar polarity	37	6	0.79	0.00012	0.023570126582278483
+GO:0007164	establishment of tissue polarity	37	6	0.79	0.00012	0.023570126582278483
+GO:0045089	positive regulation of innate immune response	365	20	7.81	0.00013	0.023731882352941176
+GO:0065008	regulation of biological quality	2940	91	62.87	0.00013	0.023731882352941176
+GO:0033043	regulation of organelle organization	1183	45	25.3	0.00013	0.023731882352941176
+GO:0032103	positive regulation of response to external stimulus	640	29	13.69	0.00013	0.023731882352941176
+GO:0009987	cellular process	17647	394	377.4	0.00013	0.023731882352941176
+GO:1903034	regulation of response to wounding	179	13	3.83	0.00013	0.023731882352941176
+GO:1901700	response to oxygen-containing compound	1698	59	36.31	0.00014	0.024686136363636365
+GO:0051726	regulation of cell cycle	1116	43	23.87	0.00014	0.024686136363636365
+GO:0043412	macromolecule modification	3191	97	68.24	0.00014	0.024686136363636365
+GO:0046390	ribose phosphate biosynthetic process	233	15	4.98	0.00016	0.02758577777777778
+GO:0051254	positive regulation of RNA metabolic process	1937	65	41.42	0.00016	0.02758577777777778
+GO:0006177	GMP biosynthetic process	14	4	0.3	0.00017	0.02867271739130435
+GO:0010556	regulation of macromolecule biosynthetic process	5582	153	119.38	0.00017	0.02867271739130435
+GO:0010468	regulation of gene expression	5454	150	116.64	0.00018	0.030032903225806453
+GO:0022607	cellular component assembly	3100	94	66.3	0.00020	0.03266736842105263
+GO:0060997	dendritic spine morphogenesis	57	7	1.22	0.00020	0.03266736842105263
+GO:0002753	cytoplasmic pattern recognition receptor signaling pathway	163	12	3.49	0.00021	0.033250714285714286
+GO:0048585	negative regulation of response to stimulus	1764	60	37.72	0.00021	0.033250714285714286
+GO:0048813	dendrite morphogenesis	140	11	2.99	0.00021	0.033250714285714286
+GO:0019637	organophosphate metabolic process	1034	40	22.11	0.00022	0.03379940594059406
+GO:0001941	postsynaptic membrane organization	41	6	0.88	0.00022	0.03379940594059406
+GO:0031349	positive regulation of defense response	502	24	10.74	0.00022	0.03379940594059406
+GO:0031401	positive regulation of protein modification process	764	32	16.34	0.00024	0.03651058823529412
+GO:0009124	nucleoside monophosphate biosynthetic process	42	6	0.9	0.00025	0.037662621359223304
+GO:0022402	cell cycle process	1294	47	27.67	0.00026	0.038792499999999994
+GO:0022603	regulation of anatomical structure morphogenesis	907	36	19.4	0.00028	0.04137866666666666
+GO:0048732	gland development	449	22	9.6	0.00029	0.04205542056074767
+GO:0019693	ribose phosphate metabolic process	480	23	10.27	0.00029	0.04205542056074767
+GO:0051179	localization	5335	146	114.09	0.00030	0.0423190909090909
+GO:0002833	positive regulation of response to biotic stimulus	390	20	8.34	0.00030	0.0423190909090909
+GO:0051130	positive regulation of cellular component organization	1122	42	23.99	0.00030	0.0423190909090909
+GO:0048523	negative regulation of cellular process	5471	149	117	0.00031	0.042805517241379314
+GO:0043933	protein-containing complex organization	2454	77	52.48	0.00032	0.042805517241379314
+GO:0010033	response to organic substance	2734	84	58.47	0.00032	0.042805517241379314
+GO:0019405	alditol catabolic process	7	3	0.15	0.00032	0.042805517241379314
+GO:0099173	postsynapse organization	196	13	4.19	0.00032	0.042805517241379314
+GO:0006351	DNA-templated transcription	3554	104	76.01	0.00032	0.042805517241379314
+GO:0098698	postsynaptic specialization assembly	29	5	0.62	0.00034	0.045092136752136754
+GO:0022612	gland morphogenesis	125	10	2.67	0.00036	0.04734
+GO:0099084	postsynaptic specialization organization	45	6	0.96	0.00037	0.048246134453781515
+GO:0009260	ribonucleotide biosynthetic process	226	14	4.83	0.00038	0.04913716666666667

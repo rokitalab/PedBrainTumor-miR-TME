@@ -1,0 +1,30 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0006886	intracellular protein transport	676	36	14.89	1.0e-06	0.008792966666666666
+GO:0033036	macromolecule localization	3004	103	66.15	1.6e-06	0.008792966666666666
+GO:0071702	organic substance transport	2370	86	52.19	1.7e-06	0.008792966666666666
+GO:0015031	protein transport	1415	58	31.16	3.2e-06	0.01103431111111111
+GO:0043434	response to peptide hormone	438	26	9.65	5.1e-06	0.01103431111111111
+GO:0070727	cellular macromolecule localization	2516	88	55.41	5.5e-06	0.01103431111111111
+GO:0051179	localization	5335	159	117.48	5.5e-06	0.01103431111111111
+GO:0071375	cellular response to peptide hormone stimulus	311	21	6.85	6.0e-06	0.01103431111111111
+GO:0071705	nitrogen compound transport	1903	71	41.91	6.4e-06	0.01103431111111111
+GO:0051641	cellular localization	3384	110	74.52	8.1e-06	0.011120516666666667
+GO:0008104	protein localization	2505	87	55.16	8.3e-06	0.011120516666666667
+GO:0006810	transport	4385	135	96.56	8.6e-06	0.011120516666666667
+GO:1901653	cellular response to peptide	376	23	8.28	1.1e-05	0.01312976923076923
+GO:1901652	response to peptide	526	28	11.58	1.7e-05	0.017585933333333335
+GO:0044271	cellular nitrogen compound biosynthetic process	4855	145	106.91	1.7e-05	0.017585933333333335
+GO:0008286	insulin receptor signaling pathway	126	12	2.77	2.3e-05	0.0223056875
+GO:0035332	positive regulation of hippo signaling	9	4	0.2	2.7e-05	0.024644647058823528
+GO:0045184	establishment of protein localization	1701	63	37.46	2.9e-05	0.02499961111111111
+GO:0051234	establishment of localization	4698	139	103.45	4.8e-05	0.03879250000000001
+GO:0080090	regulation of primary metabolic process	5756	164	126.75	5.3e-05	0.03879250000000001
+GO:1901362	organic cyclic compound biosynthetic process	4257	128	93.74	5.4e-05	0.03879250000000001
+GO:0032869	cellular response to insulin stimulus	206	15	4.54	5.5e-05	0.03879250000000001
+GO:0006607	NLS-bearing protein import into nucleus	20	5	0.44	6.0e-05	0.04047913043478261
+GO:0046907	intracellular transport	1357	52	29.88	6.6e-05	0.04117973076923077
+GO:0043066	negative regulation of apoptotic process	917	39	20.19	6.8e-05	0.04117973076923077
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	125	91.54	6.9e-05	0.04117973076923077
+GO:0018130	heterocycle biosynthetic process	4088	123	90.02	7.9e-05	0.04540159259259259
+GO:0006807	nitrogen compound metabolic process	10169	262	223.93	8.4e-05	0.046551
+GO:0046649	lymphocyte activation	799	35	17.59	9.2e-05	0.049226344827586206

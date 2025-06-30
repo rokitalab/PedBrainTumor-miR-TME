@@ -1,0 +1,105 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0051252	regulation of RNA metabolic process	3847	106	64.76	3.4e-08	2.79306e-4
+GO:0051171	regulation of nitrogen compound metabolic process	5614	140	94.5	3.6e-08	2.79306e-4
+GO:0080090	regulation of primary metabolic process	5756	142	96.89	5.5e-08	2.8447833333333333e-4
+GO:0031323	regulation of cellular metabolic process	6611	156	111.29	1.4e-07	4.0908454545454545e-4
+GO:0044238	primary metabolic process	10655	224	179.36	1.5e-07	4.0908454545454545e-4
+GO:0051173	positive regulation of nitrogen compound metabolic process	3083	88	51.9	1.8e-07	4.0908454545454545e-4
+GO:0006355	regulation of DNA-templated transcription	3431	95	57.76	2.1e-07	4.0908454545454545e-4
+GO:0032774	RNA biosynthetic process	3585	98	60.35	2.2e-07	4.0908454545454545e-4
+GO:2001141	regulation of RNA biosynthetic process	3450	95	58.08	2.7e-07	4.0908454545454545e-4
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	109	69.98	2.8e-07	4.0908454545454545e-4
+GO:0006351	DNA-templated transcription	3554	97	59.83	2.9e-07	4.0908454545454545e-4
+GO:0036211	protein modification process	2958	84	49.79	4.9e-07	6.2068e-4
+GO:0006357	regulation of transcription by RNA polymerase II	2581	76	43.45	5.2e-07	6.2068e-4
+GO:0051172	negative regulation of nitrogen compound metabolic process	2266	69	38.14	6.0e-07	6.650142857142857e-4
+GO:0018130	heterocycle biosynthetic process	4088	106	68.81	8.1e-07	7.7585e-4
+GO:0051641	cellular localization	3384	92	56.96	8.1e-07	7.7585e-4
+GO:0043412	macromolecule modification	3191	88	53.72	8.5e-07	7.7585e-4
+GO:0048522	positive regulation of cellular process	5861	139	98.66	1.1e-06	8.983526315789475e-4
+GO:0034654	nucleobase-containing compound biosynthetic process	4012	104	67.54	1.1e-06	8.983526315789475e-4
+GO:0044271	cellular nitrogen compound biosynthetic process	4855	120	81.73	1.3e-06	0.001008605
+GO:0045892	negative regulation of DNA-templated transcription	1264	45	21.28	1.5e-06	0.001057977272727273
+GO:0006366	transcription by RNA polymerase II	2701	77	45.47	1.5e-06	0.001057977272727273
+GO:0051253	negative regulation of RNA metabolic process	1395	48	23.48	1.7e-06	0.0010991208333333332
+GO:0019438	aromatic compound biosynthetic process	4101	105	69.03	1.7e-06	0.0010991208333333332
+GO:1901362	organic cyclic compound biosynthetic process	4257	108	71.66	1.8e-06	0.0011172239999999998
+GO:1902679	negative regulation of RNA biosynthetic process	1279	45	21.53	2.1e-06	0.0012532961538461536
+GO:0009893	positive regulation of metabolic process	3816	99	64.24	2.3e-06	0.0013218185185185185
+GO:0000122	negative regulation of transcription by RNA polymerase II	923	36	15.54	2.5e-06	0.0013376724137931036
+GO:0019222	regulation of metabolic process	7117	160	119.8	2.5e-06	0.0013376724137931036
+GO:0006807	nitrogen compound metabolic process	10169	211	171.18	3.2e-06	0.0016551466666666667
+GO:0006996	organelle organization	3623	94	60.99	4.6e-06	0.0023025225806451613
+GO:0048518	positive regulation of biological process	6411	146	107.92	5.5e-06	0.002666984375
+GO:0031325	positive regulation of cellular metabolic process	3440	90	57.91	5.8e-06	0.002727230303030303
+GO:0070727	cellular macromolecule localization	2516	71	42.35	6.4e-06	0.0028373942857142856
+GO:0033365	protein localization to organelle	963	36	16.21	6.4e-06	0.0028373942857142856
+GO:0033036	macromolecule localization	3004	81	50.57	6.7e-06	0.0028878861111111113
+GO:0012501	programmed cell death	2055	61	34.59	7.2e-06	0.0030195243243243243
+GO:0008219	cell death	2059	61	34.66	7.7e-06	0.0031442342105263165
+GO:0045934	negative regulation of nucleobase-containing compound metabolic process	1523	49	25.64	8.3e-06	0.0033023358974358973
+GO:0010556	regulation of macromolecule biosynthetic process	5582	130	93.96	9.2e-06	0.0034642604651162786
+GO:0006915	apoptotic process	1979	59	33.31	9.2e-06	0.0034642604651162786
+GO:0044237	cellular metabolic process	10978	222	184.8	9.4e-06	0.0034642604651162786
+GO:0046907	intracellular transport	1357	45	22.84	9.6e-06	0.0034642604651162786
+GO:0008104	protein localization	2505	70	42.17	1.1e-05	0.0038792500000000003
+GO:0010604	positive regulation of macromolecule metabolic process	3506	90	59.02	1.3e-05	0.004482688888888888
+GO:0090304	nucleic acid metabolic process	5683	131	95.66	1.4e-05	0.004722565217391304
+GO:0048523	negative regulation of cellular process	5471	127	92.1	1.5e-05	0.0048490625
+GO:0009889	regulation of biosynthetic process	5745	132	96.71	1.5e-05	0.0048490625
+GO:0060255	regulation of macromolecule metabolic process	6596	147	111.03	1.8e-05	0.005700122448979592
+GO:0031326	regulation of cellular biosynthetic process	5714	131	96.19	1.9e-05	0.00589646
+GO:0051254	positive regulation of RNA metabolic process	1937	57	32.61	2.0e-05	0.005968076923076923
+GO:0016070	RNA metabolic process	5123	120	86.24	2.0e-05	0.005968076923076923
+GO:0019538	protein metabolic process	4915	116	82.74	2.2e-05	0.006441018867924528
+GO:0014743	regulation of muscle hypertrophy	71	8	1.2	2.5e-05	0.007183796296296297
+GO:0045935	positive regulation of nucleobase-containing compound metabolic process	2145	61	36.11	2.7e-05	0.007617436363636363
+GO:0051865	protein autoubiquitination	73	8	1.23	3.1e-05	0.008589767857142858
+GO:0010468	regulation of gene expression	5454	125	91.81	3.6e-05	0.00980021052631579
+GO:0043687	post-translational protein modification	1006	35	16.93	3.9e-05	0.010433844827586207
+GO:0016050	vesicle organization	371	18	6.25	6.3e-05	0.016551466666666667
+GO:0044346	fibroblast apoptotic process	26	5	0.44	6.4e-05	0.016551466666666667
+GO:0045184	establishment of protein localization	1701	50	28.63	7.1e-05	0.017733714285714287
+GO:0046483	heterocycle metabolic process	6421	141	108.09	7.2e-05	0.017733714285714287
+GO:0043170	macromolecule metabolic process	10237	206	172.32	7.2e-05	0.017733714285714287
+GO:0048519	negative regulation of biological process	5819	130	97.95	7.9e-05	0.019153796875
+GO:0051649	establishment of localization in cell	1947	55	32.77	8.6e-05	0.020530184615384615
+GO:0016567	protein ubiquitination	760	28	12.79	9.3e-05	0.021770119402985073
+GO:0016188	synaptic vesicle maturation	28	5	0.47	9.4e-05	0.021770119402985073
+GO:0070050	neuron cellular homeostasis	64	7	1.08	9.8e-05	0.02203863768115942
+GO:0007049	cell cycle	1816	52	30.57	9.8e-05	0.02203863768115942
+GO:0006139	nucleobase-containing compound metabolic process	6241	137	105.06	0.00010	0.022167142857142857
+GO:0043068	positive regulation of programmed cell death	574	23	9.66	0.00012	0.026225915492957746
+GO:0045944	positive regulation of transcription by RNA polymerase II	1243	39	20.92	0.00013	0.028016805555555552
+GO:0031647	regulation of protein stability	326	16	5.49	0.00014	0.028583947368421053
+GO:1904951	positive regulation of establishment of protein localization	326	16	5.49	0.00014	0.028583947368421053
+GO:0051726	regulation of cell cycle	1116	36	18.79	0.00014	0.028583947368421053
+GO:0010611	regulation of cardiac muscle hypertrophy	68	7	1.14	0.00014	0.028583947368421053
+GO:0070647	protein modification by small protein conjugation or removal	949	32	15.97	0.00015	0.030227922077922072
+GO:0030878	thyroid gland development	31	5	0.52	0.00016	0.030650864197530867
+GO:0007034	vacuolar transport	171	11	2.88	0.00016	0.030650864197530867
+GO:0003158	endothelium development	143	10	2.41	0.00016	0.030650864197530867
+GO:0097401	synaptic vesicle lumen acidification	17	4	0.29	0.00016	0.030650864197530867
+GO:0023057	negative regulation of signaling	1485	44	25	0.00017	0.03216939024390244
+GO:0043502	regulation of muscle adaptation	94	8	1.58	0.00019	0.03552084337349398
+GO:0034641	cellular nitrogen compound metabolic process	6887	147	115.93	0.00020	0.0356712643678161
+GO:0010558	negative regulation of macromolecule biosynthetic process	2696	69	45.38	0.00020	0.0356712643678161
+GO:0031327	negative regulation of cellular biosynthetic process	2747	70	46.24	0.00020	0.0356712643678161
+GO:1901360	organic cyclic compound metabolic process	6720	144	113.12	0.00020	0.0356712643678161
+GO:0071310	cellular response to organic substance	2015	55	33.92	0.00021	0.03580846153846154
+GO:0045893	positive regulation of DNA-templated transcription	1685	48	28.36	0.00021	0.03580846153846154
+GO:0031324	negative regulation of cellular metabolic process	3157	78	53.14	0.00021	0.03580846153846154
+GO:1903829	positive regulation of protein localization	483	20	8.13	0.00021	0.03580846153846154
+GO:1902680	positive regulation of RNA biosynthetic process	1688	48	28.41	0.00022	0.03710586956521739
+GO:0032446	protein modification by small protein conjugation	845	29	14.22	0.00023	0.037567473684210526
+GO:0048732	gland development	449	19	7.56	0.00023	0.037567473684210526
+GO:0009890	negative regulation of biosynthetic process	2761	70	46.48	0.00023	0.037567473684210526
+GO:0008152	metabolic process	12343	237	207.77	0.00024	0.038392577319587624
+GO:0051301	cell division	643	24	10.82	0.00024	0.038392577319587624
+GO:0050794	regulation of cellular process	11713	227	197.17	0.00025	0.03958418367346939
+GO:0009891	positive regulation of biosynthetic process	2719	69	45.77	0.00026	0.04034419999999999
+GO:0006725	cellular aromatic compound metabolic process	6468	139	108.88	0.00026	0.04034419999999999
+GO:0071383	cellular response to steroid hormone stimulus	213	12	3.59	0.00027	0.04148108910891089
+GO:0055070	copper ion homeostasis	20	4	0.34	0.00031	0.046701650485436896
+GO:2000269	regulation of fibroblast apoptotic process	20	4	0.34	0.00031	0.046701650485436896
+GO:0010648	negative regulation of cell communication	1484	43	24.98	0.00033	0.04923663461538461

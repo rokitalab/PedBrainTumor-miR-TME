@@ -1,0 +1,142 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0044271	cellular nitrogen compound biosynthetic process	4855	401	309.17	6.4e-10	9.930879999999999e-6
+GO:0044238	primary metabolic process	10655	772	678.52	8.9e-09	6.905065e-5
+GO:0043412	macromolecule modification	3191	275	203.21	2.3e-08	7.241266666666667e-5
+GO:0030163	protein catabolic process	994	108	63.3	2.6e-08	7.241266666666667e-5
+GO:0051649	establishment of localization in cell	1947	183	123.99	2.8e-08	7.241266666666667e-5
+GO:0006351	DNA-templated transcription	3554	300	226.32	3.4e-08	7.241266666666667e-5
+GO:0034654	nucleobase-containing compound biosynthetic process	4012	332	255.49	3.7e-08	7.241266666666667e-5
+GO:0036211	protein modification process	2958	257	188.37	3.9e-08	7.241266666666667e-5
+GO:0018130	heterocycle biosynthetic process	4088	337	260.33	4.2e-08	7.241266666666667e-5
+GO:0046907	intracellular transport	1357	136	86.42	5.7e-08	8.844690000000001e-5
+GO:0006807	nitrogen compound metabolic process	10169	736	647.57	6.4e-08	9.028072727272728e-5
+GO:0032774	RNA biosynthetic process	3585	300	228.3	8.0e-08	1.0265092307692307e-4
+GO:0019438	aromatic compound biosynthetic process	4101	336	261.16	8.6e-08	1.0265092307692307e-4
+GO:0051641	cellular localization	3384	285	215.5	1.1e-07	1.163775e-4
+GO:0006355	regulation of DNA-templated transcription	3431	288	218.49	1.2e-07	1.163775e-4
+GO:0045893	positive regulation of DNA-templated transcription	1685	160	107.3	1.2e-07	1.163775e-4
+GO:1902680	positive regulation of RNA biosynthetic process	1688	160	107.49	1.4e-07	1.277870588235294e-4
+GO:2001141	regulation of RNA biosynthetic process	3450	288	219.7	2.0e-07	1.724111111111111e-4
+GO:0007167	enzyme-linked receptor protein signaling pathway	1028	107	65.46	2.7e-07	2.205047368421053e-4
+GO:1901362	organic cyclic compound biosynthetic process	4257	343	271.09	3.4e-07	2.63789e-4
+GO:0006366	transcription by RNA polymerase II	2701	233	172	3.6e-07	2.660057142857143e-4
+GO:0051603	proteolysis involved in protein catabolic process	756	84	48.14	3.9e-07	2.7507409090909095e-4
+GO:0045944	positive regulation of transcription by RNA polymerase II	1243	123	79.16	5.1e-07	3.4407260869565216e-4
+GO:0051171	regulation of nitrogen compound metabolic process	5614	434	357.51	5.4e-07	3.491325e-4
+GO:0006357	regulation of transcription by RNA polymerase II	2581	223	164.36	6.2e-07	3.8195692307692303e-4
+GO:0080090	regulation of primary metabolic process	5756	443	366.55	6.4e-07	3.8195692307692303e-4
+GO:0043632	modification-dependent macromolecule catabolic process	618	71	39.35	9.4e-07	5.172333333333333e-4
+GO:0019538	protein metabolic process	4915	385	312.99	9.6e-07	5.172333333333333e-4
+GO:0019941	modification-dependent protein catabolic process	607	70	38.65	9.8e-07	5.172333333333333e-4
+GO:0009056	catabolic process	2668	228	169.9	1.0e-06	5.172333333333333e-4
+GO:0009966	regulation of signal transduction	3131	261	199.39	1.1e-06	5.33396875e-4
+GO:0006511	ubiquitin-dependent protein catabolic process	597	69	38.02	1.1e-06	5.33396875e-4
+GO:0023051	regulation of signaling	3554	290	226.32	1.4e-06	6.582969696969696e-4
+GO:1901564	organonitrogen compound metabolic process	5992	456	381.58	1.5e-06	6.845735294117647e-4
+GO:0010646	regulation of cell communication	3559	289	226.64	2.3e-06	0.0010196885714285715
+GO:0071705	nitrogen compound transport	1903	170	121.19	2.5e-06	0.0010775694444444446
+GO:0016197	endosomal transport	289	40	18.4	3.0e-06	0.0012581351351351351
+GO:0009893	positive regulation of metabolic process	3816	306	243.01	3.1e-06	0.0012658605263157895
+GO:0051252	regulation of RNA metabolic process	3847	308	244.98	3.2e-06	0.0012731897435897435
+GO:0045935	positive regulation of nucleobase-containing compound metabolic process	2145	187	136.6	3.5e-06	0.001324621951219512
+GO:0065007	biological regulation	12701	879	808.81	3.5e-06	0.001324621951219512
+GO:0071560	cellular response to transforming growth factor beta stimulus	302	41	19.23	3.7e-06	0.0013669738095238096
+GO:0051173	positive regulation of nitrogen compound metabolic process	3083	254	196.33	3.9e-06	0.0014073558139534883
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	328	264.72	5.1e-06	0.0017930755555555554
+GO:1901565	organonitrogen compound catabolic process	1432	133	91.19	5.2e-06	0.0017930755555555554
+GO:0140459	response to Gram-positive bacterium	6	5	0.38	5.9e-06	0.0019808936170212766
+GO:0016567	protein ubiquitination	760	80	48.4	6.0e-06	0.0019808936170212766
+GO:0071559	response to transforming growth factor beta	309	41	19.68	6.5e-06	0.002090044897959184
+GO:0010557	positive regulation of macromolecule biosynthetic process	2611	219	166.27	6.6e-06	0.002090044897959184
+GO:0010604	positive regulation of macromolecule metabolic process	3506	282	223.27	7.0e-06	0.00217238
+GO:0034976	response to endoplasmic reticulum stress	269	37	17.13	8.0e-06	0.0024340392156862742
+GO:0043687	post-translational protein modification	1006	99	64.06	8.9e-06	0.0026557942307692305
+GO:0060411	cardiac septum morphogenesis	72	16	4.59	9.2e-06	0.0026935169811320753
+GO:0009719	response to endogenous stimulus	1758	156	111.95	9.8e-06	0.002816048148148148
+GO:0032446	protein modification by small protein conjugation	845	86	53.81	1.0e-05	0.0028212727272727274
+GO:0051254	positive regulation of RNA metabolic process	1937	169	123.35	1.1e-05	0.003047982142857143
+GO:0070647	protein modification by small protein conjugation or removal	949	94	60.43	1.2e-05	0.0032104137931034484
+GO:0051179	localization	5335	405	339.74	1.2e-05	0.0032104137931034484
+GO:0007169	transmembrane receptor protein tyrosine kinase signaling pathway	641	69	40.82	1.3e-05	0.0034189999999999997
+GO:0048583	regulation of response to stimulus	4116	322	262.11	1.4e-05	0.0036206333333333334
+GO:0009057	macromolecule catabolic process	1463	133	93.17	1.5e-05	0.0036367968750000003
+GO:0007179	transforming growth factor beta receptor signaling pathway	245	34	15.6	1.5e-05	0.0036367968750000003
+GO:0010498	proteasomal protein catabolic process	525	59	33.43	1.5e-05	0.0036367968750000003
+GO:0031325	positive regulation of cellular metabolic process	3440	275	219.06	1.5e-05	0.0036367968750000003
+GO:0071495	cellular response to endogenous stimulus	1505	136	95.84	1.6e-05	0.0037616969696969696
+GO:0000209	protein polyubiquitination	267	36	17	1.6e-05	0.0037616969696969696
+GO:0051234	establishment of localization	4698	361	299.17	1.7e-05	0.00387925
+GO:0009967	positive regulation of signal transduction	1600	143	101.89	1.7e-05	0.00387925
+GO:0071840	cellular component organization or biogenesis	6791	500	432.46	1.8e-05	0.0039338873239436615
+GO:0048731	system development	4072	318	259.31	1.8e-05	0.0039338873239436615
+GO:0048518	positive regulation of biological process	6411	475	408.26	1.8e-05	0.0039338873239436615
+GO:0016043	cellular component organization	6581	486	419.09	1.9e-05	0.004094763888888889
+GO:0016482	cytosolic transport	138	23	8.79	2.0e-05	0.004251232876712329
+GO:0031328	positive regulation of cellular biosynthetic process	2698	222	171.81	2.1e-05	0.0044034729729729724
+GO:0008152	metabolic process	12343	850	786.02	2.9e-05	0.005999906666666667
+GO:0009725	response to hormone	883	87	56.23	3.0e-05	0.006125131578947369
+GO:0045184	establishment of protein localization	1701	149	108.32	3.1e-05	0.006247103896103896
+GO:0009891	positive regulation of biosynthetic process	2719	222	173.15	3.4e-05	0.006763820512820513
+GO:0141091	transforming growth factor beta receptor superfamily signaling pathway	388	46	24.71	3.5e-05	0.006874620253164557
+GO:0048522	positive regulation of cellular process	5861	436	373.24	3.7e-05	0.0071766124999999995
+GO:0006796	phosphate-containing compound metabolic process	2559	210	162.96	4.3e-05	0.008136963414634147
+GO:0019222	regulation of metabolic process	7117	518	453.22	4.3e-05	0.008136963414634147
+GO:0016310	phosphorylation	1550	137	98.71	4.4e-05	0.008225879518072288
+GO:0008104	protein localization	2505	206	159.52	4.6e-05	0.008397435294117647
+GO:0006879	intracellular iron ion homeostasis	73	15	4.65	4.6e-05	0.008397435294117647
+GO:0003279	cardiac septum development	108	19	6.88	4.8e-05	0.008561103448275863
+GO:0060485	mesenchyme development	336	41	21.4	4.8e-05	0.008561103448275863
+GO:1901575	organic substance catabolic process	2188	183	139.33	5.2e-05	0.009137788888888889
+GO:0051253	negative regulation of RNA metabolic process	1395	125	88.84	5.3e-05	0.009137788888888889
+GO:0051056	regulation of small GTPase mediated signal transduction	304	38	19.36	5.3e-05	0.009137788888888889
+GO:0141124	intracellular signaling cassette	1914	163	121.89	5.7e-05	0.00951041935483871
+GO:0045892	negative regulation of DNA-templated transcription	1264	115	80.49	5.7e-05	0.00951041935483871
+GO:0006793	phosphorus metabolic process	2585	211	164.62	5.7e-05	0.00951041935483871
+GO:0007275	multicellular organism development	4764	361	303.38	5.8e-05	0.00957431914893617
+GO:0070727	cellular macromolecule localization	2516	206	160.22	6.0e-05	0.00980021052631579
+GO:1901700	response to oxygen-containing compound	1698	147	108.13	6.3e-05	0.01018303125
+GO:0010033	response to organic substance	2734	221	174.1	6.8e-05	0.010877896907216494
+GO:0023056	positive regulation of signaling	1817	155	115.71	8.1e-05	0.012825275510204083
+GO:0098876	vesicle-mediated transport to the plasma membrane	151	23	9.62	8.5e-05	0.013322676767676768
+GO:1902679	negative regulation of RNA biosynthetic process	1279	115	81.45	9.3e-05	0.014430809999999999
+GO:0022008	neurogenesis	1741	149	110.87	9.7e-05	0.014638679245283018
+GO:0045934	negative regulation of nucleobase-containing compound metabolic process	1523	133	96.99	9.8e-05	0.014638679245283018
+GO:0071363	cellular response to growth factor stimulus	747	74	47.57	1.0e-04	0.014638679245283018
+GO:0050789	regulation of biological process	12273	841	781.56	1.0e-04	0.014638679245283018
+GO:0007178	transmembrane receptor protein serine/threonine kinase signaling pathway	417	47	26.56	0.00010	0.014638679245283018
+GO:0071702	organic substance transport	2370	194	150.92	0.00010	0.014638679245283018
+GO:0031323	regulation of cellular metabolic process	6611	481	421	0.00011	0.015952056074766355
+GO:0006886	intracellular protein transport	676	68	43.05	0.00012	0.017082935779816514
+GO:0033036	macromolecule localization	3004	238	191.3	0.00012	0.017082935779816514
+GO:0070848	response to growth factor	779	76	49.61	0.00013	0.018338272727272724
+GO:0072001	renal system development	329	39	20.95	0.00014	0.01939625
+GO:0009888	tissue development	2032	169	129.4	0.00014	0.01939625
+GO:0070482	response to oxygen levels	354	41	22.54	0.00015	0.020417105263157893
+GO:0035270	endocrine system development	137	21	8.72	0.00015	0.020417105263157893
+GO:0032456	endocytic recycling	90	16	5.73	0.00016	0.021402758620689657
+GO:0010647	positive regulation of cell communication	1816	153	115.64	0.00016	0.021402758620689657
+GO:0051172	negative regulation of nitrogen compound metabolic process	2266	185	144.3	0.00018	0.02367
+GO:0033993	response to lipid	929	87	59.16	0.00018	0.02367
+GO:0006810	transport	4385	331	279.24	0.00019	0.024775042016806723
+GO:0044237	cellular metabolic process	10978	758	699.09	0.00020	0.025437704918032787
+GO:0060430	lung saccule development	10	5	0.64	0.00020	0.025437704918032787
+GO:0030182	neuron differentiation	1426	124	90.81	0.00020	0.025437704918032787
+GO:0070072	vacuolar proton-transporting V-type ATPase complex assembly	6	4	0.38	0.00022	0.0277539837398374
+GO:0050794	regulation of cellular process	11713	803	745.9	0.00023	0.028781532258064516
+GO:2000008	regulation of protein localization to cell surface	42	10	2.67	0.00024	0.02979264
+GO:0036293	response to decreased oxygen levels	327	38	20.82	0.00025	0.03054527559055118
+GO:0016192	vesicle-mediated transport	1543	132	98.26	0.00025	0.03054527559055118
+GO:0036486	ventral trunk neural crest cell migration	3	3	0.19	0.00026	0.03127457364341085
+GO:0065008	regulation of biological quality	2940	231	187.22	0.00026	0.03127457364341085
+GO:0071704	organic substance metabolic process	11820	809	752.71	0.00027	0.031981603053435115
+GO:0090092	regulation of transmembrane receptor protein serine/threonine kinase signaling pathway	317	37	20.19	0.00027	0.031981603053435115
+GO:0034641	cellular nitrogen compound metabolic process	6887	495	438.57	0.00029	0.03409037878787879
+GO:0001822	kidney development	319	37	20.31	0.00031	0.035897537313432835
+GO:0034394	protein localization to cell surface	68	13	4.33	0.00031	0.035897537313432835
+GO:0015031	protein transport	1415	122	90.11	0.00032	0.036781037037037036
+GO:0035556	intracellular signal transduction	2721	215	173.28	0.00033	0.03765154411764706
+GO:0033554	cellular response to stress	1847	153	117.62	0.00036	0.04077459854014599
+GO:0017015	regulation of transforming growth factor beta receptor signaling pathway	177	24	11.27	0.00037	0.04160355072463768
+GO:0003205	cardiac chamber development	168	23	10.7	0.00042	0.046885899280575544
+GO:0065009	regulation of molecular function	2037	166	129.72	0.00043	0.0473213475177305
+GO:0048699	generation of neurons	1508	128	96.03	0.00043	0.0473213475177305

@@ -1,0 +1,127 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0019538	protein metabolic process	4915	62	33.04	2.8e-08	1.9008325000000002e-4
+GO:0048518	positive regulation of biological process	6411	73	43.1	4.3e-08	1.9008325000000002e-4
+GO:0051171	regulation of nitrogen compound metabolic process	5614	67	37.74	4.5e-08	1.9008325000000002e-4
+GO:0080090	regulation of primary metabolic process	5756	68	38.7	4.9e-08	1.9008325000000002e-4
+GO:0010604	positive regulation of macromolecule metabolic process	3506	49	23.57	9.6e-08	2.979264e-4
+GO:0008283	cell population proliferation	2090	35	14.05	2.2e-07	5.689566666666667e-4
+GO:0048522	positive regulation of cellular process	5861	67	39.4	2.7e-07	5.818875e-4
+GO:0036211	protein modification process	2958	43	19.89	3.0e-07	5.818875e-4
+GO:0031325	positive regulation of cellular metabolic process	3440	47	23.13	4.1e-07	7.068855555555555e-4
+GO:0009893	positive regulation of metabolic process	3816	50	25.65	5.2e-07	7.899563636363637e-4
+GO:0042127	regulation of cell population proliferation	1780	31	11.97	5.6e-07	7.899563636363637e-4
+GO:0043412	macromolecule modification	3191	44	21.45	9.2e-07	0.001108357142857143
+GO:0050789	regulation of biological process	12273	107	82.51	9.9e-07	0.001108357142857143
+GO:0060255	regulation of macromolecule metabolic process	6596	71	44.34	1.0e-06	0.001108357142857143
+GO:0031323	regulation of cellular metabolic process	6611	71	44.44	1.1e-06	0.0011379133333333333
+GO:0006468	protein phosphorylation	1289	25	8.67	1.3e-06	0.0012607562500000001
+GO:0019222	regulation of metabolic process	7117	74	47.85	1.9e-06	0.0017342529411764707
+GO:0051173	positive regulation of nitrogen compound metabolic process	3083	42	20.73	2.6e-06	0.0022413444444444445
+GO:0043170	macromolecule metabolic process	10237	94	68.82	3.1e-06	0.002531721052631579
+GO:0007166	cell surface receptor signaling pathway	2899	40	19.49	3.6e-06	0.00279306
+GO:0065007	biological regulation	12701	108	85.39	4.0e-06	0.0029556190476190476
+GO:0031054	pre-miRNA processing	17	4	0.11	4.3e-06	0.0030328681818181822
+GO:0048856	anatomical structure development	6016	65	40.44	4.5e-06	0.003035934782608696
+GO:0007169	transmembrane receptor protein tyrosine kinase signaling pathway	641	16	4.31	6.4e-06	0.004137866666666666
+GO:0002009	morphogenesis of an epithelium	501	14	3.37	7.1e-06	0.004406828
+GO:0051246	regulation of protein metabolic process	2223	33	14.94	7.7e-06	0.004595419230769231
+GO:1901564	organonitrogen compound metabolic process	5992	64	40.28	8.8e-06	0.005057392592592593
+GO:0008284	positive regulation of cell population proliferation	994	20	6.68	1.0e-05	0.005541785714285715
+GO:0044238	primary metabolic process	10655	95	71.63	1.2e-05	0.006420827586206897
+GO:0031326	regulation of cellular biosynthetic process	5714	61	38.41	1.8e-05	0.009310200000000001
+GO:0042327	positive regulation of phosphorylation	624	15	4.2	2.0e-05	0.010010967741935484
+GO:0009889	regulation of biosynthetic process	5745	61	38.62	2.2e-05	0.0106679375
+GO:0048660	regulation of smooth muscle cell proliferation	174	8	1.17	2.3e-05	0.010814878787878787
+GO:0032502	developmental process	6593	67	44.32	2.7e-05	0.011742594594594594
+GO:0048659	smooth muscle cell proliferation	178	8	1.2	2.7e-05	0.011742594594594594
+GO:0044237	cellular metabolic process	10978	96	73.8	2.8e-05	0.011742594594594594
+GO:0006807	nitrogen compound metabolic process	10169	91	68.36	2.8e-05	0.011742594594594594
+GO:0019220	regulation of phosphate metabolic process	1164	21	7.83	3.1e-05	0.012658605263157896
+GO:0051174	regulation of phosphorus metabolic process	1165	21	7.83	3.2e-05	0.012731897435897435
+GO:0016310	phosphorylation	1550	25	10.42	3.3e-05	0.012801525000000001
+GO:0070922	RISC complex assembly	10	3	0.07	3.4e-05	0.012867756097560974
+GO:0001934	positive regulation of protein phosphorylation	579	14	3.89	3.6e-05	0.013300285714285716
+GO:0050794	regulation of cellular process	11713	100	78.74	3.8e-05	0.013712697674418604
+GO:0010556	regulation of macromolecule biosynthetic process	5582	59	37.53	4.0e-05	0.014106363636363639
+GO:0051347	positive regulation of transferase activity	376	11	2.53	4.7e-05	0.016206644444444442
+GO:0033002	muscle cell proliferation	251	9	1.69	5.1e-05	0.017100367346938775
+GO:0051896	regulation of phosphatidylinositol 3-kinase/protein kinase B signal transduction	253	9	1.7	5.4e-05	0.017100367346938775
+GO:0051726	regulation of cell cycle	1116	20	7.5	5.4e-05	0.017100367346938775
+GO:0031401	positive regulation of protein modification process	764	16	5.14	5.4e-05	0.017100367346938775
+GO:0000289	nuclear-transcribed mRNA poly(A) tail shortening	32	4	0.22	6.1e-05	0.01850103846153846
+GO:0043549	regulation of kinase activity	532	13	3.58	6.2e-05	0.01850103846153846
+GO:0007049	cell cycle	1816	27	12.21	6.2e-05	0.01850103846153846
+GO:0009888	tissue development	2032	29	13.66	6.5e-05	0.019030283018867923
+GO:0060429	epithelium development	1228	21	8.26	6.8e-05	0.019119160714285714
+GO:0031128	developmental induction	33	4	0.22	6.9e-05	0.019119160714285714
+GO:0048729	tissue morphogenesis	616	14	4.14	6.9e-05	0.019119160714285714
+GO:0048519	negative regulation of biological process	5819	60	39.12	7.2e-05	0.01960042105263158
+GO:0010562	positive regulation of phosphorus metabolic process	702	15	4.72	7.5e-05	0.019725
+GO:0045937	positive regulation of phosphate metabolic process	702	15	4.72	7.5e-05	0.019725
+GO:0060213	positive regulation of nuclear-transcribed mRNA poly(A) tail shortening	13	3	0.09	8.1e-05	0.02094795
+GO:0031399	regulation of protein modification process	1246	21	8.38	8.3e-05	0.02111329508196721
+GO:0010468	regulation of gene expression	5454	57	36.67	8.7e-05	0.02167453968253968
+GO:0000288	nuclear-transcribed mRNA catabolic process, deadenylation-dependent decay	67	5	0.45	8.8e-05	0.02167453968253968
+GO:0010586	miRNA metabolic process	108	6	0.73	9.0e-05	0.02182078125
+GO:0048284	organelle fusion	159	7	1.07	0.00010	0.02248840579710145
+GO:0002711	positive regulation of T cell mediated immunity	69	5	0.46	0.00010	0.02248840579710145
+GO:0051338	regulation of transferase activity	639	14	4.3	0.00010	0.02248840579710145
+GO:1903131	mononuclear cell differentiation	484	12	3.25	0.00010	0.02248840579710145
+GO:0030154	cell differentiation	4448	49	29.9	0.00010	0.02248840579710145
+GO:0048869	cellular developmental process	4450	49	29.92	0.00011	0.02338178082191781
+GO:0016043	cellular component organization	6581	65	44.24	0.00011	0.02338178082191781
+GO:2000573	positive regulation of DNA biosynthetic process	70	5	0.47	0.00011	0.02338178082191781
+GO:0002474	antigen processing and presentation of peptide antigen via MHC class I	37	4	0.25	0.00011	0.02338178082191781
+GO:0061024	membrane organization	816	16	5.49	0.00012	0.025162702702702704
+GO:0060211	regulation of nuclear-transcribed mRNA poly(A) tail shortening	15	3	0.1	0.00013	0.026197532467532463
+GO:0042325	regulation of phosphorylation	1001	18	6.73	0.00013	0.026197532467532463
+GO:0050793	regulation of developmental process	2555	33	17.18	0.00013	0.026197532467532463
+GO:0019882	antigen processing and presentation	117	6	0.79	0.00014	0.027498481012658227
+GO:2000026	regulation of multicellular organismal development	1491	23	10.02	0.00014	0.027498481012658227
+GO:0010564	regulation of cell cycle process	746	15	5.02	0.00015	0.02770892857142857
+GO:0001916	positive regulation of T cell mediated cytotoxicity	40	4	0.27	0.00015	0.02770892857142857
+GO:0007275	multicellular organism development	4764	51	32.03	0.00015	0.02770892857142857
+GO:0006906	vesicle fusion	119	6	0.8	0.00015	0.02770892857142857
+GO:0001932	regulation of protein phosphorylation	925	17	6.22	0.00015	0.02770892857142857
+GO:0002486	antigen processing and presentation of endogenous peptide antigen via MHC class I via ER pathway, TAP-independent	16	3	0.11	0.00016	0.029208470588235298
+GO:0090174	organelle membrane fusion	121	6	0.81	0.00017	0.030673139534883723
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	46	27.95	0.00018	0.030692967032967033
+GO:0007167	enzyme-linked receptor protein signaling pathway	1028	18	6.91	0.00018	0.030692967032967033
+GO:0044319	wound healing, spreading of cells	42	4	0.28	0.00018	0.030692967032967033
+GO:0090505	epiboly involved in wound healing	42	4	0.28	0.00018	0.030692967032967033
+GO:0000079	regulation of cyclin-dependent protein serine/threonine kinase activity	78	5	0.52	0.00018	0.030692967032967033
+GO:0002476	antigen processing and presentation of endogenous peptide antigen via MHC class Ib	17	3	0.11	0.00019	0.031034
+GO:0002484	antigen processing and presentation of endogenous peptide antigen via MHC class I via ER pathway	17	3	0.11	0.00019	0.031034
+GO:0043491	phosphatidylinositol 3-kinase/protein kinase B signal transduction	299	9	2.01	0.00019	0.031034
+GO:0048523	negative regulation of cellular process	5471	56	36.78	0.00019	0.031034
+GO:0090504	epiboly	43	4	0.29	0.00020	0.031667346938775515
+GO:0012501	programmed cell death	2055	28	13.82	0.00020	0.031667346938775515
+GO:0051054	positive regulation of DNA metabolic process	301	9	2.02	0.00020	0.031667346938775515
+GO:0008219	cell death	2059	28	13.84	0.00021	0.032263069306930695
+GO:0016050	vesicle organization	371	10	2.49	0.00021	0.032263069306930695
+GO:0033674	positive regulation of kinase activity	303	9	2.04	0.00021	0.032263069306930695
+GO:1904029	regulation of cyclin-dependent protein kinase activity	81	5	0.54	0.00022	0.033143106796116505
+GO:0002428	antigen processing and presentation of peptide antigen via MHC class Ib	18	3	0.12	0.00022	0.033143106796116505
+GO:0048732	gland development	449	11	3.02	0.00023	0.03366896226415094
+GO:0002347	response to tumor cell	45	4	0.3	0.00023	0.03366896226415094
+GO:0035196	miRNA processing	45	4	0.3	0.00023	0.03366896226415094
+GO:0030097	hemopoiesis	959	17	6.45	0.00024	0.03448222222222222
+GO:0051247	positive regulation of protein metabolic process	1246	20	8.38	0.00024	0.03448222222222222
+GO:0006915	apoptotic process	1979	27	13.3	0.00026	0.037013027522935775
+GO:0001845	phagolysosome assembly	19	3	0.13	0.00027	0.03707601769911504
+GO:0060061	Spemann organizer formation	4	2	0.03	0.00027	0.03707601769911504
+GO:0120222	regulation of blastocyst development	4	2	0.03	0.00027	0.03707601769911504
+GO:2000134	negative regulation of G1/S transition of mitotic cell cycle	85	5	0.57	0.00027	0.03707601769911504
+GO:0009057	macromolecule catabolic process	1463	22	9.84	0.00029	0.03947307017543859
+GO:0033077	T cell differentiation in thymus	87	5	0.58	0.00030	0.0401301724137931
+GO:0071840	cellular component organization or biogenesis	6791	65	45.65	0.00030	0.0401301724137931
+GO:0071704	organic substance metabolic process	11820	98	79.46	0.00031	0.040765
+GO:0002521	leukocyte differentiation	626	13	4.21	0.00031	0.040765
+GO:0008152	metabolic process	12343	101	82.98	0.00033	0.04267175
+GO:0045859	regulation of protein kinase activity	470	11	3.16	0.00033	0.04267175
+GO:0001914	regulation of T cell mediated cytotoxicity	50	4	0.34	0.00035	0.04488388429752066
+GO:0031328	positive regulation of cellular biosynthetic process	2698	33	18.14	0.00036	0.04578786885245902
+GO:0009892	negative regulation of metabolic process	3414	39	22.95	0.00037	0.04667715447154472
+GO:0051301	cell division	643	13	4.32	0.00040	0.04926031746031746
+GO:0045935	positive regulation of nucleobase-containing compound metabolic process	2145	28	14.42	0.00040	0.04926031746031746
+GO:0000278	mitotic cell cycle	911	16	6.12	0.00040	0.04926031746031746

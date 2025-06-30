@@ -1,0 +1,99 @@
+---
+title: 'Plot DE miRNA target GO enrichment'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett, Bicna Song
+date: "2025-06-30"
+---
+
+This script plots DE miRNA target gene GO enrichment
+
+### Load packages
+
+```{r load-packages}
+library(tidyverse)
+library(ggplot2)
+```
+
+### Set directory paths
+
+```{r dir-paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-go-enrichment")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+### List go enrichment results files
+
+```{r list-results}
+results_files <- list.files(results_dir)
+go_enr_files <- results_files[grepl("-shared-GO-BP_all.tsv", results_files)]
+```
+
+### Identify keywords in GO terms for plotting
+
+```{r keywords}
+# provided by Dalia
+keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense"
+```
+
+### Loop through GO enrichment files and plot significantly enriched terms related to immune and other processes
+
+```{r plot, message=TRUE, warning=TRUE}
+for (file in go_enr_files){
+  
+  go_enr_df <- read_tsv(file.path(results_dir, file)) %>%
+    dplyr::filter(grepl(keywords, Term)) %>%
+    dplyr::mutate(gene_ratio = Significant/Annotated) %>%
+    arrange(gene_ratio) %>%
+    dplyr::mutate(Term = fct_relevel(Term, unique(Term)))
+  
+  mirna_id <- str_replace(file, "-shared-GO-BP_all.tsv", "")
+  
+  # Only plot and save if there are rows
+  if (nrow(go_enr_df) > 0) {
+    # calculate a reasonable height, min of 3"
+    height_val <- max(3, 1 + nrow(go_enr_df) * 0.15)
+    
+    p <- ggplot(go_enr_df, aes(x = gene_ratio, y = Term,
+                                size = Significant,
+                                colour = -log10(classicFisher))) +
+      geom_point(alpha = 0.9) +
+      scale_color_gradient(low = "lightpink", high = "darkred") +
+      labs(
+        title  = mirna_id,
+        x      = "Gene Ratio",
+        size   = "Count",
+        colour = "-log10(p)",
+        y      = NULL
+      ) +
+      theme_Publication()
+    
+    ggsave(
+      filename = file.path(
+        plot_dir,
+        paste0(mirna_id, "-targets-immune-go-term-enrichment-dotplot.pdf")
+      ),
+      plot   = p,
+      width  = 9,
+      height = height_val
+    )
+  } else {
+    message("Skipping ", mirna_id, ": no enriched GO terms to plot.")
+  }
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+

@@ -1,0 +1,145 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0071840	cellular component organization or biogenesis	6791	489	388.6	6.3e-11	9.77571e-7
+GO:0016043	cellular component organization	6581	472	376.58	3.9e-10	2.4309966666666667e-6
+GO:1901564	organonitrogen compound metabolic process	5992	436	342.88	4.7e-10	2.4309966666666667e-6
+GO:0048518	positive regulation of biological process	6411	459	366.86	1.2e-09	4.03442e-6
+GO:0030163	protein catabolic process	994	104	56.88	1.3e-09	4.03442e-6
+GO:0006807	nitrogen compound metabolic process	10169	676	581.9	1.6e-09	4.137866666666666e-6
+GO:0051172	negative regulation of nitrogen compound metabolic process	2266	194	129.67	2.8e-09	6.2068e-6
+GO:0051603	proteolysis involved in protein catabolic process	756	84	43.26	3.5e-09	6.7886875e-6
+GO:0006810	transport	4385	331	250.92	4.9e-09	8.448144444444444e-6
+GO:0080090	regulation of primary metabolic process	5756	415	329.38	6.6e-09	9.73339090909091e-6
+GO:1901565	organonitrogen compound catabolic process	1432	134	81.94	6.9e-09	9.73339090909091e-6
+GO:0051179	localization	5335	388	305.28	1.1e-08	1.2191928571428571e-5
+GO:0051171	regulation of nitrogen compound metabolic process	5614	405	321.25	1.1e-08	1.2191928571428571e-5
+GO:0044238	primary metabolic process	10655	698	609.71	1.1e-08	1.2191928571428571e-5
+GO:0032446	protein modification by small protein conjugation	845	89	48.35	1.6e-08	1.655146666666667e-5
+GO:0048522	positive regulation of cellular process	5861	418	335.38	2.3e-08	2.23056875e-5
+GO:0045934	negative regulation of nucleobase-containing compound metabolic process	1523	138	87.15	3.0e-08	2.672372222222222e-5
+GO:0070647	protein modification by small protein conjugation or removal	949	96	54.3	3.1e-08	2.672372222222222e-5
+GO:0051641	cellular localization	3384	262	193.64	4.5e-08	3.675078947368421e-5
+GO:0019538	protein metabolic process	4915	358	281.25	5.2e-08	3.912982608695653e-5
+GO:0048523	negative regulation of cellular process	5471	392	313.07	5.4e-08	3.912982608695653e-5
+GO:0048583	regulation of response to stimulus	4116	308	235.53	5.7e-08	3.912982608695653e-5
+GO:0046907	intracellular transport	1357	125	77.65	5.8e-08	3.912982608695653e-5
+GO:0051253	negative regulation of RNA metabolic process	1395	127	79.83	8.8e-08	5.689566666666666e-5
+GO:0051234	establishment of localization	4698	343	268.83	9.5e-08	5.8964599999999994e-5
+GO:0045892	negative regulation of DNA-templated transcription	1264	117	72.33	1.2e-07	7.161692307692307e-5
+GO:0036211	protein modification process	2958	232	169.27	1.3e-07	7.471148148148149e-5
+GO:0043687	post-translational protein modification	1006	98	57.57	1.4e-07	7.49096551724138e-5
+GO:0009966	regulation of signal transduction	3131	243	179.17	1.4e-07	7.49096551724138e-5
+GO:0048519	negative regulation of biological process	5819	410	332.98	1.7e-07	8.792966666666666e-5
+GO:0023051	regulation of signaling	3554	269	203.37	2.2e-07	1.1012064516129033e-4
+GO:1902679	negative regulation of RNA biosynthetic process	1279	117	73.19	2.3e-07	1.115284375e-4
+GO:0010646	regulation of cell communication	3559	269	203.66	2.5e-07	1.175530303030303e-4
+GO:0043412	macromolecule modification	3191	245	182.6	3.0e-07	1.3691470588235295e-4
+GO:0035556	intracellular signal transduction	2721	214	155.7	3.7e-07	1.594802777777778e-4
+GO:0006996	organelle organization	3623	272	207.32	3.7e-07	1.594802777777778e-4
+GO:0009057	macromolecule catabolic process	1463	129	83.72	4.1e-07	1.7194513513513513e-4
+GO:0009056	catabolic process	2668	210	152.67	4.6e-07	1.8783736842105264e-4
+GO:0051649	establishment of localization in cell	1947	162	111.41	4.8e-07	1.9008325e-4
+GO:0008152	metabolic process	12343	780	706.3	4.9e-07	1.9008325e-4
+GO:0006607	NLS-bearing protein import into nucleus	20	9	1.14	6.0e-07	2.2707804878048778e-4
+GO:0019222	regulation of metabolic process	7117	483	407.26	7.2e-07	2.660057142857143e-4
+GO:0019941	modification-dependent protein catabolic process	607	65	34.73	8.1e-07	2.92296976744186e-4
+GO:0007275	multicellular organism development	4764	341	272.61	8.3e-07	2.9270704545454547e-4
+GO:0006511	ubiquitin-dependent protein catabolic process	597	64	34.16	9.5e-07	3.275811111111111e-4
+GO:0043632	modification-dependent macromolecule catabolic process	618	65	35.36	1.5e-06	5.059891304347826e-4
+GO:0006793	phosphorus metabolic process	2585	201	147.92	2.0e-06	6.602978723404255e-4
+GO:0006796	phosphate-containing compound metabolic process	2559	199	146.43	2.3e-06	7.435229166666667e-4
+GO:0010498	proteasomal protein catabolic process	525	57	30.04	2.5e-06	7.916836734693878e-4
+GO:0034654	nucleobase-containing compound biosynthetic process	4012	290	229.58	3.8e-06	0.001179292
+GO:0031647	regulation of protein stability	326	40	18.65	4.5e-06	0.0013691470588235294
+GO:1901575	organic substance catabolic process	2188	173	125.2	4.6e-06	0.0013726576923076923
+GO:0009653	anatomical structure morphogenesis	2757	210	157.76	4.7e-06	0.0013760358490566037
+GO:0009893	positive regulation of metabolic process	3816	277	218.36	5.0e-06	0.0014367592592592594
+GO:0033036	macromolecule localization	3004	225	171.9	6.5e-06	0.001828789285714286
+GO:0051173	positive regulation of nitrogen compound metabolic process	3083	230	176.42	6.6e-06	0.001828789285714286
+GO:0018130	heterocycle biosynthetic process	4088	293	233.93	6.8e-06	0.0018511508771929823
+GO:0071705	nitrogen compound transport	1903	153	108.9	7.3e-06	0.0019462000000000001
+GO:0050821	protein stabilization	218	30	12.47	7.4e-06	0.0019462000000000001
+GO:0070727	cellular macromolecule localization	2516	193	143.97	8.2e-06	0.0021206566666666666
+GO:0010604	positive regulation of macromolecule metabolic process	3506	256	200.62	8.6e-06	0.0021523580645161295
+GO:0051170	import into nucleus	166	25	9.5	8.6e-06	0.0021523580645161295
+GO:0008104	protein localization	2505	192	143.34	9.2e-06	0.002265974603174603
+GO:0044271	cellular nitrogen compound biosynthetic process	4855	339	277.82	9.9e-06	0.0024002859375
+GO:0065007	biological regulation	12701	790	726.79	1.1e-05	0.0025475671641791045
+GO:1901362	organic cyclic compound biosynthetic process	4257	302	243.6	1.1e-05	0.0025475671641791045
+GO:0006915	apoptotic process	1979	157	113.24	1.1e-05	0.0025475671641791045
+GO:0012501	programmed cell death	2055	162	117.59	1.2e-05	0.0026225915492957747
+GO:0043933	protein-containing complex organization	2454	188	140.43	1.2e-05	0.0026225915492957747
+GO:0009790	embryo development	1128	99	64.55	1.2e-05	0.0026225915492957747
+GO:0019438	aromatic compound biosynthetic process	4101	292	234.67	1.2e-05	0.0026225915492957747
+GO:0008219	cell death	2059	162	117.82	1.3e-05	0.0027633013698630136
+GO:0048731	system development	4072	290	233.01	1.3e-05	0.0027633013698630136
+GO:0048585	negative regulation of response to stimulus	1764	142	100.94	1.5e-05	0.003145337837837838
+GO:0032774	RNA biosynthetic process	3585	259	205.14	1.7e-05	0.003517186666666667
+GO:0048856	anatomical structure development	6016	407	344.25	1.8e-05	0.003675078947368421
+GO:0006351	DNA-templated transcription	3554	256	203.37	2.3e-05	0.004634948051948052
+GO:0050789	regulation of biological process	12273	764	702.3	2.4e-05	0.004774461538461538
+GO:0000209	protein polyubiquitination	267	33	15.28	2.6e-05	0.005043025
+GO:1902531	regulation of intracellular signal transduction	1828	145	104.6	2.6e-05	0.005043025
+GO:0000122	negative regulation of transcription by RNA polymerase II	923	83	52.82	2.7e-05	0.0051723333333333335
+GO:0016567	protein ubiquitination	760	71	43.49	3.1e-05	0.005795506024096386
+GO:0071702	organic substance transport	2370	180	135.62	3.1e-05	0.005795506024096386
+GO:0035295	tube development	1174	100	67.18	3.7e-05	0.006834869047619047
+GO:0006508	proteolysis	1619	130	92.64	4.1e-05	0.007484670588235294
+GO:0098693	regulation of synaptic vesicle cycle	13	6	0.74	4.2e-05	0.00757806976744186
+GO:0060322	head development	782	72	44.75	4.4e-05	0.00784767816091954
+GO:0007264	small GTPase-mediated signal transduction	500	51	28.61	4.6e-05	0.008020022471910113
+GO:0006606	protein import into nucleus	161	23	9.21	4.6e-05	0.008020022471910113
+GO:2000434	regulation of protein neddylation	19	7	1.09	5.4e-05	0.0093102
+GO:0007420	brain development	733	68	41.94	5.7e-05	0.009719439560439561
+GO:0030323	respiratory tube development	197	26	11.27	6.0e-05	0.010010967741935484
+GO:0060255	regulation of macromolecule metabolic process	6596	437	377.44	6.0e-05	0.010010967741935484
+GO:0006366	transcription by RNA polymerase II	2701	199	154.56	6.9e-05	0.01139013829787234
+GO:0071704	organic substance metabolic process	11820	735	676.38	7.3e-05	0.01192358947368421
+GO:0048513	animal organ development	3052	221	174.64	7.4e-05	0.011961020833333332
+GO:0006357	regulation of transcription by RNA polymerase II	2581	191	147.69	7.8e-05	0.012477587628865978
+GO:0001944	vasculature development	841	75	48.12	8.6e-05	0.01361695918367347
+GO:0072359	circulatory system development	1230	102	70.38	8.8e-05	0.013654959999999999
+GO:0022612	gland morphogenesis	125	19	7.15	8.8e-05	0.013654959999999999
+GO:0006355	regulation of DNA-templated transcription	3431	244	196.33	9.2e-05	0.01413429702970297
+GO:0033554	cellular response to stress	1847	143	105.69	9.6e-05	0.014604235294117647
+GO:0051716	cellular response to stimulus	7616	495	435.81	9.7e-05	0.014613097087378641
+GO:0007417	central nervous system development	1033	88	59.11	0.00011	0.01580435185185185
+GO:0045893	positive regulation of DNA-templated transcription	1685	132	96.42	0.00011	0.01580435185185185
+GO:0015031	protein transport	1415	114	80.97	0.00011	0.01580435185185185
+GO:0030324	lung development	193	25	11.04	0.00011	0.01580435185185185
+GO:0019637	organophosphate metabolic process	1034	88	59.17	0.00011	0.01580435185185185
+GO:1902680	positive regulation of RNA biosynthetic process	1688	132	96.59	0.00012	0.016775135135135136
+GO:0001568	blood vessel development	808	72	46.24	0.00012	0.016775135135135136
+GO:0045116	protein neddylation	28	8	1.6	0.00012	0.016775135135135136
+GO:2001141	regulation of RNA biosynthetic process	3450	244	197.42	0.00013	0.01801080357142857
+GO:0060541	respiratory system development	220	27	12.59	0.00015	0.020597787610619464
+GO:0030970	retrograde protein transport, ER to cytosol	29	8	1.66	0.00016	0.021588869565217394
+GO:1903513	endoplasmic reticulum to cytosol transport	29	8	1.66	0.00016	0.021588869565217394
+GO:0006950	response to stress	3984	276	227.98	0.00017	0.022740431034482762
+GO:0051252	regulation of RNA metabolic process	3847	267	220.14	0.00021	0.027154750000000002
+GO:0044237	cellular metabolic process	10978	684	628.19	0.00021	0.027154750000000002
+GO:0050794	regulation of cellular process	11713	725	670.25	0.00021	0.027154750000000002
+GO:0031323	regulation of cellular metabolic process	6611	433	378.3	0.00021	0.027154750000000002
+GO:0051128	regulation of cellular component organization	2459	180	140.71	0.00023	0.029253360655737706
+GO:0042176	regulation of protein catabolic process	362	38	20.71	0.00023	0.029253360655737706
+GO:0051098	regulation of binding	238	28	13.62	0.00024	0.030032903225806453
+GO:0048524	positive regulation of viral process	64	12	3.66	0.00024	0.030032903225806453
+GO:0098781	ncRNA transcription	146	20	8.35	0.00025	0.031034
+GO:0035239	tube morphogenesis	958	81	54.82	0.00026	0.031767086614173226
+GO:0042981	regulation of apoptotic process	1522	119	87.09	0.00026	0.031767086614173226
+GO:0031325	positive regulation of cellular metabolic process	3440	241	196.85	0.00027	0.03247744186046512
+GO:0019219	regulation of nucleobase-containing compound metabolic process	4157	285	237.88	0.00027	0.03247744186046512
+GO:0043170	macromolecule metabolic process	10237	641	585.79	0.00028	0.033421230769230766
+GO:0006886	intracellular protein transport	676	61	38.68	0.00029	0.0343506106870229
+GO:0007154	cell communication	6687	436	382.65	0.00030	0.035265909090909084
+GO:0051246	regulation of protein metabolic process	2223	164	127.21	0.00032	0.036781037037037036
+GO:0090407	organophosphate biosynthetic process	596	55	34.1	0.00032	0.036781037037037036
+GO:0030154	cell differentiation	4448	302	254.53	0.00032	0.036781037037037036
+GO:0048869	cellular developmental process	4450	302	254.64	0.00034	0.03850934306569344
+GO:0009968	negative regulation of signal transduction	1381	109	79.02	0.00034	0.03850934306569344
+GO:0032527	protein exit from endoplasmic reticulum	49	10	2.8	0.00038	0.04272797101449276
+GO:0006913	nucleocytoplasmic transport	333	35	19.06	0.00039	0.043225928571428575
+GO:0051169	nuclear transport	333	35	19.06	0.00039	0.043225928571428575
+GO:0048468	cell development	2838	202	162.4	0.00042	0.045895352112676056
+GO:0043067	regulation of programmed cell death	1571	121	89.9	0.00042	0.045895352112676056
+GO:0023052	signaling	6595	429	377.39	0.00043	0.04665951048951049
+GO:0016192	vesicle-mediated transport	1543	119	88.3	0.00045	0.048490624999999996

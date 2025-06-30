@@ -1,0 +1,149 @@
+---
+title: 'GO Enrichment Analysis of DE miRNA Targets'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett, Bicna Song
+date: "2025-06-22"
+---
+
+### Overview
+Perform GO enrichment (Biological Process, BP) on differentially expressed (DE) miRNA target genes across histology-specific contrasts.
+
+### Load Required Packages
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(glue)
+library(topGO)
+library(org.Hs.eg.db)
+library(AnnotationDbi)
+```
+
+### Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-go-enrichment")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+# miRTarBase targets
+mirTarBase_targets_file <- file.path(results_dir,
+                                     "human-mirna-target-predictions-miRTarBase.tsv.gz")
+mirTarBase_targets_df   <- read_tsv(mirTarBase_targets_file, col_types = cols())
+
+# Histologies and controls
+histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+```
+
+### GO Enrichment per Histology and Contrast
+
+```{r go-enrichment, message=TRUE, warning=TRUE}
+mirna_target_list    <- list()
+mirna_target_go_list <- list()
+
+# Precompute background once
+all_entrez_ids <- keys(org.Hs.eg.db, keytype = "ENTREZID")
+all_genes      <- select(org.Hs.eg.db,
+                         keys    = all_entrez_ids,
+                         columns = "SYMBOL",
+                         keytype = "ENTREZID")
+
+for (hist in histologies) {
+  message("▶ Histology: ", hist)
+  
+  # Determine contrasts
+  contrasts <- if (hist %in% c("ATRT", "HGG", "LGG")) {
+    "healthyNormal"
+  } else {
+    c("healthyNormal", "paired")
+  }
+  
+  # Read DE miRNA lists per contrast
+  de_lists <- list()
+  for (ctr in contrasts) {
+    fname <- if (ctr == "paired") {
+      glue("DESeq2_{hist}_paired_sig.csv")
+    } else {
+      glue("DESeq2_{hist}_vs_{ctr}_sig.csv")
+    }
+    path <- file.path(root_dir,
+                      "analyses", "human-mirna-expression",
+                      "results", fname)
+    if (!file.exists(path)) {
+      message("   ✗ Missing file: ", fname)
+      next
+    }
+    df <- read_csv(path, col_types = cols())
+    de_lists[[ctr]] <- df %>%
+      filter(str_detect(miRNA, "^hsa")) %>%
+      pull(miRNA)
+    message("   • ", ctr, ": ", length(de_lists[[ctr]]), " miRNAs")
+  }
+  
+  # Find miRNAs shared across all contrasts
+  shared <- Reduce(intersect, de_lists)
+  message("   → Shared DE miRNAs: ", length(shared))
+  if (length(shared) == 0) next
+  
+  # Run GO for each shared miRNA
+  for (mirna in shared) {
+    message("     – GO for ", mirna)
+    mirna_target_list[[mirna]] <- mirTarBase_targets_df %>%
+      filter(miRNA == mirna) %>%
+      distinct(`Target Gene`) %>%
+      pull(`Target Gene`)
+    
+    # Only proceed if at least 20 targets
+    if (length(mirna_target_list[[mirna]]) >= 20) {
+      
+      # Binary vector for topGO
+      target_gene_df <- all_genes %>%
+        mutate(target_gene = if_else(
+          SYMBOL %in% mirna_target_list[[mirna]],
+          1L, 0L
+        ))
+      target_genes <- target_gene_df$target_gene
+      names(target_genes) <- target_gene_df$SYMBOL
+      
+      GO_data <- new("topGOdata",
+                     ontology  = "BP",
+                     allGenes  = target_genes,
+                     geneSel   = function(x) x == 1,
+                     annot     = annFUN.org,
+                     mapping   = "org.Hs.eg.db",
+                     ID        = "symbol")
+      
+      # Fisher test + table
+      result <- runTest(GO_data, algorithm="classic", statistic="fisher")
+      go_tab <- GenTable(GO_data, classicFisher = result,
+                         topNodes = length(usedGO(GO_data)),
+                         numChar  = 100000) %>%
+        mutate(fdr = p.adjust(as.numeric(classicFisher), method="BH")) %>%
+        filter(fdr < 0.05)
+      
+      if (nrow(go_tab) > 0) {
+        out_file <- glue("{mirna}-{hist}-shared-GO-BP_all.tsv")
+        write_tsv(go_tab, file.path(results_dir, out_file))
+        message("         ✓ Wrote ", nrow(go_tab), " terms to ", out_file)
+      } else {
+        message("         ✗ No significant GO terms for ", mirna)
+      }
+      
+    } else {
+      message("         ✗ Only ", length(mirna_target_list[[mirna]]),
+              " targets; skipping ", mirna)
+    }
+  }
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+

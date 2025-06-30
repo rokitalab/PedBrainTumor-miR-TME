@@ -1,0 +1,60 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0048522	positive regulation of cellular process	5861	283	217.8	6.9e-08	4.81027e-4
+GO:0006810	transport	4385	223	162.95	7.8e-08	4.81027e-4
+GO:0048518	positive regulation of biological process	6411	304	238.24	9.3e-08	4.81027e-4
+GO:0007275	multicellular organism development	4764	233	177.03	8.8e-07	0.0027309920000000002
+GO:0048856	anatomical structure development	6016	283	223.56	8.8e-07	0.0027309920000000002
+GO:0051234	establishment of localization	4698	229	174.58	1.5e-06	0.003546742857142857
+GO:0071705	nitrogen compound transport	1903	110	70.72	1.6e-06	0.003546742857142857
+GO:0051253	negative regulation of RNA metabolic process	1395	85	51.84	4.0e-06	0.006095964285714286
+GO:0051179	localization	5335	252	198.25	4.2e-06	0.006095964285714286
+GO:0030029	actin filament-based process	824	57	30.62	4.8e-06	0.006095964285714286
+GO:0032502	developmental process	6593	301	245	5.0e-06	0.006095964285714286
+GO:0045893	positive regulation of DNA-templated transcription	1685	98	62.62	5.1e-06	0.006095964285714286
+GO:0023051	regulation of signaling	3554	179	132.07	5.2e-06	0.006095964285714286
+GO:1902680	positive regulation of RNA biosynthetic process	1688	98	62.73	5.5e-06	0.006095964285714286
+GO:0048583	regulation of response to stimulus	4116	201	152.95	8.6e-06	0.008896413333333334
+GO:0030036	actin cytoskeleton organization	726	51	26.98	1.0e-05	0.009051583333333333
+GO:0141124	intracellular signaling cassette	1914	107	71.13	1.0e-05	0.009051583333333333
+GO:0071702	organic substance transport	2370	127	88.07	1.1e-05	0.009051583333333333
+GO:0016192	vesicle-mediated transport	1543	90	57.34	1.2e-05	0.009051583333333333
+GO:0045892	negative regulation of DNA-templated transcription	1264	77	46.97	1.2e-05	0.009051583333333333
+GO:0000902	cell morphogenesis	973	63	36.16	1.3e-05	0.009051583333333333
+GO:0010646	regulation of cell communication	3559	177	132.25	1.3e-05	0.009051583333333333
+GO:0009966	regulation of signal transduction	3131	159	116.35	1.4e-05	0.009051583333333333
+GO:0048731	system development	4072	198	151.32	1.4e-05	0.009051583333333333
+GO:0065007	biological regulation	12701	522	471.98	1.8e-05	0.010742538461538461
+GO:1902679	negative regulation of RNA biosynthetic process	1279	77	47.53	1.8e-05	0.010742538461538461
+GO:0045934	negative regulation of nucleobase-containing compound metabolic process	1523	88	56.6	2.1e-05	0.012068777777777777
+GO:0045944	positive regulation of transcription by RNA polymerase II	1243	75	46.19	2.2e-05	0.012191928571428572
+GO:0009893	positive regulation of metabolic process	3816	186	141.8	2.5e-05	0.01301425806451613
+GO:0006355	regulation of DNA-templated transcription	3431	170	127.5	2.6e-05	0.01301425806451613
+GO:0046907	intracellular transport	1357	80	50.43	2.6e-05	0.01301425806451613
+GO:2001141	regulation of RNA biosynthetic process	3450	170	128.2	3.5e-05	0.01697171875
+GO:0010256	endomembrane system organization	604	43	22.44	3.7e-05	0.017397848484848485
+GO:0080090	regulation of primary metabolic process	5756	262	213.9	4.6e-05	0.020837114285714286
+GO:0065008	regulation of biological quality	2940	148	109.25	4.7e-05	0.020837114285714286
+GO:0051171	regulation of nitrogen compound metabolic process	5614	256	208.62	5.3e-05	0.022227054054054056
+GO:0051172	negative regulation of nitrogen compound metabolic process	2266	119	84.21	5.3e-05	0.022227054054054056
+GO:0006351	DNA-templated transcription	3554	173	132.07	5.7e-05	0.0232755
+GO:0000122	negative regulation of transcription by RNA polymerase II	923	58	34.3	6.5e-05	0.024383857142857145
+GO:0006357	regulation of transcription by RNA polymerase II	2581	132	95.91	6.5e-05	0.024383857142857145
+GO:0016043	cellular component organization	6581	293	244.55	6.5e-05	0.024383857142857145
+GO:0043954	cellular component maintenance	72	11	2.68	6.6e-05	0.024383857142857145
+GO:0007399	nervous system development	2539	130	94.35	7.1e-05	0.025621093023255815
+GO:0010557	positive regulation of macromolecule biosynthetic process	2611	133	97.03	7.3e-05	0.025744113636363638
+GO:0009653	anatomical structure morphogenesis	2757	139	102.45	7.9e-05	0.02724095555555555
+GO:0051128	regulation of cellular component organization	2459	126	91.38	9.1e-05	0.030373702127659576
+GO:0032774	RNA biosynthetic process	3585	173	133.22	9.2e-05	0.030373702127659576
+GO:0031328	positive regulation of cellular biosynthetic process	2698	136	100.26	9.7e-05	0.03135727083333333
+GO:0006796	phosphate-containing compound metabolic process	2559	130	95.09	0.00010	0.031667346938775515
+GO:0015803	branched-chain amino acid transport	14	5	0.52	0.00011	0.03346803921568627
+GO:0006793	phosphorus metabolic process	2585	131	96.06	0.00011	0.03346803921568627
+GO:0007155	cell adhesion	1533	85	56.97	0.00012	0.03580846153846154
+GO:0051345	positive regulation of hydrolase activity	482	35	17.91	0.00013	0.038060566037735846
+GO:0022008	neurogenesis	1741	94	64.7	0.00014	0.039497818181818176
+GO:0009891	positive regulation of biosynthetic process	2719	136	101.04	0.00014	0.039497818181818176
+GO:0023056	positive regulation of signaling	1817	97	67.52	0.00016	0.04355649122807018
+GO:0098876	vesicle-mediated transport to the plasma membrane	151	16	5.61	0.00016	0.04355649122807018
+GO:0040011	locomotion	1348	76	50.09	0.00017	0.045480862068965525
+GO:0016482	cytosolic transport	138	15	5.13	0.00019	0.04997

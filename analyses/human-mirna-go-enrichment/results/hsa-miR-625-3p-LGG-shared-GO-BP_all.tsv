@@ -1,0 +1,54 @@
+GO.ID	Term	Annotated	Significant	Expected	classicFisher	fdr
+GO:0009966	regulation of signal transduction	3131	19	5.47	1.1e-07	0.00170687
+GO:1902531	regulation of intracellular signal transduction	1828	14	3.19	8.3e-07	0.003336155
+GO:0023051	regulation of signaling	3554	19	6.21	8.4e-07	0.003336155
+GO:0010646	regulation of cell communication	3559	19	6.22	8.6e-07	0.003336155
+GO:2001243	negative regulation of intrinsic apoptotic signaling pathway	114	5	0.2	1.5e-06	0.004211757142857143
+GO:0043154	negative regulation of cysteine-type endopeptidase activity involved in apoptotic process	50	4	0.09	1.7e-06	0.004211757142857143
+GO:0009968	negative regulation of signal transduction	1381	12	2.41	1.9e-06	0.004211757142857143
+GO:0150033	negative regulation of protein localization to lysosome	2	2	0	3.0e-06	0.005371269230769231
+GO:2001234	negative regulation of apoptotic signaling pathway	244	6	0.43	3.6e-06	0.005371269230769231
+GO:0010648	negative regulation of cell communication	1484	12	2.59	3.9e-06	0.005371269230769231
+GO:0023057	negative regulation of signaling	1485	12	2.59	4.0e-06	0.005371269230769231
+GO:2000117	negative regulation of cysteine-type endopeptidase activity	63	4	0.11	4.3e-06	0.005371269230769231
+GO:2001233	regulation of apoptotic signaling pathway	396	7	0.69	4.5e-06	0.005371269230769231
+GO:1902532	negative regulation of intracellular signal transduction	591	8	1.03	6.1e-06	0.006760978571428572
+GO:0048583	regulation of response to stimulus	4116	19	7.19	8.5e-06	0.0076722944444444436
+GO:0009967	positive regulation of signal transduction	1600	12	2.79	8.6e-06	0.0076722944444444436
+GO:1900100	positive regulation of plasma cell differentiation	3	2	0.01	8.9e-06	0.0076722944444444436
+GO:1990418	response to insulin-like growth factor stimulus	3	2	0.01	8.9e-06	0.0076722944444444436
+GO:0048584	positive regulation of response to stimulus	2363	14	4.13	1.8e-05	0.013300285714285716
+GO:0035556	intracellular signal transduction	2721	15	4.75	1.8e-05	0.013300285714285716
+GO:2001242	regulation of intrinsic apoptotic signaling pathway	190	5	0.33	1.8e-05	0.013300285714285716
+GO:0048585	negative regulation of response to stimulus	1764	12	3.08	2.3e-05	0.01622231818181818
+GO:0051346	negative regulation of hydrolase activity	204	5	0.36	2.6e-05	0.017179535714285717
+GO:1902176	negative regulation of oxidative stress-induced intrinsic apoptotic signaling pathway	34	3	0.06	2.8e-05	0.017179535714285717
+GO:0150031	regulation of protein localization to lysosome	5	2	0.01	2.9e-05	0.017179535714285717
+GO:1900098	regulation of plasma cell differentiation	5	2	0.01	2.9e-05	0.017179535714285717
+GO:0010647	positive regulation of cell communication	1816	12	3.17	3.1e-05	0.017179535714285717
+GO:0023056	positive regulation of signaling	1817	12	3.17	3.1e-05	0.017179535714285717
+GO:0070848	response to growth factor	779	8	1.36	4.5e-05	0.024078103448275864
+GO:0045861	negative regulation of proteolysis	231	5	0.4	4.7e-05	0.024309966666666665
+GO:0030335	positive regulation of cell migration	580	7	1.01	5.3e-05	0.026529064516129033
+GO:0010951	negative regulation of endopeptidase activity	124	4	0.22	6.2e-05	0.030064187500000002
+GO:2000147	positive regulation of cell motility	607	7	1.06	7.0e-05	0.03222761538461538
+GO:1902175	regulation of oxidative stress-induced intrinsic apoptotic signaling pathway	47	3	0.08	7.5e-05	0.03222761538461538
+GO:0010595	positive regulation of endothelial cell migration	131	4	0.23	7.7e-05	0.03222761538461538
+GO:0010466	negative regulation of peptidase activity	132	4	0.23	8.0e-05	0.03222761538461538
+GO:0097190	apoptotic signaling pathway	620	7	1.08	8.0e-05	0.03222761538461538
+GO:0040017	positive regulation of locomotion	621	7	1.08	8.1e-05	0.03222761538461538
+GO:0051173	positive regulation of nitrogen compound metabolic process	3083	15	5.39	8.1e-05	0.03222761538461538
+GO:0030879	mammary gland development	135	4	0.24	8.7e-05	0.033749475
+GO:0043434	response to peptide hormone	438	6	0.77	9.8e-05	0.03708941463414634
+GO:0002317	plasma cell differentiation	9	2	0.02	0.00011	0.03961787234042553
+GO:0048009	insulin-like growth factor receptor signaling pathway	53	3	0.09	0.00011	0.03961787234042553
+GO:0052548	regulation of endopeptidase activity	280	5	0.49	0.00012	0.03961787234042553
+GO:0018105	peptidyl-serine phosphorylation	282	5	0.49	0.00012	0.03961787234042553
+GO:0051248	negative regulation of protein metabolic process	899	8	1.57	0.00012	0.03961787234042553
+GO:0009719	response to endogenous stimulus	1758	11	3.07	0.00012	0.03961787234042553
+GO:0043066	negative regulation of apoptotic process	917	8	1.6	0.00014	0.04525791666666666
+GO:0018209	peptidyl-serine modification	294	5	0.51	0.00015	0.047501020408163265
+GO:0043281	regulation of cysteine-type endopeptidase activity involved in apoptotic process	160	4	0.28	0.00017	0.04977150943396227
+GO:0071495	cellular response to endogenous stimulus	1505	10	2.63	0.00017	0.04977150943396227
+GO:0052547	regulation of peptidase activity	304	5	0.53	0.00017	0.04977150943396227
+GO:1901701	cellular response to oxygen-containing compound	1215	9	2.12	0.00017	0.04977150943396227
