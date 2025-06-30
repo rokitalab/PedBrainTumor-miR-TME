@@ -1542,23 +1542,14 @@ library(dplyr)</code></pre>
 
 data_dir &lt;- file.path(root_dir, &quot;data&quot;)
 analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-novel-mirna-target-prediction&quot;)
-input_dir &lt;- file.path(analysis_dir, &quot;input&quot;)
 results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)</code></pre>
 <p>Set file paths</p>
-<pre class="r"><code>de_mirna_file &lt;- file.path(root_dir, &quot;analyses&quot;,
-                           &quot;human-mirna-differential-expression&quot;,
-                           &quot;results&quot;,
-                           &quot;mirna-differential-expr-deseq2-dipg-dmg-versus-normal.tsv&quot;)
-
-fasta_path &lt;- file.path(results_dir, &quot;all_novel_miRNA_mature.fa&quot;)
-output_path &lt;- file.path(results_dir, &quot;novel_de_miRNAs_mature.fa&quot;)
-
-miranda_file &lt;- file.path(results_dir, &quot;miranda_output_parsed.csv&quot;)
+<pre class="r"><code>miranda_file &lt;- file.path(results_dir, &quot;miranda_output_parsed.csv&quot;)
 gtf_file &lt;- file.path(data_dir, &quot;gencode.v39.primary_assembly.annotation.gtf.gz&quot;)
 output_file &lt;- file.path(results_dir, &quot;miranda_output_parsed_anno.csv&quot;)</code></pre>
 <pre class="r"><code>miranda &lt;- read_csv(miranda_file)</code></pre>
 <pre><code>## Rows: 110520 Columns: 7
-## ── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (3): Seq1, Seq2, Positions
 ## dbl (4): Max Score, Max Energy, Len1, Len2
@@ -1629,7 +1620,7 @@ colnames(miranda_annotated)[9] &lt;- &quot;GeneSymbol&quot;</code></pre>
 ## [35] tidyselect_1.2.1            digest_0.6.35              
 ## [37] restfulr_0.0.15             rprojroot_2.0.4            
 ## [39] fastmap_1.2.0               grid_4.4.0                 
-## [41] cli_3.6.2                   SparseArray_1.4.8          
+## [41] SparseArray_1.4.8           cli_3.6.2                  
 ## [43] magrittr_2.0.3              S4Arrays_1.4.1             
 ## [45] XML_3.99-0.16.1             utf8_1.2.4                 
 ## [47] withr_3.0.0                 UCSC.utils_1.0.0           
@@ -1639,9 +1630,10 @@ colnames(miranda_annotated)[9] &lt;- &quot;GeneSymbol&quot;</code></pre>
 ## [55] hms_1.1.3                   evaluate_0.24.0            
 ## [57] knitr_1.47                  BiocIO_1.14.0              
 ## [59] rlang_1.1.4                 glue_1.7.0                 
-## [61] vroom_1.6.5                 jsonlite_1.8.8             
-## [63] R6_2.5.1                    MatrixGenerics_1.16.0      
-## [65] GenomicAlignments_1.40.0    zlibbioc_1.50.0</code></pre>
+## [61] vroom_1.6.5                 rstudioapi_0.16.0          
+## [63] jsonlite_1.8.8              R6_2.5.1                   
+## [65] MatrixGenerics_1.16.0       GenomicAlignments_1.40.0   
+## [67] zlibbioc_1.50.0</code></pre>
 
 
 

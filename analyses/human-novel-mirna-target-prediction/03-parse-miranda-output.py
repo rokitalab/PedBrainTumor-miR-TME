@@ -50,9 +50,3 @@ with open(output_file, "w", newline="") as out:
     writer.writerows(summary_data)
 
 print(f"✅ Parsed {len(summary_data)} predictions into {output_file}")
-
-# NOTE:
-# All miRanda hits included in the raw output were retained for downstream analysis.
-# The default scoring threshold in miRanda is typically Score ≥ 140 and Energy ≤ -20 kcal/mol, 
-# but upon inspection, all entries in this run satisfied the score threshold. 
-# Energies ranged from -6.67 to -40.34, so users should apply a custom energy filter if higher specificity is needed.
