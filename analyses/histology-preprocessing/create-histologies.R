@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 })
 
 # Set path to module and results directories
-root_dir <- "haydar-mirna"
+root_dir <- find_root(has_dir(".git"))
 data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "histology-preprocessing")
 input_dir <- file.path(analysis_dir, "input")
