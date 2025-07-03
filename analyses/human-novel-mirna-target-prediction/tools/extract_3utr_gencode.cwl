@@ -1,8 +1,8 @@
 class: CommandLineTool
 cwlVersion: v1.2
-id: parse_miranda_outputs
+id: extract_3utr_genocde
 doc: |-
-  Parse Miranda output file.
+  Extract 3' UTR sequence from Gencode.
 
 requirements:
 - class: InlineJavascriptRequirement
@@ -14,24 +14,22 @@ requirements:
   coresMin: $(inputs.cores)
 - class: InitialWorkDirRequirement
   listing:
-  - entryname: 03-parse-miranda-output.py
+  - entryname: 00-extract-3utr-gencode-v39.R
     writable: false
     entry:
-      $include: ../03-parse-miranda-output.py
-baseCommand: [python]
+      $include: ../00-extract-3utr-gencode-v39.R
+baseCommand: [Rscript]
 arguments:
-- position: 99
-  prefix: ''
+- position: 1
   shellQuote: false
   valueFrom: |
-    1>&2
+    --output gencode.v39.3utr.fa
 inputs:
-  input_miranda_results: { type: File, inputBinding: { prefix: "--input_file", position: 1 }, doc: "raw miRanda output containing target predictions" }
-  output_parsed_file: { type: File, inputBinding: { prefix: "--output_file", position: 1 }, doc: "parsed and filtered results as CSV" }
+  gencode_gtf: { type: File, inputBinding: { prefix: "--gencode", position: 1 }, doc: "Input gencode file" }
   ram: { type: 'int?', default: 8, doc: "GB of RAM to allocate to the task." }
   cores: { type: 'int?', default: 2, doc: "Minimum reserved number of CPU cores for the task." }
 outputs:
   array_dirs:
     type: 'File'
     outputBinding:
-      glob: $(inputs.output_parsed_file)
+      glob: "gencode.v39.3utr.fa"
