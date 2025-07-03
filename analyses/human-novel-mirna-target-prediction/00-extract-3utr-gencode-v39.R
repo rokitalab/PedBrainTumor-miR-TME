@@ -3,25 +3,29 @@
 library(GenomicFeatures) # for creating TxDb from GTF
 library(Biostrings) # for handling and writing DNAStringSet
 library(rtracklayer) # for importing GTF
-library(BSgenome.Hsapiens.UCSC.hg38)  # pre-built genome for hg38
+library(BSgenome.Hsapiens.UCSC.hg38) # pre-built genome for hg38
+library(optparse)
 
+parser <- OptionParser()
 
-# Set directory paths
+option_list <- list(
+  make_option(c("-g", "--gencode"),
+    type = "character",
+    default = "../../data/gencode.v39.primary_assembly.annotation.gtf.gz",
+    help = "Input genocde file [default %default]", metavar = "FILE"
+  ),
+  make_option(c("-o", "--output"),
+    type = "character", default = "results/gencode.v39.3utr.fa",
+    help = "Output 3' utr fasta file name [default %default]", metavar = "FILE"
+  )
+)
 
-root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+parser <- OptionParser(option_list = option_list)
 
-data_dir <- file.path(root_dir, "data")
-analysis_dir <- file.path(root_dir, "analyses", "human-novel-mirna-target-prediction")
-input_dir <- file.path(analysis_dir, "input")
-results_dir <- file.path(analysis_dir, "results")
+opt <- parse_args(parser)
 
-if (!dir.exists(results_dir)) {
-  dir.create(results_dir, recursive = TRUE)
-}
-
-Set GTF file path 
-
-gtf_file <- file.path(data_dir, "gencode.v39.primary_assembly.annotation.gtf.gz")
+gtf_file <- opt$gencode # Access the input filename
+output_filename <- opt$output # Access the output filename
 
 # Create a transcript database (TxDb)
 
@@ -41,7 +45,7 @@ valid_chroms <- intersect(seqlevels(three_utrs), seqnames(genome))
 three_utrs_filtered <- keepSeqlevels(three_utrs, valid_chroms, pruning.mode = "coarse")
 utr_seqs <- extractTranscriptSeqs(genome, three_utrs_filtered)
 
-utr_fasta_path <- file.path(results_dir, "gencode.v39.3utr.fa")
+utr_fasta_path <- file.path(output_filename)
 
 # Save the extracted 3′ UTR sequences to a FASTA file
 
