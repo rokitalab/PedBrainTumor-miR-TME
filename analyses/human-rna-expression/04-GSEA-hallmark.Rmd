@@ -1,0 +1,111 @@
+---
+title: "GSEA Analysis Across Histologies"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+### Overview
+Run GSEA on each histology for both paired (tumor vs adjacent normal) and unpaired (tumor vs healthy normal) RNA-seq differential expression results, using MSigDB Hallmark gene sets.
+
+### Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+set.seed(2025)
+library(clusterProfiler)
+library(msigdbr)
+library(enrichplot)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(glue)
+library(rprojroot)
+```
+
+### Set directory paths
+
+```{r dir-paths}
+root_dir     <- find_root(has_dir(".git"))
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
+results_dir  <- file.path(analysis_dir, "results")
+plot_dir     <- file.path(analysis_dir, "plots")
+
+histologies  <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+
+hallmarks <- msigdbr("Homo sapiens", category = "H") %>%
+  select(gs_name, gene_symbol)
+```
+
+## Loop Over Histologies and Contrasts
+
+```{r run-gsea, message=TRUE, warning=FALSE}
+for (hist in histologies) {
+  message("Processing histology: ", hist)
+  contrasts <- if (hist %in% c("ATRT", "HGG", "LGG"))
+    "healthyNormal" else c("healthyNormal", "paired")
+  
+  for (ctr in contrasts) {
+    message(" - Contrast: ", ctr)
+    fname <- if (ctr == "paired")
+      glue("DESeq2_{hist}_paired_full.csv") else glue("DESeq2_{hist}_vs_{ctr}.csv")
+    path <- file.path(results_dir, fname)
+    if (!file.exists(path)) {
+      message("   ✗ Missing ", fname, "; skipping")
+      next
+    }
+    
+    # Load DE results and build LFC vector
+    de_df <- read_csv(path, col_types = cols())
+    lfc <- de_df %>% 
+      pull(log2FoldChange, name = gene_symbol) %>%
+      sort(decreasing = TRUE)
+    
+    # Run GSEA
+    gsea_res <- GSEA(
+      geneList     = lfc,
+      TERM2GENE    = hallmarks,
+      pvalueCutoff = 0.05,
+      pAdjustMethod= "BH",
+      minGSSize    = 25,
+      maxGSSize    = 500
+    )
+    
+    # Convert results to tibble
+    res_tbl <- as_tibble(gsea_res@result)
+    if (nrow(res_tbl) == 0) {
+      message("   ✗ No enriched pathways for ", hist, " / ", ctr, "; skipping output.")
+      next
+    }
+    
+    # Save results table
+    out_table <- glue("{hist}_{ctr}_GSEA_results.tsv")
+    res_tbl %>%
+      arrange(desc(NES)) %>%
+      write_tsv(file.path(results_dir, out_table))
+    message("   ✓ Saved results: ", out_table)
+    
+    # Plot top 5 pathways by absolute NES
+    top5 <- res_tbl %>% slice_max(order_by = abs(NES), n = 5) %>% pull(ID)
+    for (gs in top5) {
+      p <- gseaplot(gsea_res, geneSetID = gs, title = gs, color.line = "#0066FF")
+      ggsave(
+        filename = file.path(plot_dir, glue("{hist}_{ctr}_{gs}_GSEA.pdf")),
+        plot     = p,
+        width    = 8,
+        height   = 6
+      )
+      message("     ✓ Plotted: ", gs)
+    }
+  }
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+
