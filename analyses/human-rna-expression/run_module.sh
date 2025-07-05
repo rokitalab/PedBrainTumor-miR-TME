@@ -11,3 +11,6 @@ Rscript -e "rmarkdown::render('02-differential-expression.Rmd')"
 
 # Run GO enrichment
 Rscript -e "rmarkdown::render('03-GO-enrichment.Rmd')"
+
+# Run GSEA enrichment
+Rscript -e "rmarkdown::render('04-GSEA-hallmark.Rmd')"
