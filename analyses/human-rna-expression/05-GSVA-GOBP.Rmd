@@ -83,6 +83,12 @@ gsva_scores_param <- gsvaParam(expr_mat,
 
 gsva_scores <- gsva(gsva_scores_param, verbose = TRUE)
 ```
+```{r}
+gsva_scores %>%
+  as.data.frame() %>%
+  rownames_to_column("Pathway") %>%
+  write_tsv(file.path(results_dir, "gobp-gsva-scores.tsv"))
+```
 
 ### Run differential expression analysis on pathway GSVA scores
 
