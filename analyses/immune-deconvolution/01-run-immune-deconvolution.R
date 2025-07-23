@@ -38,8 +38,10 @@ if (!(deconv_method %in% c("xcell", "quantiseq")))
 # read expression data 
 expr_mat <- readRDS(expr_mat)
 
-# remove infiltrated pons sample
-expr_mat <- expr_mat[,colnames(expr_mat) != "BA_GBVGBCJG"]
+# remove infiltrated pons sample and mislabeled MB T/N samples
+expr_mat <- expr_mat[,!colnames(expr_mat) %in% c("BA_GBVGBCJG",
+                                                 "BA_FPP5ER5Q",
+                                                 "BA_Z1WV5RXA")]
 
 # read clinical data
 clin_file <- readr::read_tsv(clin_file, guess_max = 10000)
