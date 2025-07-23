@@ -109,20 +109,17 @@ RUN R -e "remotes::install_github('omnideconv/immunedeconv', ref = '23ba6bc2cd7c
 # Install Miniconda
 ENV PATH=/opt/conda/bin:$PATH
 
-RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh && \
+RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-py39_25.5.1-1-Linux-x86_64.sh -o miniconda.sh && \
     bash miniconda.sh -b -p /opt/conda && \
     rm miniconda.sh && \
     /opt/conda/bin/conda clean -a
 
 # Add conda channels and install miRanda
-#RUN /opt/conda/bin/conda config --add channels defaults && \
 RUN /opt/conda/bin/conda init bash && \
-    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
-    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
-    /opt/conda/bin/conda config --add channels defaults && \ 
-    /opt/conda/bin/conda config --add channels bioconda && \
     /opt/conda/bin/conda config --add channels conda-forge && \
-    /opt/conda/bin/conda install -y miranda=3.3a && \
+    /opt/conda/bin/conda config --add channels bioconda && \
+    /opt/conda/bin/conda config --set channel_priority strict && \
+    /opt/conda/bin/conda install -y --override-channels -c bioconda -c conda-forge miranda=3.3a && \
     /opt/conda/bin/conda clean -a && \
     apt-get remove curl -y && \
     apt-get autoclean -y && \
