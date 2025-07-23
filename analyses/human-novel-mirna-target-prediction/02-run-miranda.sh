@@ -10,7 +10,7 @@ output_dir="results"
 
 # Set file paths
 target_fasta="$output_dir/gencode.v39.3utr.fa"
-mirna_fasta="$output_dir/novel_de_miRNAs_mature.fa"
+mirna_fasta="$output_dir/combined_all_novel_mirna.fa"
 output_file="$output_dir/miranda_output.txt"
 
 # Run miRanda

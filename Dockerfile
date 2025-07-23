@@ -104,6 +104,7 @@ RUN R -e 'BiocManager::install(c( \
 ## install GitHub packages
 RUN R -e "remotes::install_github('clauswilke/colorblindr', ref = '1ac3d4d62dad047b68bb66c06cee927a4517d678', dependencies = TRUE)"
 RUN R -e "remotes::install_github('thomasp85/patchwork', ref = '1cb732b129ed6a65774796dc1f618558c7498b66', dependencies = TRUE)"
+RUN R -e "remotes::install_github('omnideconv/immunedeconv', ref = '23ba6bc2cd7c3ff7b6153a9b04949ca54402f79b', dependencies = TRUE)"
 
 # Install Miniconda
 ENV PATH=/opt/conda/bin:$PATH
@@ -114,7 +115,11 @@ RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_6
     /opt/conda/bin/conda clean -a
 
 # Add conda channels and install miRanda
-RUN /opt/conda/bin/conda config --add channels defaults && \
+#RUN /opt/conda/bin/conda config --add channels defaults && \
+RUN /opt/conda/bin/conda init bash && \
+    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+    /opt/conda/bin/conda config --add channels defaults && \ 
     /opt/conda/bin/conda config --add channels bioconda && \
     /opt/conda/bin/conda config --add channels conda-forge && \
     /opt/conda/bin/conda install -y miranda=3.3a && \
