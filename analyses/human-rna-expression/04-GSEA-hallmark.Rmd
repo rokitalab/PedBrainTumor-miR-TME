@@ -33,7 +33,7 @@ analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
 results_dir  <- file.path(analysis_dir, "results")
 plot_dir     <- file.path(analysis_dir, "plots")
 
-histologies  <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+histologies  <- c("DIPG or DMG", "EPN", "LGG", "MB")
 
 hallmarks <- msigdbr("Homo sapiens", category = "H") %>%
   select(gs_name, gene_symbol)
@@ -44,7 +44,7 @@ hallmarks <- msigdbr("Homo sapiens", category = "H") %>%
 ```{r run-gsea, message=TRUE, warning=FALSE}
 for (hist in histologies) {
   message("Processing histology: ", hist)
-  contrasts <- if (hist %in% c("ATRT", "HGG", "LGG"))
+  contrasts <- if (hist == "LGG")
     "healthyNormal" else c("healthyNormal", "paired")
   
   for (ctr in contrasts) {
