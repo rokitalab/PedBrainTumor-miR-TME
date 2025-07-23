@@ -5,7 +5,7 @@ output:
   toc: TRUE
 toc_float: TRUE
 author: Ryan Corbett, Bicna Song
-date: "2025-06-22"
+date: "`r Sys.Date()`"
 ---
 
 ### Overview
@@ -23,9 +23,9 @@ library(glue)
 
 ```{r dir-paths}
 root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
-data_dir     <- file.path(root_dir, "data")
-mirna_res    <- file.path(root_dir, "analyses", "human-mirna-expression", "results")
-rna_res      <- file.path(root_dir, "analyses", "human-rna-expression", "results")
+data_dir <- file.path(root_dir, "data")
+mirna_res <- file.path(root_dir, "analyses", "human-mirna-expression", "results")
+rna_res <- file.path(root_dir, "analyses", "human-rna-expression", "results")
 analysis_dir <- file.path(root_dir, "analyses", "human-mirna-go-enrichment")
 input_dir <- file.path(analysis_dir, "input")
 results_dir  <- file.path(analysis_dir, "results")
@@ -55,13 +55,13 @@ write_tsv(mirTarBase_df,
 
 ```{r define-histologies}
 # Define histologies and contrasts
-histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+histologies <- c("DIPG or DMG", "EPN", "LGG", "MB")
 ```
 
 ```{r process-de-results}
 for (hist in histologies) {
   message("Processing histology: ", hist)
-  contrasts <- if (hist %in% c("ATRT", "LGG")) {
+  contrasts <- if (hist %in% c("LGG")) {
     "healthyNormal"
   } else {
     c("healthyNormal", "paired")
@@ -88,8 +88,9 @@ for (hist in histologies) {
     }
 
     # Annotate targets
+    # Only keep miRNA targets with detectable mRNA expression (baseMean != NA)
     interactions <- de_mirna_df %>%
-      dplyr::filter(padj < 0.1) %>%
+      dplyr::filter(padj < 0.05) %>%
       left_join(mirTarBase_df, by = c("miRNA")) %>%
       rename(target_gene_id = `Target Gene`) %>%
       left_join(de_rna_df, by = c("target_gene_id" = "gene_symbol"),

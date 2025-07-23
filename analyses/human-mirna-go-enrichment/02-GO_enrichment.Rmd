@@ -5,7 +5,7 @@ output:
   toc: TRUE
 toc_float: TRUE
 author: Ryan Corbett, Bicna Song
-date: "2025-06-22"
+date: "`r Sys.Date()`"
 ---
 
 ### Overview
@@ -36,7 +36,7 @@ mirTarBase_targets_file <- file.path(results_dir,
 mirTarBase_targets_df   <- read_tsv(mirTarBase_targets_file, col_types = cols())
 
 # Histologies and controls
-histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+histologies <- c("DIPG or DMG", "EPN", "LGG", "MB")
 ```
 
 ### GO Enrichment per Histology and Contrast
@@ -56,7 +56,7 @@ for (hist in histologies) {
   message("▶ Histology: ", hist)
   
   # Determine contrasts
-  contrasts <- if (hist %in% c("ATRT", "HGG", "LGG")) {
+  contrasts <- if (hist %in% c("LGG")) {
     "healthyNormal"
   } else {
     c("healthyNormal", "paired")
@@ -125,10 +125,19 @@ for (hist in histologies) {
         mutate(fdr = p.adjust(as.numeric(classicFisher), method="BH")) %>%
         filter(fdr < 0.05)
       
-      if (nrow(go_tab) > 0) {
+      # add genes lists to enriched GO term df
+      genes_per_term <- genesInTerm(GO_data)
+      
+      genes_per_term_df <- enframe(genes_per_term, name = "GO.ID", value = "Genes") %>%
+      mutate(Genes = sapply(Genes, function(x) paste(x, collapse = ", ")))
+      
+      go_tab_add_genes <- go_tab %>%
+        left_join(genes_per_term_df)
+      
+      if (nrow(go_tab_add_genes) > 0) {
         out_file <- glue("{mirna}-{hist}-shared-GO-BP_all.tsv")
-        write_tsv(go_tab, file.path(results_dir, out_file))
-        message("         ✓ Wrote ", nrow(go_tab), " terms to ", out_file)
+        write_tsv(go_tab_add_genes, file.path(results_dir, out_file))
+        message("         ✓ Wrote ", nrow(go_tab_add_genes), " terms to ", out_file)
       } else {
         message("         ✗ No significant GO terms for ", mirna)
       }
@@ -146,4 +155,5 @@ for (hist in histologies) {
 ```{r session-info}
 sessionInfo()
 ```
+
 

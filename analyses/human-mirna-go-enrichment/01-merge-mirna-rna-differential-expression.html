@@ -11,7 +11,7 @@
 
 <meta name="author" content="Ryan Corbett, Bicna Song" />
 
-<meta name="date" content="2025-06-22" />
+<meta name="date" content="2025-07-22" />
 
 <title>Integrated miRNA–mRNA Interaction Analysis</title>
 
@@ -423,7 +423,7 @@ font-size: 0.95em;
 <h1 class="title toc-ignore">Integrated miRNA–mRNA Interaction
 Analysis</h1>
 <h4 class="author">Ryan Corbett, Bicna Song</h4>
-<h4 class="date">2025-06-22</h4>
+<h4 class="date">2025-07-22</h4>
 
 </div>
 
@@ -443,9 +443,9 @@ library(glue)</code></pre>
 <div id="set-directory-paths" class="section level3">
 <h3>Set directory paths</h3>
 <pre class="r"><code>root_dir &lt;- rprojroot::find_root(rprojroot::has_dir(&quot;.git&quot;))
-data_dir     &lt;- file.path(root_dir, &quot;data&quot;)
-mirna_res    &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;, &quot;results&quot;)
-rna_res      &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-rna-expression&quot;, &quot;results&quot;)
+data_dir &lt;- file.path(root_dir, &quot;data&quot;)
+mirna_res &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;, &quot;results&quot;)
+rna_res &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-rna-expression&quot;, &quot;results&quot;)
 analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-go-enrichment&quot;)
 input_dir &lt;- file.path(analysis_dir, &quot;input&quot;)
 results_dir  &lt;- file.path(analysis_dir, &quot;results&quot;)</code></pre>
@@ -510,10 +510,10 @@ mirTarBase_df &lt;- read_csv(mirTarBase_SE_R_file) %&gt;%
 <div id="process-de-results-and-annotate-targets" class="section level3">
 <h3>Process DE Results and Annotate Targets</h3>
 <pre class="r"><code># Define histologies and contrasts
-histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;LGG&quot;, &quot;MB&quot;)</code></pre>
+histologies &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;LGG&quot;, &quot;MB&quot;)</code></pre>
 <pre class="r"><code>for (hist in histologies) {
   message(&quot;Processing histology: &quot;, hist)
-  contrasts &lt;- if (hist %in% c(&quot;ATRT&quot;, &quot;LGG&quot;)) {
+  contrasts &lt;- if (hist %in% c(&quot;LGG&quot;)) {
     &quot;healthyNormal&quot;
   } else {
     c(&quot;healthyNormal&quot;, &quot;paired&quot;)
@@ -540,8 +540,9 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
     }
 
     # Annotate targets
+    # Only keep miRNA targets with detectable mRNA expression (baseMean != NA)
     interactions &lt;- de_mirna_df %&gt;%
-      dplyr::filter(padj &lt; 0.1) %&gt;%
+      dplyr::filter(padj &lt; 0.05) %&gt;%
       left_join(mirTarBase_df, by = c(&quot;miRNA&quot;)) %&gt;%
       rename(target_gene_id = `Target Gene`) %&gt;%
       left_join(de_rna_df, by = c(&quot;target_gene_id&quot; = &quot;gene_symbol&quot;),
@@ -555,7 +556,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
       message(&quot;   ✔ Saved &quot;, nrow(interactions), &quot; interactions to &quot;, out_file)
   }
 }</code></pre>
-<pre><code>## Processing histology: ATRT</code></pre>
+<pre><code>## Processing histology: DIPG or DMG</code></pre>
 <pre><code>##  - Contrast: healthyNormal</code></pre>
 <pre><code>## Rows: 2053 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -573,29 +574,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 1985 interactions to known-mirna-target-gene-differential-expr-ATRT-healthyNormal.tsv
-## 
-## Processing histology: DIPG or DMG
-## 
-##  - Contrast: healthyNormal
-## 
-## Rows: 2053 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): miRNA
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 41799 interactions to known-mirna-target-gene-differential-expr-DIPG or DMG-healthyNormal.tsv
+##    ✔ Saved 30188 interactions to known-mirna-target-gene-differential-expr-DIPG or DMG-healthyNormal.tsv
 ## 
 ##  - Contrast: paired
 ## 
@@ -615,7 +594,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 58931 interactions to known-mirna-target-gene-differential-expr-DIPG or DMG-paired.tsv
+##    ✔ Saved 51629 interactions to known-mirna-target-gene-differential-expr-DIPG or DMG-paired.tsv
 ## 
 ## Processing histology: EPN
 ## 
@@ -637,7 +616,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 13266 interactions to known-mirna-target-gene-differential-expr-EPN-healthyNormal.tsv
+##    ✔ Saved 12306 interactions to known-mirna-target-gene-differential-expr-EPN-healthyNormal.tsv
 ## 
 ##  - Contrast: paired
 ## 
@@ -657,49 +636,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 10589 interactions to known-mirna-target-gene-differential-expr-EPN-paired.tsv
-## 
-## Processing histology: HGG
-## 
-##  - Contrast: healthyNormal
-## 
-## Rows: 2053 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): miRNA
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 8151 interactions to known-mirna-target-gene-differential-expr-HGG-healthyNormal.tsv
-## 
-##  - Contrast: paired
-## 
-## Rows: 2053 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): miRNA
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 431 interactions to known-mirna-target-gene-differential-expr-HGG-paired.tsv
+##    ✔ Saved 5542 interactions to known-mirna-target-gene-differential-expr-EPN-paired.tsv
 ## 
 ## Processing histology: LGG
 ## 
@@ -721,7 +658,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 62084 interactions to known-mirna-target-gene-differential-expr-LGG-healthyNormal.tsv
+##    ✔ Saved 40109 interactions to known-mirna-target-gene-differential-expr-LGG-healthyNormal.tsv
 ## 
 ## Processing histology: MB
 ## 
@@ -743,7 +680,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 22574 interactions to known-mirna-target-gene-differential-expr-MB-healthyNormal.tsv
+##    ✔ Saved 14235 interactions to known-mirna-target-gene-differential-expr-MB-healthyNormal.tsv
 ## 
 ##  - Contrast: paired
 ## 
@@ -763,7 +700,7 @@ histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, 
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-##    ✔ Saved 18859 interactions to known-mirna-target-gene-differential-expr-MB-paired.tsv</code></pre>
+##    ✔ Saved 10107 interactions to known-mirna-target-gene-differential-expr-MB-paired.tsv</code></pre>
 </div>
 <div id="session-info" class="section level3">
 <h3>Session Info</h3>
