@@ -44,63 +44,19 @@ results_dir <- file.path(analysis_dir, "results")
 plot_dir <- file.path(analysis_dir, "plots")
 ```
 
-### Load file
+### Load histology file
 
-```{r load-file}
-# RDS with TPM expression
-tpm_rds <- file.path(data_dir, "gene-expression-rsem-tpm-collapsed.all.rds")
-
-# Load a matrix: genes × samples
-expr_tpm <- readRDS(tpm_rds)
-
-# Remove 5-1234-left-pons showing significant tumor infiltration
-expr_tpm <- expr_tpm[, !(colnames(expr_tpm) == "BA_GBVGBCJG")]
-
-# Log2‐transform
-expr_mat <- as.matrix(log2(expr_tpm + 1))
-```
-
-### Load GO–BP Gene Sets
-
-```{r}
-go_bp_df <- msigdbr(
-  species    = "Homo sapiens",
-  category   = "C5",
-  subcategory= "BP"
-) %>%
-  select(gs_name, gene_symbol)
-
-go_bp_list <- split(go_bp_df$gene_symbol, go_bp_df$gs_name)
-```
-
-### Run GSVA
-
-```{r run-gsva, warning=FALSE}
-gsva_scores_param <- gsvaParam(expr_mat,
-                               geneSets = go_bp_list,
-                               kcdf = "Gaussian",
-                               maxSize = 1500)
-
-gsva_scores <- gsva(gsva_scores_param, verbose = TRUE)
-```
-```{r}
-gsva_scores %>%
-  as.data.frame() %>%
-  rownames_to_column("Pathway") %>%
-  write_tsv(file.path(results_dir, "gobp-gsva-scores.tsv"))
-```
-
-### Run differential expression analysis on pathway GSVA scores
-
-```{r}
-all_hist <- c("ATRT","DIPG or DMG","EPN","HGG","LGG","MB")
+```{r all-hist}
+all_hist <- c("DIPG or DMG","EPN","LGG","MB") # exclude ATRT, HGG
 normal_ids <- c("B1","B2","B3","B4","B5")
 ```
 
 ```{r load-histology}
 # Load and annotate histology file
 histology_df <- read_delim(file.path(root_dir, "analyses", "histology-preprocessing", "results", "histologies.tsv")) %>%
-  filter(experimental_strategy == "RNA-Seq" & external_sample_id != "5-1234-left-pons") %>%
+  filter(experimental_strategy == "RNA-Seq",
+         # exclude tumor-infiltrated normal and mismatch pair samples
+         !external_sample_id %in% c("5-1234-left-pons", "2237-N", "2237-T")) %>% 
   # Fill in any missing histology with "Normal"
   mutate(histology = if_else(is.na(histology), "Normal", histology)) %>%
   mutate(condition = case_when(
@@ -138,9 +94,63 @@ summary_table <- paired_info %>%
 print(summary_table)
 ```
 
-Identify keywords in GO terms for plotting (provided by Dalia)
+```{r pull-bioassay_ids}
+interest_bioassay_ids <- histology_df %>%
+  filter(histology %in% c("DIPG or DMG", "MB", "LGG", "EPN", "Normal")) %>%
+  pull(Bioassay_ID)
+```
 
-```{r keywords}
+### Load file
+
+```{r load-file}
+# Path to the RDS containing TPM expression (genes × samples)
+tpm_rds <- file.path(data_dir, "gene-expression-rsem-tpm-collapsed.all.rds")
+
+# Load into R
+expr_tpm <- readRDS(tpm_rds)
+
+# Subset to only the Bioassay_IDs of interest
+expr_tpm <- expr_tpm[, interest_bioassay_ids, drop = FALSE]
+
+# Log2‐transform
+expr_mat <- log2(as.matrix(expr_tpm) + 1)
+```
+
+### Load GO–BP Gene Sets
+
+```{r load go-bp}
+go_bp_df <- msigdbr(
+  species    = "Homo sapiens",
+  category   = "C5",
+  subcategory= "BP"
+) %>%
+  select(gs_name, gene_symbol)
+
+go_bp_list <- split(go_bp_df$gene_symbol, go_bp_df$gs_name)
+```
+
+### Run GSVA
+
+```{r run-gsva, warning=FALSE}
+gsva_scores_param <- gsvaParam(expr_mat,
+                               geneSets = go_bp_list,
+                               kcdf = "Gaussian",
+                               maxSize = 1500)
+
+gsva_scores <- gsva(gsva_scores_param, verbose = TRUE)
+```
+
+```{r save gsva-scores}
+gsva_scores %>%
+  as.data.frame() %>%
+  rownames_to_column("Pathway") %>%
+  write_tsv(file.path(results_dir, "gobp-gsva-scores.tsv"))
+```
+
+### Run differential expression analysis on pathway GSVA scores
+
+```{r set-keywords}
+# Identify keywords in GO terms for plotting (provided by Dalia)
 keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense"
 ```
 
@@ -179,18 +189,17 @@ for (hist in all_hist) {
     design <- model.matrix(~ condition, data=meta)
     fit <- lmFit(mat, design) %>% eBayes()
     res <- topTable(fit, coef = 2, number = Inf) %>%
-      rownames_to_column("Pathway")
+      rownames_to_column("Pathway") %>%
+      filter(adj.P.Val < 0.05) %>%
+      arrange(adj.P.Val)
     
     if (nrow(res) > 0) {
       out_tsv <- paste0(gsub("[ ]", "_", hist), "_" , contrast, "_GSVA_DE_results.tsv")
       write_tsv(res, file.path(results_dir, out_tsv))
       message("   ✓ Saved results: ", out_tsv)
 
-      # filter significant pathways by keyword
       sig <- res %>%
-        filter(P.Value < 0.05) %>%
         filter(stringr::str_detect(Pathway, regex(keywords, ignore_case = TRUE))) %>%
-        arrange(P.Value) %>%
         slice_head(n = 30) %>%
         pull(Pathway)
       
@@ -206,7 +215,7 @@ for (hist in all_hist) {
                  color = colorRampPalette(c("blue", "white", "darkorange"))(6),
                  cluster_cols = FALSE,
                  filename = file.path(plot_dir,
-                                      paste0("heatmap_", gsub("[ ]", "_", hist), "_", contrast, ".pdf")),
+                                      paste0(gsub("[ ]", "_", hist), "_", contrast, "_GSVA_DE_heatmap.pdf")),
                  width = 12)
         message("   ✓ Plotted heatmap for ", hist, "/", contrast)
       }
