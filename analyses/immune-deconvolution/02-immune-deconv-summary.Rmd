@@ -17,11 +17,7 @@ This script summarizes immune deconvolution results as follows:
 ```{r load-packages, message=FALSE, warning=FALSE}
 # Load libraries
 library(tidyverse)
-library(rprojroot)
 library(ggpubr)
-
-#install.packages("ashr") # this will be added to Dockerfile later if needed.
-library(ashr)
 
 # Define directories
 root_dir <- find_root(has_dir(".git"))
@@ -57,11 +53,6 @@ quantiseq_res <- readRDS(quantiseq_file) %>%
     grepl("Adjacent", sample_type) ~ "Adjacent N",
     sample_type == "Normal" ~ "Healthy N",
     TRUE ~ "Tumor"
-  )) %>%
-  # abbreviate DMG
-  dplyr::mutate(histology = case_when(
-    histology == "DIPG or DMG" ~ "DMG",
-    TRUE ~ histology
   ))
 ```
 
@@ -78,9 +69,13 @@ paired_samples <- histologies %>%
 Plot quantiseq-derived cell proportions in tumors by histology 
 
 ```{r}
+hist_contrasts <- list(c("DIPG or DMG", "EPN"),
+                                        c("DIPG or DMG", "LGG"),
+                                        c("DIPG or DMG", "MB"))
+
 quantiseq_res %>%
   dplyr::filter(sample_type == "Tumor",
-                histology %in% c("DMG", "EPN", "MB", "LGG"),
+                histology %in% c("DIPG or DMG", "EPN", "MB", "LGG"),
                 cell_type != "uncharacterized cell") %>%
   
   ggplot(aes(x = histology, y = fraction)) + 
@@ -89,34 +84,69 @@ quantiseq_res %>%
               show.legend = FALSE) +
   geom_boxplot(alpha = 0.05, outlier.shape = NA) +
   stat_compare_means(method = "wilcox",
-                     comparisons = list(c("DMG", "EPN"),
-                                        c("DMG", "LGG"),
-                                        c("DMG", "MB")),
-                     method.args = list(alternative = "two.sided")) +
+                     comparisons = hist_contrasts,
+                     method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
   labs(x = NULL, y = "Cell fraction") +
   facet_wrap(~cell_type, nrow = 2, scales = "free_y",
              labeller = labeller(cell_type = label_wrap_gen(18))) +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
-  theme_Publication()
+  theme_Publication() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave(file.path(plot_dir,
                    glue::glue("quantiseq-cell-proportions-byHist.pdf")),
          width = 13, height = 6)
 ```
-
-Loop through histologies and plot cell fractions in tumor vs. normal
+compute and plot M2:M1 macrophage ratio across tumor histologies
 
 ```{r}
-groups <- c("DMG", "EPN", "LGG", "MB")
+macrophage_quantiseq_df <- quantiseq_res %>%
+  dplyr::filter(sample_type == "Tumor",
+                histology %in% c("DIPG or DMG", "EPN", "MB", "LGG"),
+                grepl("Macrophage", cell_type)) %>%
+  pivot_wider(names_from = cell_type,
+              values_from = fraction,
+              id_cols = c(Bioassay_ID, histology)) %>%
+  dplyr::mutate(m2_m1_ratio = `Macrophage M2`/`Macrophage M1`) %>%
+  dplyr::mutate(m2_m1_ratio = case_when(
+    is.infinite(m2_m1_ratio) ~ 5,
+    is.nan(m2_m1_ratio) ~ 0,
+    TRUE ~ m2_m1_ratio
+  ))
+
+macrophage_quantiseq_df %>%
+  
+  ggplot(aes(x = histology, y = m2_m1_ratio)) + 
+  geom_jitter(aes(fill = histology), shape = 21, 
+              width = 0.2, size = 2.5, alpha = 0.85,
+              show.legend = FALSE) +
+  geom_boxplot(alpha = 0.05, outlier.shape = NA) +
+  stat_compare_means(method = "wilcox",
+                     comparisons = hist_contrasts,
+                     method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
+  labs(x = NULL, y = "M2:M1 ratio") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
+  theme_Publication() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave(file.path(plot_dir,
+                   glue::glue("quantiseq-m2-m1-macrophage-ratio-byHist.pdf")),
+         width = 4, height = 3)
+```
+
+Loop through histologies and plot quantiseq cell fractions in tumor vs. normal
+
+```{r}
+groups <- c("DIPG or DMG", "EPN", "LGG", "MB")
 
 for (hist in groups){
   
   hist_plot_dir <- file.path(plot_dir, hist)
   
   if (!dir.exists(hist_plot_dir)){
-    
     dir.create(hist_plot_dir)
-    
   }
   
   # subset for histology
@@ -140,7 +170,8 @@ for (hist in groups){
     stat_compare_means(method = "wilcox",
                        comparisons = list(c("Tumor", "Healthy N"),
                                           c("Tumor", "Adjacent N")),
-                       method.args = list(alternative = "two.sided")) +
+                       method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
     labs(x = NULL, y = "Cell fraction") +
     facet_wrap(~cell_type, nrow = 2, scales = "free_y",
                labeller = labeller(cell_type = label_wrap_gen(18))) +
@@ -167,12 +198,14 @@ for (hist in groups){
       geom_boxplot(alpha = 0.05, outlier.shape = NA) +
       stat_compare_means(method = "wilcox",
                          comparisons = list(c("Tumor", "Adjacent N")),
-                         method.args = list(alternative = "two.sided")) +
+                         method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
       labs(x = NULL, y = "Cell fraction") +
       facet_wrap(~cell_type, nrow = 2, scales = "free_y",
                  labeller = labeller(cell_type = label_wrap_gen(18))) +
       scale_y_continuous(expand = expansion(mult = c(0.05, 0.2))) +
-      theme_Publication()
+      theme_Publication() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
     
     ggsave(file.path(hist_plot_dir,
                  glue::glue("{hist}-cell-proportions-tumor-v-adjN-quantiseq.pdf")),
@@ -183,7 +216,6 @@ for (hist in groups){
 }
 ```
 
-
 Load Xcell immune deconvolution output
 
 ```{r}
@@ -192,10 +224,6 @@ xcell_res <- readRDS(xcell_file) %>%
     grepl("Adjacent", sample_type) ~ "Adjacent N",
     sample_type == "Normal" ~ "Healthy N",
     TRUE ~ "Tumor"
-  )) %>%
-  dplyr::mutate(histology = case_when(
-    histology == "DIPG or DMG" ~ "DMG",
-    TRUE ~ histology
   )) %>%
   # define groups of cell types for plotting
   dplyr::mutate(cell_group = case_when(
@@ -214,11 +242,14 @@ for (cell in unique(xcell_res$cell_group)){
   
   ncells <- length(unique(xcell_res$cell_type[xcell_res$cell_group == cell]))
   
-  plot_width <- 6 + ncells/3
+  plot_width <- ifelse(cell == "B cell", 6,
+                     ifelse(cell == "Innate immune cell", 9,
+                            ifelse(cell == "T cell", 12,
+                                   ifelse(cell == "Other", 8, 3))))
   
   xcell_res %>%
     dplyr::filter(sample_type == "Tumor",
-                  histology %in% c("DMG", "EPN", "LGG", "MB"),
+                  histology %in% c("DIPG or DMG", "EPN", "LGG", "MB"),
                   cell_group == cell) %>%
     
     ggplot(aes(x = histology, y = fraction)) + 
@@ -227,21 +258,63 @@ for (cell in unique(xcell_res$cell_group)){
                 show.legend = FALSE) +
     geom_boxplot(alpha = 0.05, outlier.shape = NA) +
     stat_compare_means(method = "wilcox",
-                       comparisons = list(c("DMG", "EPN"),
-                                          c("DMG", "LGG"),
-                                          c("DMG", "MB")),
-                       method.args = list(alternative = "two.sided")) +
+                       comparisons = hist_contrasts,
+                       method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
     labs(x = NULL, y = "Cell enrichment score") +
     facet_wrap(~cell_type, nrow = 3, scales = "free_y",
                labeller = labeller(cell_type = label_wrap_gen(18))) +
-    scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
-    theme_Publication()
+    theme_Publication() +
+        scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
   ggsave(file.path(plot_dir,
                    glue::glue("{cell}-proportions-byHist-xcell.pdf")),
          width = plot_width, height = 7)
     
 }
+```
+
+Compute and plot M2:M1 macrophage ratio by histology
+
+```{r}
+macrophage_xcell_df <- xcell_res %>%
+  dplyr::filter(sample_type == "Tumor",
+                histology %in% c("DIPG or DMG", "EPN", "MB", "LGG"),
+                grepl("Macrophage M", cell_type)) %>%
+  dplyr::mutate(fraction = case_when(
+    fraction < 1e-5 ~ 0,
+    TRUE ~ fraction
+  )) %>%
+  pivot_wider(names_from = cell_type,
+              values_from = fraction,
+              id_cols = c(Bioassay_ID, histology)) %>%
+  dplyr::mutate(m2_m1_ratio = `Macrophage M2`/`Macrophage M1`) %>%
+  dplyr::mutate(m2_m1_ratio = case_when(
+    is.infinite(m2_m1_ratio) ~ 20,
+    is.nan(m2_m1_ratio) ~ 0,
+    TRUE ~ m2_m1_ratio
+  ))
+
+macrophage_xcell_df %>%
+  
+  ggplot(aes(x = histology, y = m2_m1_ratio)) + 
+  geom_jitter(aes(fill = histology), shape = 21, 
+              width = 0.2, size = 2.5, alpha = 0.85,
+              show.legend = FALSE) +
+  geom_boxplot(alpha = 0.05, outlier.shape = NA) +
+  stat_compare_means(method = "wilcox",
+                     comparisons = hist_contrasts,
+                     method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
+  labs(x = NULL, y = "M2:M1 ratio") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
+  theme_Publication() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave(file.path(plot_dir,
+                   glue::glue("xcell-m2-m1-macrophage-ratio-byHist.pdf")),
+         width = 4, height = 3)
 ```
 
 Loop through histologies and plot tumor vs. normal cell enrichment scores 
@@ -252,9 +325,7 @@ for (hist in groups){
   hist_plot_dir <- file.path(plot_dir, hist)
   
   if (!dir.exists(hist_plot_dir)){
-    
     dir.create(hist_plot_dir)
-    
   }
   
   # subset for histology
@@ -262,7 +333,6 @@ for (hist in groups){
     dplyr::filter(histology == hist | sample_type == "Normal")
   
   # remove cell types with low proportions
-  
   mean_cell_proportions <- xcell_group %>%
     group_by(cell_type) %>%
     summarise(mean_proportion = mean(fraction, na.rm = TRUE)) %>%
@@ -281,7 +351,10 @@ for (hist in groups){
     # determine plot widths based on n cell types
     ncells <- length(unique(xcell_group$cell_type[xcell_group$cell_group == cell]))
   
-    plot_width <- 6 + ncells/3
+    plot_width <- ifelse(cell == "B cell", 6,
+                       ifelse(cell == "Innate immune cell", 9,
+                              ifelse(cell == "T cell", 12,
+                                     ifelse(cell == "Other", 8, 3))))
   
     # plot
     xcell_group %>%
@@ -300,13 +373,14 @@ for (hist in groups){
       stat_compare_means(method = "wilcox",
                          comparisons = list(c("Tumor", "Healthy N"),
                                             c("Tumor", "Adjacent N")),
-                         method.args = list(alternative = "two.sided")) +
+                         method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
       labs(x = NULL, y = "Cell enrichment score") +
       facet_wrap(~cell_type, nrow = 3, scales = "free_y",
                  labeller = labeller(cell_type = label_wrap_gen(18))) +
-      scale_y_continuous(expand = expansion(mult = c(0.05, 0.2))) +
       theme_Publication() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      scale_y_continuous(expand = expansion(mult = c(0.05, 0.2)))
     
     # save to output
     ggsave(file.path(hist_plot_dir,
@@ -329,12 +403,14 @@ for (hist in groups){
         geom_boxplot(alpha = 0.05, outlier.shape = NA) +
         stat_compare_means(method = "wilcox",
                            comparisons = list(c("Tumor", "Adjacent N")),
-                           method.args = list(alternative = "two.sided")) +
+                           method.args = list(alternative = "two.sided"),
+                       label = "p.signif") +
         labs(x = NULL, y = "Cell enrichment score") +
         facet_wrap(~cell_type, nrow = 3, scales = "free_y",
                    labeller = labeller(cell_type = label_wrap_gen(18))) +
-        scale_y_continuous(expand = expansion(mult = c(0.05, 0.2))) +
-        theme_Publication()
+        theme_Publication() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        scale_y_continuous(expand = expansion(mult = c(0.05, 0.2)))
       
       ggsave(file.path(hist_plot_dir,
                    glue::glue("{hist}-{cell}-proportions-tumor-v-adjN-xcell.pdf")),
@@ -348,7 +424,6 @@ for (hist in groups){
 ```
 
 Session info
-
 ```{r}
 sessionInfo()
 ```
