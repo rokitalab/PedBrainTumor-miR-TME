@@ -11,7 +11,7 @@
 
 <meta name="author" content="Bicna Song" />
 
-<meta name="date" content="2025-07-24" />
+<meta name="date" content="2025-07-28" />
 
 <title>GSVA of RNA-Seq TPM Using GO–Biological Process</title>
 
@@ -423,7 +423,7 @@ font-size: 0.95em;
 <h1 class="title toc-ignore">GSVA of RNA-Seq TPM Using GO–Biological
 Process</h1>
 <h4 class="author">Bicna Song</h4>
-<h4 class="date">2025-07-24</h4>
+<h4 class="date">2025-07-28</h4>
 
 </div>
 
@@ -449,10 +449,7 @@ library(tibble)
 library(ggplot2)
 library(pheatmap)
 library(rprojroot)
-library(tidyverse)
-
-# Define colors
-heat_colors &lt;- colorRampPalette(c(&quot;blue&quot;,&quot;white&quot;,&quot;darkorange&quot;))(6)</code></pre>
+library(tidyverse)</code></pre>
 </div>
 <div id="set-directory-paths" class="section level3">
 <h3>Set directory paths</h3>
@@ -464,13 +461,11 @@ plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)</code></pre>
 </div>
 <div id="load-histology-file" class="section level3">
 <h3>Load histology file</h3>
-<pre class="r"><code>all_hist &lt;- c(&quot;DIPG or DMG&quot;,&quot;EPN&quot;,&quot;LGG&quot;,&quot;MB&quot;) # exclude ATRT, HGG
+<pre class="r"><code>all_hist &lt;- c(&quot;DIPG or DMG&quot;,&quot;EPN&quot;,&quot;LGG&quot;,&quot;MB&quot;) # exclude ATRT, HGG, GNT
 normal_ids &lt;- c(&quot;B1&quot;,&quot;B2&quot;,&quot;B3&quot;,&quot;B4&quot;,&quot;B5&quot;)</code></pre>
 <pre class="r"><code># Load and annotate histology file
 histology_df &lt;- read_delim(file.path(root_dir, &quot;analyses&quot;, &quot;histology-preprocessing&quot;, &quot;results&quot;, &quot;histologies.tsv&quot;)) %&gt;%
-  filter(experimental_strategy == &quot;RNA-Seq&quot;,
-         # exclude tumor-infiltrated normal and mismatch pair samples
-         !external_sample_id %in% c(&quot;5-1234-left-pons&quot;, &quot;2237-N&quot;, &quot;2237-T&quot;)) %&gt;% 
+  filter(experimental_strategy == &quot;RNA-Seq&quot;) %&gt;% 
   # Fill in any missing histology with &quot;Normal&quot;
   mutate(histology = if_else(is.na(histology), &quot;Normal&quot;, histology)) %&gt;%
   mutate(condition = case_when(
@@ -484,7 +479,7 @@ histology_df &lt;- read_delim(file.path(root_dir, &quot;analyses&quot;, &quot;hi
       TRUE ~ NA_character_
     )
   )</code></pre>
-<pre><code>## Rows: 108 Columns: 10
+<pre><code>## Rows: 102 Columns: 10
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (10): Bioassay_ID, experimental_strategy, sample_id, external_sample_id,...
@@ -570,86 +565,98 @@ gsva_scores &lt;- gsva(gsva_scores_param, verbose = TRUE)</code></pre>
 <h3>Run differential expression analysis on pathway GSVA scores</h3>
 <pre class="r"><code># Identify keywords in GO terms for plotting (provided by Dalia)
 keywords &lt;- &quot;immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense&quot;</code></pre>
+<pre class="r"><code>plot_heatmap &lt;- function(top30, ids, hist, constrast){
+
+    mat &lt;- gsva_scores[top30, ids, drop=FALSE]
+    # label
+    rownames(mat) &lt;- gsub(&quot;^GOBP_&quot;, &quot;&quot;, top30)
+    col_meta &lt;- histology_df %&gt;% filter(Bioassay_ID %in% ids)
+    # order columns: Tumor then Normal
+    col_ord &lt;- col_meta %&gt;% arrange(desc(sample_type)) %&gt;% pull(Bioassay_ID)
+    mat &lt;- mat[, col_ord, drop=FALSE]
+    colnames(mat) &lt;- col_meta %&gt;% arrange(desc(sample_type)) %&gt;% pull(external_sample_id)
+    # plot
+    pheatmap(mat,
+             fontsize = 8,
+             treeheight_row = 10,
+             color = colorRampPalette(c(&quot;blue&quot;, &quot;white&quot;, &quot;darkorange&quot;))(6),
+             cluster_cols = FALSE,
+             filename = file.path(plot_dir, paste0(hist, &quot;_&quot;, constrast, &quot;_GSVA_DE_heatmap.pdf&quot;)),
+             width = 12)
+        message(&quot;   ✓ Plotted heatmap for &quot;, hist, &quot;/&quot;, constrast)
+        
+}</code></pre>
 <pre class="r"><code>for (hist in all_hist) {
   message(&quot;Histology: &quot;, hist)
-  # Determine paired vs. unpaired samples using paired_info
+  
+  # paired analysis
   paired_sample_ids &lt;- paired_info %&gt;%
     filter(histology == hist, pair_status == &quot;Paired&quot;) %&gt;%
     pull(sample_id)
-  # Map to Bioassay_IDs
+  
   paired_ids &lt;- histology_df %&gt;%
     filter(sample_id %in% paired_sample_ids) %&gt;%
     pull(Bioassay_ID)
-
-  # Unpaired (tumor vs healthy normals)
-  healthy_ids &lt;- histology_df %&gt;%
-    filter(histology==hist &amp; sample_type==&quot;Tumor&quot; | external_sample_id %in% normal_ids) %&gt;% pull(Bioassay_ID)
   
-  for (contrast in c(&quot;paired&quot;,&quot;healthyNormal&quot;)) {
-    ids &lt;- if (contrast==&quot;paired&quot;) paired_ids else healthy_ids
-    if (length(ids) &lt; 2) next
-    mat &lt;- gsva_scores[, ids, drop=FALSE]
-    meta &lt;- histology_df %&gt;%
-      filter(Bioassay_ID %in% ids) %&gt;%
-      mutate(condition = if_else(sample_type == &quot;Tumor&quot;, hist, &quot;Normal&quot;)) %&gt;%
+  if(length(paired_ids)&gt;=2) {
+    mat_p &lt;- gsva_scores[, paired_ids, drop=FALSE]
+    meta_p &lt;- histology_df %&gt;%
+      filter(Bioassay_ID %in% paired_ids) %&gt;%
+      mutate(condition = if_else(sample_type == &quot;Tumor&quot;, &quot;Tumor&quot;, &quot;Normal&quot;)) %&gt;%
       # ensure &#39;condition&#39; is a factor with &#39;Normal&#39; baseline
-      mutate(condition = factor(condition, levels = c(&quot;Normal&quot;, hist)))
-
-    # skip if any condition has fewer than two samples
-    cond_counts &lt;- table(meta$condition)
-    if (any(cond_counts &lt; 2)) {
-      message(&quot;   ✗ Insufficient replicates for &quot;, hist, &quot;/&quot;, contrast, &quot;: &quot;, paste(names(cond_counts), cond_counts, sep=&quot;=&quot;, collapse=&quot;, &quot;))
-      next
-    }
-    design &lt;- model.matrix(~ condition, data=meta)
-    fit &lt;- lmFit(mat, design) %&gt;% eBayes()
-    res &lt;- topTable(fit, coef = 2, number = Inf) %&gt;%
+      mutate(condition = factor(condition, levels = c(&quot;Normal&quot;, &quot;Tumor&quot;)))
+    design_p &lt;- model.matrix(~ sample_id + condition, data=meta_p)
+    fit_p &lt;- lmFit(mat_p, design_p) %&gt;% eBayes()
+    res_p &lt;- topTable(fit_p, coef = &quot;conditionTumor&quot;, number = Inf) %&gt;%
       rownames_to_column(&quot;Pathway&quot;) %&gt;%
       filter(adj.P.Val &lt; 0.05) %&gt;%
       arrange(adj.P.Val)
+    if (nrow(res_p)) write_tsv(res_p, file.path(results_dir, paste0(hist, &quot;_paired_GSVA_DE_results.tsv&quot;)))
     
-    if (nrow(res) &gt; 0) {
-      out_tsv &lt;- paste0(gsub(&quot;[ ]&quot;, &quot;_&quot;, hist), &quot;_&quot; , contrast, &quot;_GSVA_DE_results.tsv&quot;)
-      write_tsv(res, file.path(results_dir, out_tsv))
-      message(&quot;   ✓ Saved results: &quot;, out_tsv)
-
-      sig &lt;- res %&gt;%
-        filter(stringr::str_detect(Pathway, regex(keywords, ignore_case = TRUE))) %&gt;%
-        slice_head(n = 30) %&gt;%
-        pull(Pathway)
-      
-      if (length(sig) &gt; 1) {
-        # reorder columns to show Tumor first, then Normal
-        col_order &lt;- meta %&gt;% arrange(desc(sample_type)) %&gt;% pull(Bioassay_ID)
-        hm &lt;- mat[sig, col_order, drop = FALSE]
-        rownames(hm) &lt;- gsub(&quot;^GOBP_&quot;, &quot;&quot;, rownames(hm))
-        colnames(hm) &lt;- meta %&gt;% arrange(desc(sample_type)) %&gt;% pull(external_sample_id)
-        pheatmap(hm,
-                 fontsize = 8,
-                 treeheight_row = 10,
-                 color = colorRampPalette(c(&quot;blue&quot;, &quot;white&quot;, &quot;darkorange&quot;))(6),
-                 cluster_cols = FALSE,
-                 filename = file.path(plot_dir,
-                                      paste0(gsub(&quot;[ ]&quot;, &quot;_&quot;, hist), &quot;_&quot;, contrast, &quot;_GSVA_DE_heatmap.pdf&quot;)),
-                 width = 12)
-        message(&quot;   ✓ Plotted heatmap for &quot;, hist, &quot;/&quot;, contrast)
-      }
-    }
+    if(nrow(res_p)==0) next
+    top30 &lt;- res_p %&gt;%
+      filter(stringr::str_detect(Pathway, regex(keywords, ignore_case = TRUE))) %&gt;%
+      slice_min(order_by=adj.P.Val, n=30) %&gt;%
+      pull(Pathway)
+    
+    plot_heatmap(top30, paired_ids, hist, &quot;paired&quot;)
+  }
+    
+  # healthy normal comparision
+  healthy_ids &lt;- histology_df %&gt;%
+    filter(histology==hist &amp; sample_type==&quot;Tumor&quot; | external_sample_id %in% normal_ids) %&gt;% pull(Bioassay_ID)
+  
+  if(length(healthy_ids)&gt;=2) {
+    mat_h &lt;- gsva_scores[, healthy_ids, drop=FALSE]
+    meta_h &lt;- histology_df %&gt;%
+      filter(Bioassay_ID %in% healthy_ids) %&gt;%
+      mutate(condition = if_else(sample_type == &quot;Tumor&quot;, &quot;Tumor&quot;, &quot;Normal&quot;)) %&gt;%
+      # ensure &#39;condition&#39; is a factor with &#39;Normal&#39; baseline
+      mutate(condition = factor(condition, levels = c(&quot;Normal&quot;, &quot;Tumor&quot;)))
+    design_h &lt;- model.matrix(~ condition, data=meta_h)
+    fit_h &lt;- lmFit(mat_h, design_h) %&gt;% eBayes()
+    res_h &lt;- topTable(fit_h, coef = &quot;conditionTumor&quot;, number = Inf) %&gt;%
+      rownames_to_column(&quot;Pathway&quot;) %&gt;%
+      filter(adj.P.Val &lt; 0.05) %&gt;%
+      arrange(adj.P.Val)
+    if (nrow(res_h)) write_tsv(res_h, file.path(results_dir, paste0(hist, &quot;_healthyNormal_GSVA_DE_results.tsv&quot;)))
+    
+    if(nrow(res_h)==0) next
+    top30 &lt;- res_h %&gt;%
+      filter(stringr::str_detect(Pathway, regex(keywords, ignore_case = TRUE))) %&gt;%
+      slice_min(order_by=adj.P.Val, n=30) %&gt;%
+      pull(Pathway)
+    
+    plot_heatmap(top30, healthy_ids, hist, &quot;healthyNormal&quot;)
   }
 }</code></pre>
 <pre><code>## Histology: DIPG or DMG</code></pre>
-<pre><code>##    ✓ Saved results: DIPG_or_DMG_paired_GSVA_DE_results.tsv</code></pre>
 <pre><code>##    ✓ Plotted heatmap for DIPG or DMG/paired</code></pre>
-<pre><code>##    ✓ Saved results: DIPG_or_DMG_healthyNormal_GSVA_DE_results.tsv</code></pre>
 <pre><code>##    ✓ Plotted heatmap for DIPG or DMG/healthyNormal</code></pre>
 <pre><code>## Histology: EPN</code></pre>
-<pre><code>##    ✓ Saved results: EPN_healthyNormal_GSVA_DE_results.tsv</code></pre>
-<pre><code>##    ✓ Plotted heatmap for EPN/healthyNormal</code></pre>
 <pre><code>## Histology: LGG</code></pre>
 <pre><code>## Histology: MB</code></pre>
-<pre><code>##    ✓ Saved results: MB_paired_GSVA_DE_results.tsv</code></pre>
 <pre><code>##    ✓ Plotted heatmap for MB/paired</code></pre>
-<pre><code>##    ✓ Saved results: MB_healthyNormal_GSVA_DE_results.tsv</code></pre>
 <pre><code>##    ✓ Plotted heatmap for MB/healthyNormal</code></pre>
 </div>
 <div id="session-info" class="section level3">
