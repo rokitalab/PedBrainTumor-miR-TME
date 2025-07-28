@@ -77,6 +77,7 @@ RUN R -e 'BiocManager::install(c( \
   "edgeR", \
   "EnhancedVolcano", \
   "fgsea", \
+  "future.apply", \
   "ggpubr", \
   "ggstatsplot", \
   "ggthemes", \
