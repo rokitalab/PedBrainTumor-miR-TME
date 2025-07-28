@@ -20,7 +20,7 @@ library(tidyverse)
 library(ggpubr)
 
 # Define directories
-root_dir <- find_root(has_dir(".git"))
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
 data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "immune-deconvolution")
 results_dir <- file.path(analysis_dir, "results")
@@ -86,7 +86,8 @@ quantiseq_res %>%
   stat_compare_means(method = "wilcox",
                      comparisons = hist_contrasts,
                      method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
+                     label = "p.signif",
+                     step.increase = 0.15) +
   labs(x = NULL, y = "Cell fraction") +
   facet_wrap(~cell_type, nrow = 2, scales = "free_y",
              labeller = labeller(cell_type = label_wrap_gen(18))) +
@@ -125,8 +126,9 @@ macrophage_quantiseq_df %>%
   stat_compare_means(method = "wilcox",
                      comparisons = hist_contrasts,
                      method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
-  labs(x = NULL, y = "M2:M1 ratio") +
+                     label = "p.signif",
+                     step.increase = 0.20) +
+  labs(x = NULL, y = "M2:M1\nMacrophage\nratio") +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
   theme_Publication() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -153,6 +155,18 @@ for (hist in groups){
   quantiseq_group <- quantiseq_res %>%
     dplyr::filter(histology == hist | sample_type == "Normal",
                 cell_type != "uncharacterized cell")
+  
+  # define contrasts for plotting significance
+  if (hist == "LGG"){
+    
+    contrasts <- list(c("Tumor", "Healthy N"))
+    
+  } else {
+    
+    contrasts <- list(c("Tumor", "Healthy N"),
+                      c("Tumor", "Adjacent N"))
+    
+  }
 
 # plot tumor vs adj and healthy normal
   quantiseq_group %>%
@@ -168,10 +182,10 @@ for (hist in groups){
                 show.legend = FALSE) +
     geom_boxplot(alpha = 0.05, outlier.shape = NA) +
     stat_compare_means(method = "wilcox",
-                       comparisons = list(c("Tumor", "Healthy N"),
-                                          c("Tumor", "Adjacent N")),
+                       comparisons = contrasts,
                        method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
+                       label = "p.signif",
+                       step.increase = 0.15) +
     labs(x = NULL, y = "Cell fraction") +
     facet_wrap(~cell_type, nrow = 2, scales = "free_y",
                labeller = labeller(cell_type = label_wrap_gen(18))) +
@@ -199,7 +213,8 @@ for (hist in groups){
       stat_compare_means(method = "wilcox",
                          comparisons = list(c("Tumor", "Adjacent N")),
                          method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
+                         label = "p.signif",
+                         step.increase = 0.15) +
       labs(x = NULL, y = "Cell fraction") +
       facet_wrap(~cell_type, nrow = 2, scales = "free_y",
                  labeller = labeller(cell_type = label_wrap_gen(18))) +
@@ -260,7 +275,8 @@ for (cell in unique(xcell_res$cell_group)){
     stat_compare_means(method = "wilcox",
                        comparisons = hist_contrasts,
                        method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
+                       label = "p.signif",
+                       step.increase = 0.15) +
     labs(x = NULL, y = "Cell enrichment score") +
     facet_wrap(~cell_type, nrow = 3, scales = "free_y",
                labeller = labeller(cell_type = label_wrap_gen(18))) +
@@ -270,7 +286,7 @@ for (cell in unique(xcell_res$cell_group)){
   
   ggsave(file.path(plot_dir,
                    glue::glue("{cell}-proportions-byHist-xcell.pdf")),
-         width = plot_width, height = 7)
+         width = plot_width, height = 7.5)
     
 }
 ```
@@ -306,8 +322,9 @@ macrophage_xcell_df %>%
   stat_compare_means(method = "wilcox",
                      comparisons = hist_contrasts,
                      method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
-  labs(x = NULL, y = "M2:M1 ratio") +
+                     label = "p.signif",
+                     step.increase = 0.20) +
+  labs(x = NULL, y = "M2:M1\nMacrophage\nratio") +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
   theme_Publication() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -345,6 +362,18 @@ for (hist in groups){
   xcell_group <- xcell_group %>% 
     dplyr::filter(cell_type %in% cell_types_retain)
   
+  # define contrasts for plotting significance
+  if (hist == "LGG"){
+    
+    contrasts <- list(c("Tumor", "Healthy N"))
+    
+  } else {
+    
+    contrasts <- list(c("Tumor", "Healthy N"),
+                      c("Tumor", "Adjacent N"))
+    
+  }
+  
   # loop through cell groups for plotting
   for (cell in unique(xcell_group$cell_group)){
     
@@ -371,10 +400,10 @@ for (hist in groups){
                   show.legend = FALSE) +
       geom_boxplot(alpha = 0.05, outlier.shape = NA) +
       stat_compare_means(method = "wilcox",
-                         comparisons = list(c("Tumor", "Healthy N"),
-                                            c("Tumor", "Adjacent N")),
+                         comparisons = contrasts,
                          method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
+                         label = "p.signif",
+                         step.increase = 0.15) +
       labs(x = NULL, y = "Cell enrichment score") +
       facet_wrap(~cell_type, nrow = 3, scales = "free_y",
                  labeller = labeller(cell_type = label_wrap_gen(18))) +
@@ -385,7 +414,7 @@ for (hist in groups){
     # save to output
     ggsave(file.path(hist_plot_dir,
                      glue::glue("{hist}-{cell}-proportions-tumor-v-adj-healthyN-xcell.pdf")),
-           width = plot_width, height = 7)
+           width = plot_width, height = 7.5)
     
     # plot matched T/N samples only
     if (hist != "LGG"){
@@ -404,7 +433,8 @@ for (hist in groups){
         stat_compare_means(method = "wilcox",
                            comparisons = list(c("Tumor", "Adjacent N")),
                            method.args = list(alternative = "two.sided"),
-                       label = "p.signif") +
+                           label = "p.signif",
+                           step.increase = 0.15) +
         labs(x = NULL, y = "Cell enrichment score") +
         facet_wrap(~cell_type, nrow = 3, scales = "free_y",
                    labeller = labeller(cell_type = label_wrap_gen(18))) +
@@ -414,7 +444,7 @@ for (hist in groups){
       
       ggsave(file.path(hist_plot_dir,
                    glue::glue("{hist}-{cell}-proportions-tumor-v-adjN-xcell.pdf")),
-           width = plot_width, height = 7)
+           width = plot_width, height = 7.5)
       
     }
     
