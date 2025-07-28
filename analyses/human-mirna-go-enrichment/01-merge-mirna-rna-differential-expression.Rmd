@@ -1,0 +1,115 @@
+---
+title: 'Integrated miRNA–mRNA Interaction Analysis'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett, Bicna Song
+date: "`r Sys.Date()`"
+---
+
+### Overview
+This script identifies and annotates mRNA targets of differentially expressed (DE) miRNAs across tumor histologies and control contrasts, then saves the combined interaction tables for downstream analysis.
+
+### Load Required Packages
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(glue)
+```
+
+### Set directory paths
+
+```{r dir-paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+mirna_res <- file.path(root_dir, "analyses", "human-mirna-expression", "results")
+rna_res <- file.path(root_dir, "analyses", "human-rna-expression", "results")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-go-enrichment")
+input_dir <- file.path(analysis_dir, "input")
+results_dir  <- file.path(analysis_dir, "results")
+```
+
+### Wrangle miRTarBase Data
+
+```{r wrangle-mirbase}
+mirTarBase_SE_R_file <- file.path(input_dir, "miRTarBase_SE_R.csv")
+mirTarBase_SE_W_file <- file.path(input_dir, "miRTarBase_SE_W.csv")
+mirTarBase_SE_WR_file <- file.path(input_dir, "miRTarBase_SE_WR.csv")
+mirTarBase_WE_Clip_file <- file.path(input_dir, "miRTarBase_WE_Clip.tsv.gz")
+mirTarBase_WE_Other_file <- file.path(input_dir, "miRTarBase_WE_Other.csv")
+
+mirTarBase_df <- read_csv(mirTarBase_SE_R_file) %>%
+  bind_rows(read_csv(mirTarBase_SE_W_file)) %>%
+  bind_rows(read_csv(mirTarBase_SE_WR_file)) %>%
+  bind_rows(read_csv(mirTarBase_WE_Other_file)) %>%
+  bind_rows(read_tsv(mirTarBase_WE_Clip_file)) %>%
+  dplyr::filter(grepl("hsa", miRNA))
+
+write_tsv(mirTarBase_df,
+          file.path(results_dir, "human-mirna-target-predictions-miRTarBase.tsv.gz"))
+```
+
+### Process DE Results and Annotate Targets
+
+```{r define-histologies}
+# Define histologies and contrasts
+histologies <- c("DIPG or DMG", "EPN", "LGG", "MB")
+```
+
+```{r process-de-results}
+for (hist in histologies) {
+  message("Processing histology: ", hist)
+  contrasts <- if (hist %in% c("LGG")) {
+    "healthyNormal"
+  } else {
+    c("healthyNormal", "paired")
+  }
+  
+  for (contrast in contrasts) {
+    message(" - Contrast: ", contrast)
+
+    # load miRNA DE results file
+    if (contrast == "healthyNormal"){
+      
+      de_mirna_df <- read_csv(file.path(mirna_res,
+                                glue::glue("DESeq2_{hist}_vs_healthyNormal.csv")))
+      
+      de_rna_df <- read_csv(file.path(rna_res,
+                                      glue::glue("DESeq2_{hist}_vs_healthyNormal.csv")))
+    } else {
+    
+      de_mirna_df <- read_csv(file.path(mirna_res,
+                          glue::glue("DESeq2_{hist}_paired_full.csv")))
+      
+      de_rna_df <- read_csv(file.path(rna_res,
+                                      glue::glue("DESeq2_{hist}_paired_full.csv")))
+    }
+
+    # Annotate targets
+    # Only keep miRNA targets with detectable mRNA expression (baseMean != NA)
+    interactions <- de_mirna_df %>%
+      dplyr::filter(padj < 0.05) %>%
+      left_join(mirTarBase_df, by = c("miRNA")) %>%
+      rename(target_gene_id = `Target Gene`) %>%
+      left_join(de_rna_df, by = c("target_gene_id" = "gene_symbol"),
+                suffix = c("_miRNA","_mRNA")) %>%
+      filter(!is.na(target_gene_id), !is.na(baseMean_mRNA)) %>%
+      distinct(miRNA, target_gene_id, .keep_all=TRUE)
+    
+      # Save per-histology, per-contrast
+      out_file <- glue("known-mirna-target-gene-differential-expr-{hist}-{contrast}.tsv")
+      write_tsv(interactions, file.path(results_dir, out_file))
+      message("   ✔ Saved ", nrow(interactions), " interactions to ", out_file)
+  }
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+
+
