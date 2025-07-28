@@ -39,8 +39,6 @@ BA_RV9RT71G	RNA-Seq	7316-11670	2229-N	Normal-Tumor Adjacent	Right Frontal	NA	NA	
 BA_Q0H8WD5T	RNA-Seq	7316-11670	2229-T	Tumor	Right Cerebellum	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	ATRT, TYR	ATRT
 BA_BJBS777G	RNA-Seq	7316-11671	2232-N	Normal-Tumor Adjacent	Left Occipital	NA	NA	NA	DIPG or DMG
 BA_Q3YTW9JT	RNA-Seq	7316-11671	2232-T	Tumor	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
-BA_FPP5ER5Q	RNA-Seq	7316-11673	2237-N	Normal-Tumor Adjacent	Right Occipital	NA	NA	NA	MB
-BA_Z1WV5RXA	RNA-Seq	7316-11673	2237-T	Tumor	Right Cerebellum	Medulloblastoma	Medulloblastoma	NA	MB
 BA_F3C4R1QS	RNA-Seq	7316-11315	2248-N	Normal-Tumor Adjacent	Right Occipital	NA	NA	NA	DIPG or DMG
 BA_JCM7AADD	RNA-Seq	7316-11315	2248-T	Tumor	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_KK43JS84	RNA-Seq	7316-11314	759-N	Normal-Tumor Adjacent	Left Temporal	NA	NA	NA	MB
@@ -94,8 +92,6 @@ BA_00NW3YEK	miRNA-Seq	7316-11670	2229-N	Normal-Tumor Adjacent	Right Frontal	NA	N
 BA_KA6HWN63	miRNA-Seq	7316-11670	2229-T	Tumor	Right Cerebellum	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	ATRT, TYR	ATRT
 BA_K09YPGMQ	miRNA-Seq	7316-11671	2232-N	Normal-Tumor Adjacent	Left Occipital	NA	NA	NA	DIPG or DMG
 BA_2TX1QV5Q	miRNA-Seq	7316-11671	2232-T	Tumor	Left Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse midline glioma	DMG, H3 K28	DIPG or DMG
-BA_90GWSERE	miRNA-Seq	7316-11673	2237-N	Normal-Tumor Adjacent	Right Occipital	NA	NA	NA	MB
-BA_V2F01E3Z	miRNA-Seq	7316-11673	2237-T	Tumor	Right Cerebellum	Medulloblastoma	Medulloblastoma	NA	MB
 BA_V5E825V2	miRNA-Seq	7316-11315	2248-N	Normal-Tumor Adjacent	Right Occipital	NA	NA	NA	DIPG or DMG
 BA_BXKJBWBQ	miRNA-Seq	7316-11315	2248-T	Tumor	Right Pons	Brainstem glioma- Diffuse intrinsic pontine glioma	Diffuse intrinsic pontine glioma	NA	DIPG or DMG
 BA_AZSFDWK2	miRNA-Seq	7316-11314	759-N	Normal-Tumor Adjacent	Left Temporal	NA	NA	NA	MB
