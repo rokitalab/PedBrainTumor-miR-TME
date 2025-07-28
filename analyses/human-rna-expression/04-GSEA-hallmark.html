@@ -11,7 +11,7 @@
 
 <meta name="author" content="Bicna Song" />
 
-<meta name="date" content="2025-07-04" />
+<meta name="date" content="2025-07-23" />
 
 <title>GSEA Analysis Across Histologies</title>
 
@@ -422,7 +422,7 @@ font-size: 0.95em;
 
 <h1 class="title toc-ignore">GSEA Analysis Across Histologies</h1>
 <h4 class="author">Bicna Song</h4>
-<h4 class="date">2025-07-04</h4>
+<h4 class="date">2025-07-23</h4>
 
 </div>
 
@@ -452,7 +452,7 @@ analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-rna-exp
 results_dir  &lt;- file.path(analysis_dir, &quot;results&quot;)
 plot_dir     &lt;- file.path(analysis_dir, &quot;plots&quot;)
 
-histologies  &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;LGG&quot;, &quot;MB&quot;)
+histologies  &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;LGG&quot;, &quot;MB&quot;)
 
 hallmarks &lt;- msigdbr(&quot;Homo sapiens&quot;, category = &quot;H&quot;) %&gt;%
   select(gs_name, gene_symbol)</code></pre>
@@ -461,7 +461,7 @@ hallmarks &lt;- msigdbr(&quot;Homo sapiens&quot;, category = &quot;H&quot;) %&gt
 <h2>Loop Over Histologies and Contrasts</h2>
 <pre class="r"><code>for (hist in histologies) {
   message(&quot;Processing histology: &quot;, hist)
-  contrasts &lt;- if (hist %in% c(&quot;ATRT&quot;, &quot;HGG&quot;, &quot;LGG&quot;))
+  contrasts &lt;- if (hist == &quot;LGG&quot;)
     &quot;healthyNormal&quot; else c(&quot;healthyNormal&quot;, &quot;paired&quot;)
   
   for (ctr in contrasts) {
@@ -518,13 +518,6 @@ hallmarks &lt;- msigdbr(&quot;Homo sapiens&quot;, category = &quot;H&quot;) %&gt
     }
   }
 }</code></pre>
-<pre><code>## Processing histology: ATRT</code></pre>
-<pre><code>##  - Contrast: healthyNormal</code></pre>
-<pre><code>## using &#39;fgsea&#39; for GSEA analysis, please cite Korotkevich et al (2019).</code></pre>
-<pre><code>## preparing geneSet collections...</code></pre>
-<pre><code>## GSEA analysis...</code></pre>
-<pre><code>## no term enriched under specific pvalueCutoff...</code></pre>
-<pre><code>##    ✗ No enriched pathways for ATRT / healthyNormal; skipping output.</code></pre>
 <pre><code>## Processing histology: DIPG or DMG</code></pre>
 <pre><code>##  - Contrast: healthyNormal</code></pre>
 <pre><code>## using &#39;fgsea&#39; for GSEA analysis, please cite Korotkevich et al (2019).</code></pre>
@@ -575,19 +568,6 @@ hallmarks &lt;- msigdbr(&quot;Homo sapiens&quot;, category = &quot;H&quot;) %&gt
 <pre><code>##      ✓ Plotted: HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION</code></pre>
 <pre><code>##      ✓ Plotted: HALLMARK_TNFA_SIGNALING_VIA_NFKB</code></pre>
 <pre><code>##      ✓ Plotted: HALLMARK_ANGIOGENESIS</code></pre>
-<pre><code>## Processing histology: HGG</code></pre>
-<pre><code>##  - Contrast: healthyNormal</code></pre>
-<pre><code>## using &#39;fgsea&#39; for GSEA analysis, please cite Korotkevich et al (2019).</code></pre>
-<pre><code>## preparing geneSet collections...</code></pre>
-<pre><code>## GSEA analysis...</code></pre>
-<pre><code>## leading edge analysis...</code></pre>
-<pre><code>## done...</code></pre>
-<pre><code>##    ✓ Saved results: HGG_healthyNormal_GSEA_results.tsv</code></pre>
-<pre><code>##      ✓ Plotted: HALLMARK_G2M_CHECKPOINT</code></pre>
-<pre><code>##      ✓ Plotted: HALLMARK_E2F_TARGETS</code></pre>
-<pre><code>##      ✓ Plotted: HALLMARK_IL6_JAK_STAT3_SIGNALING</code></pre>
-<pre><code>##      ✓ Plotted: HALLMARK_MITOTIC_SPINDLE</code></pre>
-<pre><code>##      ✓ Plotted: HALLMARK_ALLOGRAFT_REJECTION</code></pre>
 <pre><code>## Processing histology: LGG</code></pre>
 <pre><code>##  - Contrast: healthyNormal</code></pre>
 <pre><code>## using &#39;fgsea&#39; for GSEA analysis, please cite Korotkevich et al (2019).</code></pre>

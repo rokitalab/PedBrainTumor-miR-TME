@@ -11,7 +11,7 @@
 
 <meta name="author" content="Bicna Song" />
 
-<meta name="date" content="2025-04-15" />
+<meta name="date" content="2025-06-30" />
 
 <title>Convert Novel miRNA Table to FASTA Format</title>
 
@@ -1482,85 +1482,63 @@ border-radius: 0px;
 <h1 class="title toc-ignore">Convert Novel miRNA Table to FASTA
 Format</h1>
 <h4 class="author">Bicna Song</h4>
-<h4 class="date">2025-04-15</h4>
+<h4 class="date">2025-06-30</h4>
 
 </div>
 
 
-<p>Load packages</p>
+<p>Setup</p>
 <pre class="r"><code>library(readr)
+library(dplyr)
 library(Biostrings)</code></pre>
-<pre><code>## Loading required package: BiocGenerics</code></pre>
-<pre><code>## 
-## Attaching package: &#39;BiocGenerics&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     IQR, mad, sd, var, xtabs</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     anyDuplicated, aperm, append, as.data.frame, basename, cbind,
-##     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
-##     get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
-##     match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-##     Position, rank, rbind, Reduce, rownames, sapply, setdiff, table,
-##     tapply, union, unique, unsplit, which.max, which.min</code></pre>
-<pre><code>## Loading required package: S4Vectors</code></pre>
-<pre><code>## Loading required package: stats4</code></pre>
-<pre><code>## 
-## Attaching package: &#39;S4Vectors&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:utils&#39;:
-## 
-##     findMatches</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     expand.grid, I, unname</code></pre>
-<pre><code>## Loading required package: IRanges</code></pre>
-<pre><code>## Loading required package: XVector</code></pre>
-<pre><code>## Loading required package: GenomeInfoDb</code></pre>
-<pre><code>## 
-## Attaching package: &#39;Biostrings&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:base&#39;:
-## 
-##     strsplit</code></pre>
-<p>Set directory paths</p>
-<pre class="r"><code>root_dir &lt;- rprojroot::find_root(rprojroot::has_dir(&quot;.git&quot;))
-
-data_dir &lt;- file.path(root_dir, &quot;data&quot;)
+<p>Directory and File Paths</p>
+<pre class="r"><code>root_dir     &lt;- rprojroot::find_root(rprojroot::has_dir(&quot;.git&quot;))
+data_dir     &lt;- file.path(root_dir, &quot;data&quot;)
 analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-novel-mirna-target-prediction&quot;)
-input_dir &lt;- file.path(analysis_dir, &quot;input&quot;)
-results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)</code></pre>
-<p>Set file paths</p>
-<pre class="r"><code>input_file &lt;- file.path(data_dir, &quot;all_novel_miRNA.xls&quot;)
-output_fasta &lt;- file.path(results_dir, &quot;all_novel_miRNA_mature.fa&quot;)</code></pre>
-<p>Read raw miRNA table and assign column names</p>
-<pre class="r"><code># Read tab-delimited file with no header
-miRNA_df &lt;- read_tsv(input_file, col_names = FALSE)</code></pre>
-<pre><code>## Rows: 986 Columns: 5
-## ── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;\t&quot;
-## chr (5): X1, X2, X3, X4, X5
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code># Assign column names
-colnames(miRNA_df) &lt;- c(&quot;id&quot;, &quot;mature_seq&quot;, &quot;star_seq&quot;, &quot;precursor_seq&quot;, &quot;precursor_coordinate&quot;)
+results_dir  &lt;- file.path(analysis_dir, &quot;results&quot;)
+output_fasta &lt;- file.path(results_dir, &quot;combined_all_novel_mirna.fa&quot;)
 
-# Preview the data
-head(miRNA_df)</code></pre>
+batch1_file  &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;, &quot;results&quot;, &quot;30-931106737-all_novel_miRNA_merged_id.tsv&quot;)
+batch2_file  &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;, &quot;results&quot;, &quot;30-1075661268-all_novel_miRNA_merged_id.tsv&quot;)</code></pre>
+<p>Read and Merge Batches</p>
+<pre class="r"><code># Read both batch tables
+batch1 &lt;- read_tsv(batch1_file, col_types = cols())
+batch2 &lt;- read_tsv(batch2_file, col_types = cols())
+
+# Stack rows and keep the first occurrence for each merge_id
+mirna_df &lt;- bind_rows(batch1, batch2) %&gt;%
+  distinct(merged_id, .keep_all = TRUE) %&gt;%
+  select(
+    merged_id,
+    mature_seq,
+    star_seq,
+    precursor_seq,
+    precursor_coordinate
+  )
+
+# Inspect merged result
+head(mirna_df)</code></pre>
 <pre><code>## # A tibble: 6 × 5
-##   id           mature_seq            star_seq precursor_seq precursor_coordinate
-##   &lt;chr&gt;        &lt;chr&gt;                 &lt;chr&gt;    &lt;chr&gt;         &lt;chr&gt;               
-## 1 NovelmiRNA-1 uuaguuucgccuucuaccuc… aauggua… uuaguuucgccu… 13:107577129..10757…
-## 2 NovelmiRNA-2 uucgagaccagccuggccaa… gggcgca… uucgagaccagc… 19:4842085..4842170…
-## 3 NovelmiRNA-3 ugacccugugggccuguggc… uggcuac… uggcuacccagg… 20:35003619..350036…
-## 4 NovelmiRNA-4 acccuguccuccaggagcuc… aggcccu… aggcccuggggg… 22:32128285..321283…
-## 5 NovelmiRNA-5 uggcucaguucagcuggg    cagcuag… uggcucaguuca… 2:76924691..7692474…
-## 6 NovelmiRNA-6 caaaaacgacaauuacuuuug aaaagua… aaaaguaauugu… 2:139826710..139826…</code></pre>
+##   merged_id       mature_seq         star_seq precursor_seq precursor_coordinate
+##   &lt;chr&gt;           &lt;chr&gt;              &lt;chr&gt;    &lt;chr&gt;         &lt;chr&gt;               
+## 1 NovelmiRNA-2485 uuaguuucgccuucuac… aauggua… uuaguuucgccu… 13:107577129..10757…
+## 2 NovelmiRNA-3260 uucgagaccagccuggc… gggcgca… uucgagaccagc… 19:4842085..4842170…
+## 3 NovelmiRNA-3476 ugacccugugggccugu… uggcuac… uggcuacccagg… 20:35003619..350036…
+## 4 NovelmiRNA-3624 acccuguccuccaggag… aggcccu… aggcccuggggg… 22:32128285..321283…
+## 5 NovelmiRNA-508  uggcucaguucagcuggg cagcuag… uggcucaguuca… 2:76924691..7692474…
+## 6 NovelmiRNA-574  caaaaacgacaauuacu… aaaagua… aaaaguaauugu… 2:139826710..139826…</code></pre>
+<p>Write Merged Table to TSV</p>
+<pre class="r"><code># Save the combined data frame as TSV
+write_tsv(
+  mirna_df,
+  file = file.path(results_dir, &quot;combined_all_novel_mirna.tsv&quot;),
+  col_names = FALSE
+)</code></pre>
 <p>Convert to FASTA format using mature miRNA sequence</p>
-<pre class="r"><code>mature_rna &lt;- RNAStringSet(miRNA_df$mature_seq)
-names(mature_rna) &lt;- miRNA_df$id</code></pre>
+<pre class="r"><code>mature_mirna &lt;- RNAStringSet(mirna_df$mature_seq)
+names(mature_mirna) &lt;- mirna_df$merged_id</code></pre>
 <p>Write FASTA output</p>
-<pre class="r"><code>writeXStringSet(mature_rna, filepath = output_fasta)</code></pre>
+<pre class="r"><code>writeXStringSet(mature_mirna, filepath = output_fasta)</code></pre>
 
 
 

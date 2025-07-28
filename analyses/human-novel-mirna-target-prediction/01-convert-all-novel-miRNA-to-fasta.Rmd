@@ -5,58 +5,74 @@ output:
     toc: true
     toc_float: true
 author: "Bicna Song"
-date: "2025-04-15"
+date: "2025-06-30"
 ---
 
-Load packages
+Setup
 
-```{r load packages}
+```{r setup, message=FALSE, warning=FALSE}
 library(readr)
+library(dplyr)
 library(Biostrings)
 ```
 
-Set directory paths
+Directory and File Paths
 
-```{r dir paths}
-root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
-
-data_dir <- file.path(root_dir, "data")
+```{r paths}
+root_dir     <- rprojroot::find_root(rprojroot::has_dir(".git"))
+data_dir     <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "human-novel-mirna-target-prediction")
-input_dir <- file.path(analysis_dir, "input")
-results_dir <- file.path(analysis_dir, "results")
+results_dir  <- file.path(analysis_dir, "results")
+output_fasta <- file.path(results_dir, "combined_all_novel_mirna.fa")
+
+batch1_file  <- file.path(root_dir, "analyses", "human-mirna-expression", "results", "30-931106737-all_novel_miRNA_merged_id.tsv")
+batch2_file  <- file.path(root_dir, "analyses", "human-mirna-expression", "results", "30-1075661268-all_novel_miRNA_merged_id.tsv")
 ```
 
-Set file paths
+Read and Merge Batches
 
-```{r file paths}
-input_file <- file.path(data_dir, "all_novel_miRNA.xls")
-output_fasta <- file.path(results_dir, "all_novel_miRNA_mature.fa")
+```{r merge-batches}
+# Read both batch tables
+batch1 <- read_tsv(batch1_file, col_types = cols())
+batch2 <- read_tsv(batch2_file, col_types = cols())
+
+# Stack rows and keep the first occurrence for each merge_id
+mirna_df <- bind_rows(batch1, batch2) %>%
+  distinct(merged_id, .keep_all = TRUE) %>%
+  select(
+    merged_id,
+    mature_seq,
+    star_seq,
+    precursor_seq,
+    precursor_coordinate
+  )
+
+# Inspect merged result
+head(mirna_df)
 ```
 
-Read raw miRNA table and assign column names
+Write Merged Table to TSV
 
-```{r}
-# Read tab-delimited file with no header
-miRNA_df <- read_tsv(input_file, col_names = FALSE)
-
-# Assign column names
-colnames(miRNA_df) <- c("id", "mature_seq", "star_seq", "precursor_seq", "precursor_coordinate")
-
-# Preview the data
-head(miRNA_df)
-```
+```{r write-tsv}
+# Save the combined data frame as TSV
+write_tsv(
+  mirna_df,
+  file = file.path(results_dir, "combined_all_novel_mirna.tsv"),
+  col_names = FALSE
+)
+```  
 
 Convert to FASTA format using mature miRNA sequence
 
 ```{r}
-mature_rna <- RNAStringSet(miRNA_df$mature_seq)
-names(mature_rna) <- miRNA_df$id
+mature_mirna <- RNAStringSet(mirna_df$mature_seq)
+names(mature_mirna) <- mirna_df$merged_id
 ```
 
 Write FASTA output
 
 ```{r}
-writeXStringSet(mature_rna, filepath = output_fasta)
+writeXStringSet(mature_mirna, filepath = output_fasta)
 ```
 
 

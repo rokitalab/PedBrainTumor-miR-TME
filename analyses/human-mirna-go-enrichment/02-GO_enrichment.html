@@ -11,7 +11,7 @@
 
 <meta name="author" content="Ryan Corbett, Bicna Song" />
 
-<meta name="date" content="2025-06-22" />
+<meta name="date" content="2025-07-28" />
 
 <title>GO Enrichment Analysis of DE miRNA Targets</title>
 
@@ -423,7 +423,7 @@ font-size: 0.95em;
 <h1 class="title toc-ignore">GO Enrichment Analysis of DE miRNA
 Targets</h1>
 <h4 class="author">Ryan Corbett, Bicna Song</h4>
-<h4 class="date">2025-06-22</h4>
+<h4 class="date">2025-07-28</h4>
 
 </div>
 
@@ -440,7 +440,8 @@ contrasts.</p>
 library(glue)
 library(topGO)
 library(org.Hs.eg.db)
-library(AnnotationDbi)</code></pre>
+library(AnnotationDbi)
+library(future.apply)</code></pre>
 </div>
 <div id="set-directory-paths" class="section level3">
 <h3>Set directory paths</h3>
@@ -450,17 +451,74 @@ analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-g
 results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)
 plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)
 
-# miRTarBase targets
-mirTarBase_targets_file &lt;- file.path(results_dir,
-                                     &quot;human-mirna-target-predictions-miRTarBase.tsv.gz&quot;)
-mirTarBase_targets_df   &lt;- read_tsv(mirTarBase_targets_file, col_types = cols())
-
 # Histologies and controls
-histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;LGG&quot;, &quot;MB&quot;)</code></pre>
+histologies &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;LGG&quot;, &quot;MB&quot;)</code></pre>
+</div>
+<div id="go-enrichment-analysis-function" class="section level3">
+<h3>GO enrichment analysis function</h3>
+<pre class="r"><code>go_enrichment &lt;- function(mirna, df, hist){
+
+  message(&quot;     – GO for &quot;, mirna)
+      targets &lt;- df %&gt;%
+        filter(miRNA == mirna) %&gt;%
+        distinct(target_gene_id) %&gt;%
+        pull(target_gene_id)
+      
+      # Only proceed if at least 20 targets
+      if (length(targets) &gt;= 20) {
+        
+        # Binary vector for topGO
+        target_genes &lt;- as.integer(symbol_set %in% targets)
+        names(target_genes) &lt;- symbol_set
+        
+        system.time(
+        GO_data &lt;- new(&quot;topGOdata&quot;,
+                       ontology  = &quot;BP&quot;,
+                       allGenes  = target_genes,
+                       geneSel   = function(x) x == 1,
+                       annot     = annFUN.org,
+                       mapping   = &quot;org.Hs.eg.db&quot;,
+                       ID        = &quot;symbol&quot;,
+                       nodeSize  = 10)
+        )
+        
+        # Fisher test + table
+        result &lt;- runTest(GO_data, algorithm=&quot;classic&quot;, statistic=&quot;fisher&quot;)
+        go_tab &lt;- GenTable(GO_data, classicFisher = result,
+                           topNodes = 250,
+                           numChar  = 100000) %&gt;%
+          mutate(fdr = p.adjust(as.numeric(classicFisher), method=&quot;BH&quot;)) %&gt;%
+          filter(fdr &lt; 0.05)
+        
+        # add genes lists to enriched GO term df
+        genes_per_term &lt;- genesInTerm(GO_data)
+        
+        genes_per_term_df &lt;- enframe(genes_per_term, name = &quot;GO.ID&quot;, value = &quot;Genes&quot;) %&gt;%
+        mutate(Genes = sapply(Genes, function(x) paste(x, collapse = &quot;, &quot;)))
+        
+        go_tab_add_genes &lt;- go_tab %&gt;%
+          left_join(genes_per_term_df)
+        
+        if (nrow(go_tab_add_genes) &gt; 0) {
+          out_file &lt;- glue(&quot;{mirna}-{hist}-shared-GO-BP_all.tsv&quot;)
+          write_tsv(go_tab_add_genes, file.path(results_dir, out_file))
+          message(&quot;         ✓ Wrote &quot;, nrow(go_tab_add_genes), &quot; terms to &quot;, out_file)
+        } else {
+          message(&quot;         ✗ No significant GO terms for &quot;, mirna)
+        }
+        
+      } else {
+        message(&quot;         ✗ Only &quot;, length(targets),
+                &quot; targets; skipping &quot;, mirna)
+      }
+      
+}</code></pre>
 </div>
 <div id="go-enrichment-per-histology-and-contrast" class="section level3">
 <h3>GO Enrichment per Histology and Contrast</h3>
-<pre class="r"><code>mirna_target_list    &lt;- list()
+<pre class="r"><code>plan(multisession)
+
+mirna_target_list    &lt;- list()
 mirna_target_go_list &lt;- list()
 
 # Precompute background once
@@ -470,11 +528,22 @@ all_genes      &lt;- select(org.Hs.eg.db,
                          columns = &quot;SYMBOL&quot;,
                          keytype = &quot;ENTREZID&quot;)</code></pre>
 <pre><code>## &#39;select()&#39; returned 1:1 mapping between keys and columns</code></pre>
-<pre class="r"><code>for (hist in histologies) {
+<pre class="r"><code>go_annotated_genes &lt;- AnnotationDbi::select(org.Hs.eg.db,
+                                            keys    = keys(org.Hs.eg.db, keytype = &quot;GO&quot;),
+                                            columns = &quot;SYMBOL&quot;,
+                                            keytype = &quot;GO&quot;) %&gt;%
+  dplyr::filter(!is.na(SYMBOL)) %&gt;%
+  dplyr::distinct(SYMBOL) %&gt;%
+  dplyr::pull(SYMBOL)</code></pre>
+<pre><code>## &#39;select()&#39; returned 1:many mapping between keys and columns</code></pre>
+<pre class="r"><code># Use this to filter your gene universe
+symbol_set &lt;- intersect(all_genes$SYMBOL, go_annotated_genes)
+
+for (hist in histologies) {
   message(&quot;▶ Histology: &quot;, hist)
   
   # Determine contrasts
-  contrasts &lt;- if (hist %in% c(&quot;ATRT&quot;, &quot;LGG&quot;)) {
+  contrasts &lt;- if (hist %in% c(&quot;LGG&quot;)) {
     &quot;healthyNormal&quot;
   } else {
     c(&quot;healthyNormal&quot;, &quot;paired&quot;)
@@ -484,20 +553,19 @@ all_genes      &lt;- select(org.Hs.eg.db,
   de_lists &lt;- list()
   for (ctr in contrasts) {
     fname &lt;- if (ctr == &quot;paired&quot;) {
-      glue(&quot;DESeq2_{hist}_paired_sig.csv&quot;)
+    glue(&quot;known-mirna-target-gene-differential-expr-{hist}-paired.tsv&quot;)
     } else {
-      glue(&quot;DESeq2_{hist}_vs_{ctr}_sig.csv&quot;)
+      glue(&quot;known-mirna-target-gene-differential-expr-{hist}-healthyNormal.tsv&quot;)
     }
-    path &lt;- file.path(root_dir,
-                      &quot;analyses&quot;, &quot;human-mirna-expression&quot;,
-                      &quot;results&quot;, fname)
+    path &lt;- file.path(results_dir, fname)
     if (!file.exists(path)) {
       message(&quot;   ✗ Missing file: &quot;, fname)
       next
     }
-    df &lt;- read_csv(path, col_types = cols())
+    df &lt;- read_tsv(path, col_types = cols())
     de_lists[[ctr]] &lt;- df %&gt;%
       filter(str_detect(miRNA, &quot;^hsa&quot;)) %&gt;%
+      distinct(miRNA) %&gt;%
       pull(miRNA)
     message(&quot;   • &quot;, ctr, &quot;: &quot;, length(de_lists[[ctr]]), &quot; miRNAs&quot;)
   }
@@ -507,119 +575,20 @@ all_genes      &lt;- select(org.Hs.eg.db,
   message(&quot;   → Shared DE miRNAs: &quot;, length(shared))
   if (length(shared) == 0) next
   
-  # Run GO for each shared miRNA
-  for (mirna in shared) {
-    message(&quot;     – GO for &quot;, mirna)
-    mirna_target_list[[mirna]] &lt;- mirTarBase_targets_df %&gt;%
-      filter(miRNA == mirna) %&gt;%
-      distinct(`Target Gene`) %&gt;%
-      pull(`Target Gene`)
-    
-    # Only proceed if at least 20 targets
-    if (length(mirna_target_list[[mirna]]) &gt;= 20) {
-      
-      # Binary vector for topGO
-      target_gene_df &lt;- all_genes %&gt;%
-        mutate(target_gene = if_else(
-          SYMBOL %in% mirna_target_list[[mirna]],
-          1L, 0L
-        ))
-      target_genes &lt;- target_gene_df$target_gene
-      names(target_genes) &lt;- target_gene_df$SYMBOL
-      
-      GO_data &lt;- new(&quot;topGOdata&quot;,
-                     ontology  = &quot;BP&quot;,
-                     allGenes  = target_genes,
-                     geneSel   = function(x) x == 1,
-                     annot     = annFUN.org,
-                     mapping   = &quot;org.Hs.eg.db&quot;,
-                     ID        = &quot;symbol&quot;)
-      
-      # Fisher test + table
-      result &lt;- runTest(GO_data, algorithm=&quot;classic&quot;, statistic=&quot;fisher&quot;)
-      go_tab &lt;- GenTable(GO_data, classicFisher = result,
-                         topNodes = length(usedGO(GO_data)),
-                         numChar  = 100000) %&gt;%
-        mutate(fdr = p.adjust(as.numeric(classicFisher), method=&quot;BH&quot;)) %&gt;%
-        filter(fdr &lt; 0.05)
-      
-      if (nrow(go_tab) &gt; 0) {
-        out_file &lt;- glue(&quot;{mirna}-{hist}-shared-GO-BP_all.tsv&quot;)
-        write_tsv(go_tab, file.path(results_dir, out_file))
-        message(&quot;         ✓ Wrote &quot;, nrow(go_tab), &quot; terms to &quot;, out_file)
-      } else {
-        message(&quot;         ✗ No significant GO terms for &quot;, mirna)
-      }
-      
-    } else {
-      message(&quot;         ✗ Only &quot;, length(mirna_target_list[[mirna]]),
-              &quot; targets; skipping &quot;, mirna)
-    }
-  }
+  # run GO enrichment on all shared DE miRNA targets
+  future_lapply(shared, 
+                function(x) go_enrichment(x, df, hist))
+  
 }</code></pre>
-<pre><code>## ▶ Histology: ATRT</code></pre>
-<pre><code>##    • healthyNormal: 4 miRNAs</code></pre>
-<pre><code>##    → Shared DE miRNAs: 4</code></pre>
-<pre><code>##      – GO for hsa-miR-375-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-375-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-324-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 8736 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 618 terms to hsa-miR-324-3p-ATRT-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-10b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 5036 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 182 terms to hsa-miR-10b-5p-ATRT-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-1269a</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 1407 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-1269a</code></pre>
 <pre><code>## ▶ Histology: DIPG or DMG</code></pre>
-<pre><code>##    • healthyNormal: 58 miRNAs</code></pre>
-<pre><code>##    • paired: 101 miRNAs</code></pre>
-<pre><code>##    → Shared DE miRNAs: 31</code></pre>
+<pre><code>##    • healthyNormal: 53 miRNAs</code></pre>
+<pre><code>##    • paired: 93 miRNAs</code></pre>
+<pre><code>##    → Shared DE miRNAs: 27</code></pre>
 <pre><code>##      – GO for hsa-miR-139-5p</code></pre>
 <pre><code>## 
 ## Building most specific GOs .....</code></pre>
+<pre><code>## Loading required package: org.Hs.eg.db</code></pre>
+<pre><code>## </code></pre>
 <pre><code>##  ( 12271 GO terms found. )</code></pre>
 <pre><code>## 
 ## Build GO DAG topology ..........</code></pre>
@@ -630,1813 +599,1326 @@ all_genes      &lt;- select(org.Hs.eg.db,
 <pre><code>## 
 ##           -- Classic Algorithm -- 
 ## 
-##       the algorithm is scoring 7531 nontrivial nodes
+##       the algorithm is scoring 5785 nontrivial nodes
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 535 terms to hsa-miR-139-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-216a-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+<pre><code>## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-139-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-216a-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 3316 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 4 terms to hsa-miR-216a-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-891a-5p</code></pre>
-<pre><code>##          ✗ Only 13 targets; skipping hsa-miR-891a-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-582-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8263 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 572 terms to hsa-miR-582-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-542-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3017 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-216a-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-891a-5p
+## ✗ Only 13 targets; skipping hsa-miR-891a-5p
+## – GO for hsa-miR-582-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 7584 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 122 terms to hsa-miR-542-3p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-455-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5965 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 117 terms to hsa-miR-455-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-135b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6112 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-582-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-542-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 2922 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 273 terms to hsa-miR-135b-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-450b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8533 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 674 terms to hsa-miR-450b-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-892a</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5825 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-542-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-455-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 6931 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 192 terms to hsa-miR-892a-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-203a-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5508 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 759 terms to hsa-miR-203a-3p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-212-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4954 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-455-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-135b-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 2902 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-212-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-216b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3043 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-216b-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-10b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2685 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-135b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-450b-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 5036 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 182 terms to hsa-miR-10b-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-1269a</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 1407 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-1269a</code></pre>
-<pre><code>##      – GO for hsa-miR-3059-5p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-3059-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-888-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6183 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-450b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-892a
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 2067 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-888-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-378d</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6311 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 145 terms to hsa-miR-378d-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-320c</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5466 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-892a-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-203a-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 7920 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 504 terms to hsa-miR-320c-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-206</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7765 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 528 terms to hsa-miR-206-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-217-5p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-217-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-769-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4600 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-203a-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-212-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 7356 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 76 terms to hsa-miR-769-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-145-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 4973 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 981 terms to hsa-miR-145-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-7-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2639 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 1 terms to hsa-miR-212-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-216b-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 6246 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 316 terms to hsa-miR-7-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-137-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-137-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-92b-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6059 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 262 terms to hsa-miR-92b-3p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-222-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2772 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-216b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-10b-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 5083 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 236 terms to hsa-miR-222-3p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-5010-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2834 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-5010-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-301b-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4253 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-10b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-1269a
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 5100 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 104 terms to hsa-miR-301b-3p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-3065-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8509 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
+## the algorithm is scoring 1334 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-1269a-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-888-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 1933 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-888-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-378d
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 5144 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-378d-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-320c
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 5958 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-320c-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-206
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 5878 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-206-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-769-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 5654 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-769-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-145-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 4148 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-145-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-7-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 5114 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-7-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-92b-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 4980 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-92b-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-222-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 4265 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-222-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-5010-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 2597 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-5010-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-301b-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 4387 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-301b-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-3065-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
+## 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 6202 nontrivial nodes parameters: test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
 ## ℹ In argument: `fdr = p.adjust(as.numeric(classicFisher), method = &quot;BH&quot;)`.
 ## Caused by warning in `p.adjust()`:
 ## ! NAs introduced by coercion</code></pre>
-<pre><code>##          ✓ Wrote 605 terms to hsa-miR-3065-5p-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-770-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-770-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-3615</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+<pre><code>## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 248 terms to hsa-miR-3065-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-3615
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 3848 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 4 terms to hsa-miR-3615-DIPG or DMG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>## ▶ Histology: EPN</code></pre>
-<pre><code>##    • healthyNormal: 30 miRNAs</code></pre>
-<pre><code>##    • paired: 17 miRNAs</code></pre>
-<pre><code>##    → Shared DE miRNAs: 9</code></pre>
-<pre><code>##      – GO for hsa-miR-128-2-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-128-2-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-449a</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8204 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 452 terms to hsa-miR-449a-EPN-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-3059-5p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-3059-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-10a-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3461 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-3615-DIPG or DMG-shared-GO-BP_all.tsv
+## ▶ Histology: EPN
+## • healthyNormal: 25 miRNAs
+## • paired: 13 miRNAs
+## → Shared DE miRNAs: 5
+## – GO for hsa-miR-449a
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5281 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 120 terms to hsa-miR-10a-5p-EPN-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-137-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-137-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-449c-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6056 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-449a-EPN-shared-GO-BP_all.tsv
+## – GO for hsa-miR-10a-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2458 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-449c-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-128-1-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-128-1-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-483-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4473 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-10a-5p-EPN-shared-GO-BP_all.tsv
+## – GO for hsa-miR-449c-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 7048 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 128 terms to hsa-miR-483-3p-EPN-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-615-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6518 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 59 terms to hsa-miR-615-5p-EPN-shared-GO-BP_all.tsv</code></pre>
-<pre><code>## ▶ Histology: HGG</code></pre>
-<pre><code>##    • healthyNormal: 14 miRNAs</code></pre>
-<pre><code>##    • paired: 1 miRNAs</code></pre>
-<pre><code>##    → Shared DE miRNAs: 0</code></pre>
-<pre><code>## ▶ Histology: LGG</code></pre>
-<pre><code>##    • healthyNormal: 77 miRNAs</code></pre>
-<pre><code>##    → Shared DE miRNAs: 77</code></pre>
-<pre><code>##      – GO for hsa-miR-128-2-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-128-2-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-548ah-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2302 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-449c-5p-EPN-shared-GO-BP_all.tsv
+## – GO for hsa-miR-483-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3943 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 33 terms to hsa-miR-548ah-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-152-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5536 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-483-3p-EPN-shared-GO-BP_all.tsv
+## – GO for hsa-miR-615-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3381 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 126 terms to hsa-miR-152-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-138-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5279 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-615-5p-EPN-shared-GO-BP_all.tsv
+## ▶ Histology: LGG
+## • healthyNormal: 68 miRNAs
+## → Shared DE miRNAs: 68
+## – GO for hsa-miR-548ah-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3510 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 564 terms to hsa-miR-138-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-548a-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3562 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-548ah-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-152-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8869 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
+## the algorithm is scoring 3059 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-152-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-138-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 3164 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-138-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-548a-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 6287 nontrivial nodes parameters: test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
 ## ℹ In argument: `fdr = p.adjust(as.numeric(classicFisher), method = &quot;BH&quot;)`.
 ## Caused by warning in `p.adjust()`:
 ## ! NAs introduced by coercion</code></pre>
-<pre><code>##          ✓ Wrote 670 terms to hsa-miR-548a-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-668-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+<pre><code>## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 248 terms to hsa-miR-548a-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-668-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 1434 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-668-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-549a-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-549a-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-3616-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 1373 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-668-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-3616-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7023 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 172 terms to hsa-miR-3616-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-491-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5561 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-3616-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-491-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7772 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 367 terms to hsa-miR-491-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-517-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-517-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-330-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5876 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-491-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-330-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8197 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 408 terms to hsa-miR-330-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-4732-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6060 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-330-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-4732-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5561 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 10 terms to hsa-miR-4732-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-124-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4693 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-4732-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-124-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8708 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 795 terms to hsa-miR-124-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-675-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6213 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-124-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-675-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 1785 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-675-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-383-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 1666 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-675-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-383-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2588 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-383-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-203b-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2416 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-383-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-203b-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3023 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-203b-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-324-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2726 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 63 terms to hsa-miR-203b-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-324-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8736 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 618 terms to hsa-miR-324-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-410-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6261 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-324-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-410-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 4423 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 78 terms to hsa-miR-410-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-10b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3892 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-410-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-10b-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5036 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 182 terms to hsa-miR-10b-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-21-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4253 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-10b-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-21-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6621 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 962 terms to hsa-miR-21-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-2355-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5294 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-21-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-2355-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6448 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 158 terms to hsa-miR-2355-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-181b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5181 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-2355-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-181b-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 4837 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 197 terms to hsa-miR-181b-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-3059-5p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-3059-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-3167</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4192 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-181b-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-3167
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6883 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 196 terms to hsa-miR-3167-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-130a-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5437 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-3167-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-130a-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5655 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 478 terms to hsa-miR-130a-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-548ae-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4758 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-130a-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-548ae-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3314 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-548ae-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-935</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3021 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-548ae-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-935
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7545 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 267 terms to hsa-miR-935-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-760</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5789 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-935-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-760
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7336 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 144 terms to hsa-miR-760-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-3117-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5693 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-760-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-3117-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5551 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 137 terms to hsa-miR-3117-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-873-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4615 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-3117-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-873-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3224 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-873-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-146b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2962 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-873-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-146b-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7100 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 100 terms to hsa-miR-146b-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-10a-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5625 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-146b-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-10a-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5281 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 120 terms to hsa-miR-10a-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-675-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4473 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-10a-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-675-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2258 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-675-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-1229-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2119 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-675-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-1229-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3304 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 61 terms to hsa-miR-1229-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-199a-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3055 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-1229-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-199a-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7151 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 466 terms to hsa-miR-199a-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-206</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5574 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-199a-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-206
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7765 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 528 terms to hsa-miR-206-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-769-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5878 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-206-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-769-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7356 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 76 terms to hsa-miR-769-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-4787-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5654 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-769-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-4787-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2662 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-4787-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-4742-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2423 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 211 terms to hsa-miR-4787-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-4742-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7294 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 218 terms to hsa-miR-4742-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-7-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5694 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-4742-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-7-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6246 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 316 terms to hsa-miR-7-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-1908-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5114 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-7-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-1908-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2317 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 2 terms to hsa-miR-1908-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-3085-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-3085-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-195-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2133 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 186 terms to hsa-miR-1908-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-195-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6089 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 414 terms to hsa-miR-195-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-137-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-137-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-31-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5066 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-195-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-31-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 4046 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 191 terms to hsa-miR-31-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-490-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3606 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-31-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-490-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6859 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 116 terms to hsa-miR-490-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-940</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5409 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-490-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-940
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 9952 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 227 terms to hsa-miR-940-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-148a-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6588 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-940-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-148a-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 4459 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 333 terms to hsa-miR-148a-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-3943</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3894 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-148a-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-3943
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6310 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 150 terms to hsa-miR-3943-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-421</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5167 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-3943-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-421
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8176 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 430 terms to hsa-miR-421-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-128-1-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-128-1-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-1250-5p</code></pre>
-<pre><code>##          ✗ Only 13 targets; skipping hsa-miR-1250-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-224-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 6079 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-421-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-1250-5p
+## ✗ Only 13 targets; skipping hsa-miR-1250-5p
+## – GO for hsa-miR-224-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3265 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 39 terms to hsa-miR-224-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-625-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2925 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-224-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-625-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2202 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 53 terms to hsa-miR-625-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-105-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2078 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-625-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-105-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3009 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-105-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-651-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2765 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-105-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-651-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 1541 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-651-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-199b-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 1460 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✗ No significant GO terms for hsa-miR-651-5p
+## – GO for hsa-miR-199b-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6738 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 216 terms to hsa-miR-199b-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-214-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5347 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-199b-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-214-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3618 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-214-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-517a-3p</code></pre>
-<pre><code>##          ✗ Only 10 targets; skipping hsa-miR-517a-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-3065-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3233 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-214-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-517a-3p
+## ✗ Only 10 targets; skipping hsa-miR-517a-3p
+## – GO for hsa-miR-3065-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8509 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
+## the algorithm is scoring 6202 nontrivial nodes parameters: test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
 ## ℹ In argument: `fdr = p.adjust(as.numeric(classicFisher), method = &quot;BH&quot;)`.
 ## Caused by warning in `p.adjust()`:
 ## ! NAs introduced by coercion</code></pre>
-<pre><code>##          ✓ Wrote 605 terms to hsa-miR-3065-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-944</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+<pre><code>## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 248 terms to hsa-miR-3065-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-944
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7992 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 327 terms to hsa-miR-944-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-149-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5958 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-944-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-149-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5417 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 437 terms to hsa-miR-149-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-433-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4571 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-149-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-433-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2322 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-433-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-3200-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2160 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-433-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-3200-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5259 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 29 terms to hsa-miR-3200-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-1226-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 4446 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-3200-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-1226-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 3598 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-1226-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-511-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2314 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-511-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-493-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3271 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-1226-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-511-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2814 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 2 terms to hsa-miR-493-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-199a-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2096 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-511-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-493-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 7715 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 381 terms to hsa-miR-199a-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-885-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6885 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 215 terms to hsa-miR-885-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-615-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2581 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-493-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-199a-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6518 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 59 terms to hsa-miR-615-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-511-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5866 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-199a-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-885-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 3992 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 5 terms to hsa-miR-511-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-770-3p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-770-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-642a-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2143 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-642a-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-625-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5468 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-885-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-615-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3371 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 9 terms to hsa-miR-625-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-574-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5279 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-615-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-511-3p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 7036 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 175 terms to hsa-miR-574-5p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-549a-5p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-549a-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-338-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 7778 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 141 terms to hsa-miR-338-3p-LGG-shared-GO-BP_all.tsv</code></pre>
-<pre><code>## ▶ Histology: MB</code></pre>
-<pre><code>##    • healthyNormal: 30 miRNAs</code></pre>
-<pre><code>##    • paired: 24 miRNAs</code></pre>
-<pre><code>##    → Shared DE miRNAs: 7</code></pre>
-<pre><code>##      – GO for hsa-miR-203b-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3588 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-511-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-642a-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 3023 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-203b-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-216b-5p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 2012 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-642a-3p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-625-5p
+## Building most specific GOs .....
+## Loading required package: org.Hs.eg.db
 ## 
-##       the algorithm is scoring 3043 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-216b-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-378d</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 6311 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 145 terms to hsa-miR-378d-MB-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-217-5p</code></pre>
-<pre><code>##          ✗ Only 0 targets; skipping hsa-miR-217-5p</code></pre>
-<pre><code>##      – GO for hsa-miR-421</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 3039 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-625-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-574-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 8176 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 430 terms to hsa-miR-421-MB-shared-GO-BP_all.tsv</code></pre>
-<pre><code>##      – GO for hsa-miR-106b-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5559 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-574-5p-LGG-shared-GO-BP_all.tsv
+## – GO for hsa-miR-338-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 2490 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✗ No significant GO terms for hsa-miR-106b-3p</code></pre>
-<pre><code>##      – GO for hsa-miR-130b-3p</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12271 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15517 GO terms and 34975 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 18888 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
+## the algorithm is scoring 5879 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-338-3p-LGG-shared-GO-BP_all.tsv
+## ▶ Histology: MB
+## • healthyNormal: 29 miRNAs
+## • paired: 21 miRNAs
+## → Shared DE miRNAs: 6
+## – GO for hsa-miR-203b-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
 ## 
-##       the algorithm is scoring 5957 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>##          ✓ Wrote 261 terms to hsa-miR-130b-3p-MB-shared-GO-BP_all.tsv</code></pre>
+## the algorithm is scoring 2726 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 63 terms to hsa-miR-203b-3p-MB-shared-GO-BP_all.tsv
+## – GO for hsa-miR-216b-5p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 2772 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-216b-5p-MB-shared-GO-BP_all.tsv
+## – GO for hsa-miR-378d
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 5144 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-378d-MB-shared-GO-BP_all.tsv
+## – GO for hsa-miR-421
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 6079 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-421-MB-shared-GO-BP_all.tsv
+## – GO for hsa-miR-106b-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 2313 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-106b-3p-MB-shared-GO-BP_all.tsv
+## – GO for hsa-miR-130b-3p
+## Building most specific GOs .....
+## ( 12271 GO terms found. )
+## Build GO DAG topology ..........
+## ( 15517 GO terms and 34975 relations. )
+## Annotating nodes ...............
+## ( 18888 genes annotated to the GO terms. )
+## -- Classic Algorithm --
+## 
+## the algorithm is scoring 4917 nontrivial nodes parameters: test statistic: fisher
+## Joining with `by = join_by(GO.ID)`
+## ✓ Wrote 250 terms to hsa-miR-130b-3p-MB-shared-GO-BP_all.tsv</code></pre>
 </div>
 <div id="session-info" class="section level3">
 <h3>Session Info</h3>
@@ -2465,35 +1947,37 @@ all_genes      &lt;- select(org.Hs.eg.db,
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] org.Hs.eg.db_3.19.1  topGO_2.56.0         SparseM_1.83        
-##  [4] GO.db_3.19.1         AnnotationDbi_1.66.0 IRanges_2.38.1      
-##  [7] S4Vectors_0.42.1     Biobase_2.64.0       graph_1.82.0        
-## [10] BiocGenerics_0.50.0  glue_1.7.0           lubridate_1.9.3     
-## [13] forcats_1.0.0        stringr_1.5.1        dplyr_1.1.4         
-## [16] purrr_1.0.2          readr_2.1.5          tidyr_1.3.1         
-## [19] tibble_3.2.1         ggplot2_3.5.1        tidyverse_2.0.0     
+##  [1] future.apply_1.11.2  future_1.33.2        org.Hs.eg.db_3.19.1 
+##  [4] topGO_2.56.0         SparseM_1.83         GO.db_3.19.1        
+##  [7] AnnotationDbi_1.66.0 IRanges_2.38.1       S4Vectors_0.42.1    
+## [10] Biobase_2.64.0       graph_1.82.0         BiocGenerics_0.50.0 
+## [13] glue_1.7.0           lubridate_1.9.3      forcats_1.0.0       
+## [16] stringr_1.5.1        dplyr_1.1.4          purrr_1.0.2         
+## [19] readr_2.1.5          tidyr_1.3.1          tibble_3.2.1        
+## [22] ggplot2_3.5.1        tidyverse_2.0.0     
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] KEGGREST_1.44.1         gtable_0.3.5            xfun_0.44              
 ##  [4] bslib_0.7.0             lattice_0.22-6          tzdb_0.4.0             
 ##  [7] vctrs_0.6.5             tools_4.4.0             generics_0.1.3         
 ## [10] parallel_4.4.0          fansi_1.0.6             RSQLite_2.3.7          
-## [13] blob_1.2.4              pkgconfig_2.0.3         GenomeInfoDbData_1.2.12
-## [16] lifecycle_1.0.4         compiler_4.4.0          Biostrings_2.72.1      
-## [19] munsell_0.5.1           GenomeInfoDb_1.40.1     htmltools_0.5.8.1      
-## [22] sass_0.4.9              yaml_2.3.8              pillar_1.9.0           
-## [25] crayon_1.5.2            jquerylib_0.1.4         cachem_1.1.0           
-## [28] tidyselect_1.2.1        digest_0.6.35           stringi_1.8.4          
-## [31] rprojroot_2.0.4         fastmap_1.2.0           grid_4.4.0             
-## [34] colorspace_2.1-0        cli_3.6.2               magrittr_2.0.3         
-## [37] utf8_1.2.4              withr_3.0.0             scales_1.3.0           
-## [40] UCSC.utils_1.0.0        bit64_4.0.5             timechange_0.3.0       
-## [43] rmarkdown_2.27          XVector_0.44.0          httr_1.4.7             
-## [46] matrixStats_1.3.0       bit_4.0.5               png_0.1-8              
-## [49] hms_1.1.3               memoise_2.0.1           evaluate_0.24.0        
-## [52] knitr_1.47              rlang_1.1.4             DBI_1.2.3              
-## [55] vroom_1.6.5             rstudioapi_0.16.0       jsonlite_1.8.8         
-## [58] R6_2.5.1                zlibbioc_1.50.0</code></pre>
+## [13] blob_1.2.4              pkgconfig_2.0.3         lifecycle_1.0.4        
+## [16] GenomeInfoDbData_1.2.12 compiler_4.4.0          Biostrings_2.72.1      
+## [19] munsell_0.5.1           codetools_0.2-20        GenomeInfoDb_1.40.1    
+## [22] htmltools_0.5.8.1       sass_0.4.9              yaml_2.3.8             
+## [25] pillar_1.9.0            crayon_1.5.2            jquerylib_0.1.4        
+## [28] cachem_1.1.0            parallelly_1.37.1       tidyselect_1.2.1       
+## [31] digest_0.6.35           stringi_1.8.4           listenv_0.9.1          
+## [34] rprojroot_2.0.4         fastmap_1.2.0           grid_4.4.0             
+## [37] colorspace_2.1-0        cli_3.6.2               magrittr_2.0.3         
+## [40] utf8_1.2.4              withr_3.0.0             scales_1.3.0           
+## [43] UCSC.utils_1.0.0        bit64_4.0.5             timechange_0.3.0       
+## [46] rmarkdown_2.27          XVector_0.44.0          httr_1.4.7             
+## [49] globals_0.16.3          matrixStats_1.3.0       bit_4.0.5              
+## [52] png_0.1-8               hms_1.1.3               memoise_2.0.1          
+## [55] evaluate_0.24.0         knitr_1.47              rlang_1.1.4            
+## [58] DBI_1.2.3               vroom_1.6.5             jsonlite_1.8.8         
+## [61] R6_2.5.1                zlibbioc_1.50.0</code></pre>
 </div>
 
 

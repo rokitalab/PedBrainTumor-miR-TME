@@ -5,7 +5,7 @@ output:
   toc: TRUE
 toc_float: TRUE
 author: Ryan Corbett, Bicna Song
-date: "2025-06-22"
+date: "`r Sys.Date()`"
 ---
 
 ### Overview
@@ -19,6 +19,7 @@ library(glue)
 library(topGO)
 library(org.Hs.eg.db)
 library(AnnotationDbi)
+library(future.apply)
 ```
 
 ### Set directory paths
@@ -30,18 +31,77 @@ analysis_dir <- file.path(root_dir, "analyses", "human-mirna-go-enrichment")
 results_dir <- file.path(analysis_dir, "results")
 plot_dir <- file.path(analysis_dir, "plots")
 
-# miRTarBase targets
-mirTarBase_targets_file <- file.path(results_dir,
-                                     "human-mirna-target-predictions-miRTarBase.tsv.gz")
-mirTarBase_targets_df   <- read_tsv(mirTarBase_targets_file, col_types = cols())
-
 # Histologies and controls
-histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+histologies <- c("DIPG or DMG", "EPN", "LGG", "MB")
+```
+
+### GO enrichment analysis function
+
+```{r}
+go_enrichment <- function(mirna, df, hist){
+
+  message("     – GO for ", mirna)
+      targets <- df %>%
+        filter(miRNA == mirna) %>%
+        distinct(target_gene_id) %>%
+        pull(target_gene_id)
+      
+      # Only proceed if at least 20 targets
+      if (length(targets) >= 20) {
+        
+        # Binary vector for topGO
+        target_genes <- as.integer(symbol_set %in% targets)
+        names(target_genes) <- symbol_set
+        
+        system.time(
+        GO_data <- new("topGOdata",
+                       ontology  = "BP",
+                       allGenes  = target_genes,
+                       geneSel   = function(x) x == 1,
+                       annot     = annFUN.org,
+                       mapping   = "org.Hs.eg.db",
+                       ID        = "symbol",
+                       nodeSize  = 10)
+        )
+        
+        # Fisher test + table
+        result <- runTest(GO_data, algorithm="classic", statistic="fisher")
+        go_tab <- GenTable(GO_data, classicFisher = result,
+                           topNodes = 250,
+                           numChar  = 100000) %>%
+          mutate(fdr = p.adjust(as.numeric(classicFisher), method="BH")) %>%
+          filter(fdr < 0.05)
+        
+        # add genes lists to enriched GO term df
+        genes_per_term <- genesInTerm(GO_data)
+        
+        genes_per_term_df <- enframe(genes_per_term, name = "GO.ID", value = "Genes") %>%
+        mutate(Genes = sapply(Genes, function(x) paste(x, collapse = ", ")))
+        
+        go_tab_add_genes <- go_tab %>%
+          left_join(genes_per_term_df)
+        
+        if (nrow(go_tab_add_genes) > 0) {
+          out_file <- glue("{mirna}-{hist}-shared-GO-BP_all.tsv")
+          write_tsv(go_tab_add_genes, file.path(results_dir, out_file))
+          message("         ✓ Wrote ", nrow(go_tab_add_genes), " terms to ", out_file)
+        } else {
+          message("         ✗ No significant GO terms for ", mirna)
+        }
+        
+      } else {
+        message("         ✗ Only ", length(targets),
+                " targets; skipping ", mirna)
+      }
+      
+}
 ```
 
 ### GO Enrichment per Histology and Contrast
 
 ```{r go-enrichment, message=TRUE, warning=TRUE}
+plan(multisession)
+
 mirna_target_list    <- list()
 mirna_target_go_list <- list()
 
@@ -52,11 +112,22 @@ all_genes      <- select(org.Hs.eg.db,
                          columns = "SYMBOL",
                          keytype = "ENTREZID")
 
+go_annotated_genes <- AnnotationDbi::select(org.Hs.eg.db,
+                                            keys    = keys(org.Hs.eg.db, keytype = "GO"),
+                                            columns = "SYMBOL",
+                                            keytype = "GO") %>%
+  dplyr::filter(!is.na(SYMBOL)) %>%
+  dplyr::distinct(SYMBOL) %>%
+  dplyr::pull(SYMBOL)
+
+# Use this to filter your gene universe
+symbol_set <- intersect(all_genes$SYMBOL, go_annotated_genes)
+
 for (hist in histologies) {
   message("▶ Histology: ", hist)
   
   # Determine contrasts
-  contrasts <- if (hist %in% c("ATRT", "HGG", "LGG")) {
+  contrasts <- if (hist %in% c("LGG")) {
     "healthyNormal"
   } else {
     c("healthyNormal", "paired")
@@ -66,20 +137,19 @@ for (hist in histologies) {
   de_lists <- list()
   for (ctr in contrasts) {
     fname <- if (ctr == "paired") {
-      glue("DESeq2_{hist}_paired_sig.csv")
+    glue("known-mirna-target-gene-differential-expr-{hist}-paired.tsv")
     } else {
-      glue("DESeq2_{hist}_vs_{ctr}_sig.csv")
+      glue("known-mirna-target-gene-differential-expr-{hist}-healthyNormal.tsv")
     }
-    path <- file.path(root_dir,
-                      "analyses", "human-mirna-expression",
-                      "results", fname)
+    path <- file.path(results_dir, fname)
     if (!file.exists(path)) {
       message("   ✗ Missing file: ", fname)
       next
     }
-    df <- read_csv(path, col_types = cols())
+    df <- read_tsv(path, col_types = cols())
     de_lists[[ctr]] <- df %>%
       filter(str_detect(miRNA, "^hsa")) %>%
+      distinct(miRNA) %>%
       pull(miRNA)
     message("   • ", ctr, ": ", length(de_lists[[ctr]]), " miRNAs")
   }
@@ -89,55 +159,10 @@ for (hist in histologies) {
   message("   → Shared DE miRNAs: ", length(shared))
   if (length(shared) == 0) next
   
-  # Run GO for each shared miRNA
-  for (mirna in shared) {
-    message("     – GO for ", mirna)
-    mirna_target_list[[mirna]] <- mirTarBase_targets_df %>%
-      filter(miRNA == mirna) %>%
-      distinct(`Target Gene`) %>%
-      pull(`Target Gene`)
-    
-    # Only proceed if at least 20 targets
-    if (length(mirna_target_list[[mirna]]) >= 20) {
-      
-      # Binary vector for topGO
-      target_gene_df <- all_genes %>%
-        mutate(target_gene = if_else(
-          SYMBOL %in% mirna_target_list[[mirna]],
-          1L, 0L
-        ))
-      target_genes <- target_gene_df$target_gene
-      names(target_genes) <- target_gene_df$SYMBOL
-      
-      GO_data <- new("topGOdata",
-                     ontology  = "BP",
-                     allGenes  = target_genes,
-                     geneSel   = function(x) x == 1,
-                     annot     = annFUN.org,
-                     mapping   = "org.Hs.eg.db",
-                     ID        = "symbol")
-      
-      # Fisher test + table
-      result <- runTest(GO_data, algorithm="classic", statistic="fisher")
-      go_tab <- GenTable(GO_data, classicFisher = result,
-                         topNodes = length(usedGO(GO_data)),
-                         numChar  = 100000) %>%
-        mutate(fdr = p.adjust(as.numeric(classicFisher), method="BH")) %>%
-        filter(fdr < 0.05)
-      
-      if (nrow(go_tab) > 0) {
-        out_file <- glue("{mirna}-{hist}-shared-GO-BP_all.tsv")
-        write_tsv(go_tab, file.path(results_dir, out_file))
-        message("         ✓ Wrote ", nrow(go_tab), " terms to ", out_file)
-      } else {
-        message("         ✗ No significant GO terms for ", mirna)
-      }
-      
-    } else {
-      message("         ✗ Only ", length(mirna_target_list[[mirna]]),
-              " targets; skipping ", mirna)
-    }
-  }
+  # run GO enrichment on all shared DE miRNA targets
+  future_lapply(shared, 
+                function(x) go_enrichment(x, df, hist))
+  
 }
 ```
 
@@ -146,4 +171,5 @@ for (hist in histologies) {
 ```{r session-info}
 sessionInfo()
 ```
+
 
