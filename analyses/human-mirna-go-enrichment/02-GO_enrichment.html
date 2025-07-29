@@ -485,7 +485,7 @@ histologies &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;LGG&quot;, &
         # Fisher test + table
         result &lt;- runTest(GO_data, algorithm=&quot;classic&quot;, statistic=&quot;fisher&quot;)
         go_tab &lt;- GenTable(GO_data, classicFisher = result,
-                           topNodes = 250,
+                           topNodes = 1000,
                            numChar  = 100000) %&gt;%
           mutate(fdr = p.adjust(as.numeric(classicFisher), method=&quot;BH&quot;)) %&gt;%
           filter(fdr &lt; 0.05)
@@ -603,11 +603,9 @@ for (hist in histologies) {
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-139-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-139-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-216a-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -617,7 +615,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3017 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-216a-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 152 terms to hsa-miR-216a-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-891a-5p
 ## ✗ Only 13 targets; skipping hsa-miR-891a-5p
 ## – GO for hsa-miR-582-5p
@@ -633,11 +631,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6112 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-582-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-582-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-542-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -647,11 +643,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5825 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-542-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 988 terms to hsa-miR-542-3p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-455-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -661,7 +655,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4954 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-455-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 562 terms to hsa-miR-455-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-135b-5p
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -675,11 +669,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2685 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-135b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 908 terms to hsa-miR-135b-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-450b-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -689,7 +681,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6183 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-450b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-450b-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-892a
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -703,11 +695,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5466 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-892a-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 809 terms to hsa-miR-892a-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-203a-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -717,11 +707,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4600 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-203a-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-203a-3p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-212-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -731,7 +719,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2639 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 1 terms to hsa-miR-212-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✗ No significant GO terms for hsa-miR-212-5p
 ## – GO for hsa-miR-216b-5p
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -745,11 +733,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2772 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-216b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 40 terms to hsa-miR-216b-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-10b-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -759,11 +745,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4253 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-10b-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-10b-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-1269a
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -773,7 +757,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 1334 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-1269a-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1 terms to hsa-miR-1269a-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-888-5p
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -787,11 +771,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 1933 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-888-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 2 terms to hsa-miR-888-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-378d
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -801,7 +783,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5144 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-378d-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 731 terms to hsa-miR-378d-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-320c
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -815,11 +797,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5958 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-320c-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-320c-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-206
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -829,11 +809,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5878 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-206-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-206-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-769-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -843,7 +821,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5654 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-769-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 447 terms to hsa-miR-769-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-145-5p
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -857,11 +835,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4148 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-145-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-145-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-7-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -871,7 +847,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5114 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-7-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-7-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-92b-3p
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -885,11 +861,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4980 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-92b-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-92b-3p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-222-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -899,11 +873,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4265 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-222-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-222-3p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-5010-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -913,7 +885,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2597 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-5010-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✗ No significant GO terms for hsa-miR-5010-3p
 ## – GO for hsa-miR-301b-3p
 ## Building most specific GOs .....
 ## Loading required package: org.Hs.eg.db
@@ -927,11 +899,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4387 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-301b-3p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 746 terms to hsa-miR-301b-3p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-3065-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -945,11 +915,9 @@ for (hist in histologies) {
 ## Caused by warning in `p.adjust()`:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 248 terms to hsa-miR-3065-5p-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 998 terms to hsa-miR-3065-5p-DIPG or DMG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-3615
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -959,7 +927,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3461 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-3615-DIPG or DMG-shared-GO-BP_all.tsv
+## ✓ Wrote 397 terms to hsa-miR-3615-DIPG or DMG-shared-GO-BP_all.tsv
 ## ▶ Histology: EPN
 ## • healthyNormal: 25 miRNAs
 ## • paired: 13 miRNAs
@@ -975,7 +943,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6056 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-449a-EPN-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-449a-EPN-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-10a-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -987,11 +955,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4473 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-10a-5p-EPN-shared-GO-BP_all.tsv
+## ✓ Wrote 716 terms to hsa-miR-10a-5p-EPN-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-449c-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -1001,7 +967,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2302 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-449c-5p-EPN-shared-GO-BP_all.tsv
+## ✓ Wrote 129 terms to hsa-miR-449c-5p-EPN-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-483-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1013,7 +979,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5536 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-483-3p-EPN-shared-GO-BP_all.tsv
+## ✓ Wrote 808 terms to hsa-miR-483-3p-EPN-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-615-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1025,7 +991,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5279 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-615-5p-EPN-shared-GO-BP_all.tsv
+## ✓ Wrote 526 terms to hsa-miR-615-5p-EPN-shared-GO-BP_all.tsv
 ## ▶ Histology: LGG
 ## • healthyNormal: 68 miRNAs
 ## → Shared DE miRNAs: 68
@@ -1040,7 +1006,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3562 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-548ah-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 71 terms to hsa-miR-548ah-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-152-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1052,7 +1018,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3059 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-152-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 737 terms to hsa-miR-152-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-138-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1064,7 +1030,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3164 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-138-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-138-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-548a-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1080,7 +1046,7 @@ for (hist in histologies) {
 ## Caused by warning in `p.adjust()`:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 248 terms to hsa-miR-548a-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 998 terms to hsa-miR-548a-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-668-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1092,7 +1058,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 1373 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-668-3p-LGG-shared-GO-BP_all.tsv
+## ✗ No significant GO terms for hsa-miR-668-3p
 ## – GO for hsa-miR-3616-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1104,7 +1070,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5561 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-3616-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 904 terms to hsa-miR-3616-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-491-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1116,7 +1082,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5876 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-491-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-491-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-330-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1128,7 +1094,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6060 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-330-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-330-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-4732-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1140,7 +1106,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4693 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-4732-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 283 terms to hsa-miR-4732-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-124-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1152,7 +1118,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6213 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-124-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-124-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-675-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1164,7 +1130,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 1666 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-675-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 46 terms to hsa-miR-675-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-383-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1176,7 +1142,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2416 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-383-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 102 terms to hsa-miR-383-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-203b-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1188,7 +1154,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2726 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 63 terms to hsa-miR-203b-3p-LGG-shared-GO-BP_all.tsv
+## ✗ No significant GO terms for hsa-miR-203b-3p
 ## – GO for hsa-miR-324-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1200,7 +1166,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6261 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-324-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-324-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-410-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1212,7 +1178,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3892 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-410-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 600 terms to hsa-miR-410-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-10b-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1224,7 +1190,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4253 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-10b-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-10b-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-21-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1236,7 +1202,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5294 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-21-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-21-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-2355-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1248,7 +1214,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5181 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-2355-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 827 terms to hsa-miR-2355-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-181b-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1260,7 +1226,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4192 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-181b-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 841 terms to hsa-miR-181b-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-3167
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1272,7 +1238,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5437 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-3167-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 873 terms to hsa-miR-3167-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-130a-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1284,7 +1250,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4758 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-130a-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-130a-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-548ae-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1296,7 +1262,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3021 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-548ae-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 112 terms to hsa-miR-548ae-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-935
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1308,7 +1274,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5789 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-935-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-935-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-760
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1320,7 +1286,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5693 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-760-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 641 terms to hsa-miR-760-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-3117-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1332,7 +1298,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4615 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-3117-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 677 terms to hsa-miR-3117-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-873-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1344,7 +1310,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2962 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-873-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 10 terms to hsa-miR-873-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-146b-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1356,7 +1322,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5625 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-146b-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 707 terms to hsa-miR-146b-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-10a-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1368,7 +1334,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4473 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-10a-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 716 terms to hsa-miR-10a-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-675-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1380,7 +1346,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2119 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-675-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 11 terms to hsa-miR-675-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-1229-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1392,7 +1358,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3055 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-1229-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 153 terms to hsa-miR-1229-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-199a-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1404,7 +1370,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5574 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-199a-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-199a-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-206
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1416,7 +1382,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5878 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-206-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-206-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-769-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1428,7 +1394,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5654 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-769-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 447 terms to hsa-miR-769-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-4787-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1440,7 +1406,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2423 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 211 terms to hsa-miR-4787-3p-LGG-shared-GO-BP_all.tsv
+## ✗ No significant GO terms for hsa-miR-4787-3p
 ## – GO for hsa-miR-4742-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1452,7 +1418,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5694 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-4742-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 988 terms to hsa-miR-4742-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-7-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1464,7 +1430,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5114 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-7-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-7-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-1908-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1476,7 +1442,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2133 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 186 terms to hsa-miR-1908-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 34 terms to hsa-miR-1908-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-195-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1488,7 +1454,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5066 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-195-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-195-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-31-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1500,7 +1466,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3606 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-31-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 945 terms to hsa-miR-31-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-490-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1512,7 +1478,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5409 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-490-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 597 terms to hsa-miR-490-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-940
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1524,7 +1490,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6588 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-940-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-940-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-148a-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1536,7 +1502,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3894 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-148a-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-148a-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-3943
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1548,7 +1514,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5167 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-3943-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-3943-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-421
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1560,7 +1526,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6079 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-421-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-421-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-1250-5p
 ## ✗ Only 13 targets; skipping hsa-miR-1250-5p
 ## – GO for hsa-miR-224-5p
@@ -1574,7 +1540,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2925 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-224-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 639 terms to hsa-miR-224-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-625-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1586,7 +1552,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2078 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-625-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 731 terms to hsa-miR-625-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-105-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1598,7 +1564,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2765 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-105-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 420 terms to hsa-miR-105-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-651-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1622,7 +1588,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5347 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-199b-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-199b-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-214-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1634,7 +1600,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3233 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-214-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 5 terms to hsa-miR-214-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-517a-3p
 ## ✗ Only 10 targets; skipping hsa-miR-517a-3p
 ## – GO for hsa-miR-3065-5p
@@ -1652,7 +1618,7 @@ for (hist in histologies) {
 ## Caused by warning in `p.adjust()`:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 248 terms to hsa-miR-3065-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 998 terms to hsa-miR-3065-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-944
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1664,7 +1630,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5958 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-944-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-944-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-149-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1676,7 +1642,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4571 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-149-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-149-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-433-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1688,7 +1654,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2160 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-433-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 93 terms to hsa-miR-433-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-3200-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1700,11 +1666,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4446 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-3200-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 490 terms to hsa-miR-3200-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-1226-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -1714,7 +1678,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3271 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-1226-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 65 terms to hsa-miR-1226-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-511-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1726,11 +1690,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2096 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-511-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 53 terms to hsa-miR-511-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-493-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -1740,7 +1702,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2581 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-493-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 440 terms to hsa-miR-493-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-199a-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1752,11 +1714,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5866 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-199a-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-199a-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-885-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -1766,7 +1726,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5468 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-885-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 893 terms to hsa-miR-885-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-615-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1778,11 +1738,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5279 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-615-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 526 terms to hsa-miR-615-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-511-3p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -1792,7 +1750,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3588 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-511-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 141 terms to hsa-miR-511-3p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-642a-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1804,11 +1762,9 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2012 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-642a-3p-LGG-shared-GO-BP_all.tsv
+## ✗ No significant GO terms for hsa-miR-642a-3p
 ## – GO for hsa-miR-625-5p
 ## Building most specific GOs .....
-## Loading required package: org.Hs.eg.db
-## 
 ## ( 12271 GO terms found. )
 ## Build GO DAG topology ..........
 ## ( 15517 GO terms and 34975 relations. )
@@ -1818,7 +1774,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 3039 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-625-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 204 terms to hsa-miR-625-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-574-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1830,7 +1786,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5559 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-574-5p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 740 terms to hsa-miR-574-5p-LGG-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-338-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1842,7 +1798,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5879 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-338-3p-LGG-shared-GO-BP_all.tsv
+## ✓ Wrote 761 terms to hsa-miR-338-3p-LGG-shared-GO-BP_all.tsv
 ## ▶ Histology: MB
 ## • healthyNormal: 29 miRNAs
 ## • paired: 21 miRNAs
@@ -1858,7 +1814,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2726 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 63 terms to hsa-miR-203b-3p-MB-shared-GO-BP_all.tsv
+## ✗ No significant GO terms for hsa-miR-203b-3p
 ## – GO for hsa-miR-216b-5p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1870,7 +1826,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2772 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-216b-5p-MB-shared-GO-BP_all.tsv
+## ✓ Wrote 40 terms to hsa-miR-216b-5p-MB-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-378d
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1882,7 +1838,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 5144 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-378d-MB-shared-GO-BP_all.tsv
+## ✓ Wrote 731 terms to hsa-miR-378d-MB-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-421
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1894,7 +1850,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 6079 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-421-MB-shared-GO-BP_all.tsv
+## ✓ Wrote 1000 terms to hsa-miR-421-MB-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-106b-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1906,7 +1862,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 2313 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-106b-3p-MB-shared-GO-BP_all.tsv
+## ✓ Wrote 193 terms to hsa-miR-106b-3p-MB-shared-GO-BP_all.tsv
 ## – GO for hsa-miR-130b-3p
 ## Building most specific GOs .....
 ## ( 12271 GO terms found. )
@@ -1918,7 +1874,7 @@ for (hist in histologies) {
 ## 
 ## the algorithm is scoring 4917 nontrivial nodes parameters: test statistic: fisher
 ## Joining with `by = join_by(GO.ID)`
-## ✓ Wrote 250 terms to hsa-miR-130b-3p-MB-shared-GO-BP_all.tsv</code></pre>
+## ✓ Wrote 1000 terms to hsa-miR-130b-3p-MB-shared-GO-BP_all.tsv</code></pre>
 </div>
 <div id="session-info" class="section level3">
 <h3>Session Info</h3>

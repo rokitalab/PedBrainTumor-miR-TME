@@ -67,7 +67,7 @@ go_enrichment <- function(mirna, df, hist){
         # Fisher test + table
         result <- runTest(GO_data, algorithm="classic", statistic="fisher")
         go_tab <- GenTable(GO_data, classicFisher = result,
-                           topNodes = 250,
+                           topNodes = 1000,
                            numChar  = 100000) %>%
           mutate(fdr = p.adjust(as.numeric(classicFisher), method="BH")) %>%
           filter(fdr < 0.05)
