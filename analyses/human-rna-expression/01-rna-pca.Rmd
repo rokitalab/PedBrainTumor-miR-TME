@@ -1,0 +1,180 @@
+---
+title: "RNA Expression Analysis: PCA"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+### Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+# Load libraries
+suppressPackageStartupMessages({
+  library(DESeq2)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggrepel)
+  library(rprojroot)
+  library(ggsci)
+  library(readr)
+})
+```
+
+### Data Wrangling
+
+```{r setup-paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+
+# File path for counts
+rnaseq_file <- file.path(data_dir, "gene-counts-rsem-expected_count-collapsed.all.rds")
+
+# File path for histology
+histology_file <- file.path(root_dir, "analyses", "histology-preprocessing", "results", "histologies.tsv")
+```
+
+```{r load-and-clean-histology}
+# define which histologies to keep
+keep_histologies <- c("DIPG or DMG", "EPN", "MB", "LGG", "Normal")
+batch1_ids <- c("2-1578-CC1", "3-1890-CC1")
+
+histology_df <- read_delim(histology_file) %>%
+  filter(experimental_strategy == "RNA-Seq") %>%
+  mutate(histology = coalesce(histology, "Normal"),
+         sample_id = case_when(
+           external_sample_id == "1516-T" ~ "7316-NA",
+           external_sample_id %in% paste0("B", 1:5) ~ external_sample_id,
+           TRUE ~ sample_id),
+         batch = if_else(external_sample_id %in% batch1_ids, "batch1", "batch2"),
+         condition = case_when(
+           sample_type %in% c("Tumor", "Normal") ~ histology,
+           sample_type == "Normal-Tumor Adjacent"~ paste0(histology, "-adjacent Normal"),
+           TRUE ~ NA_character_
+           ),
+         histology_condition = case_when(
+           sample_type %in% c("Tumor", "Normal") ~ histology,
+           sample_type == "Normal-Tumor Adjacent" ~ "Normal-Tumor Adjacent",
+           TRUE ~ NA_character_
+           )
+         ) %>%
+  filter(histology %in% keep_histologies)
+```
+
+```{r load-and-filter-counts}
+# load & filter genes with at least two non-zero samples
+rnaseq_counts <- readRDS(rnaseq_file) %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+
+# subset to samples in histology
+valid_ids <- histology_df$Bioassay_ID
+rnaseq_counts <- rnaseq_counts[, intersect(colnames(rnaseq_counts), valid_ids), drop = FALSE]
+```
+
+```{r align-metadata-to-counts}
+histology_df <- histology_df %>%
+  arrange(match(Bioassay_ID, names(rnaseq_counts)))
+```
+
+### PCA
+
+```{r run-pca}
+# Round expected counts to nearest integer
+rnaseq_mat <- round(rnaseq_counts)
+
+# Create DESeq2 object
+dds <- DESeqDataSetFromMatrix(countData = rnaseq_mat,
+                              colData = histology_df,
+                              design = ~ histology_condition)
+
+# VST transformation
+dds <- estimateSizeFactors(dds)
+vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
+
+# PCA plot
+pca_data <- plotPCA(vsd, intgroup = c("histology_condition", "batch"), returnData = TRUE)
+percentVar <- round(100 * attr(pca_data, "percentVar"))
+
+P1 <- ggplot(pca_data, aes(PC1, PC2, color=histology_condition, shape=batch)) +
+  geom_point(size=3) +
+  scale_color_jco(name = "Condition") +
+  labs(title = "PCA",
+       x = paste0("PC1: ", percentVar[1], "%"),
+       y = paste0("PC2: ", percentVar[2], "%")) +
+  theme_Publication()
+print(P1)
+
+# Save plot
+ggsave(filename = file.path(plot_dir, "rna-pca.pdf"), plot = P1, width = 8, height = 6)
+```
+
+```{r count-sample}
+# Count sample types per histology
+sample_summary <- histology_df %>%
+  filter(sample_type %in% c("Tumor", "Normal-Tumor Adjacent")) %>%
+  count(histology, sample_type) %>%
+  pivot_wider(names_from = sample_type, values_from = n, values_fill = 0) %>%
+  arrange(histology)
+
+# View the result
+print(sample_summary)
+
+# Save to CSV if needed
+#write.csv(sample_summary, "sample_type_counts_by_histology.csv", row.names = FALSE)
+```
+
+### PCA by Tumor Type vs Controls
+
+```{r run-pca-by-type}
+tumor_types <- c("DIPG or DMG", "EPN", "LGG", "MB")
+controls <- c("B1", "B2", "B3", "B4", "B5")
+
+for (tumor in tumor_types) {
+  tumor_samples <- histology_df %>% filter(histology == tumor & sample_type == "Tumor")
+  adjacent_normals <- histology_df %>% filter(sample_type == "Normal-Tumor Adjacent" & histology == tumor)
+  healthy_normals <- histology_df %>% filter(external_sample_id %in% controls)
+
+  subset_metadata <- bind_rows(tumor_samples, adjacent_normals, healthy_normals)
+  subset_cts <- rnaseq_mat[, subset_metadata$Bioassay_ID]
+
+  dds_subset <- DESeqDataSetFromMatrix(countData = subset_cts,
+                                       colData = subset_metadata,
+                                       design = ~ sample_type)
+  vsd_subset <- varianceStabilizingTransformation(dds_subset, blind = FALSE)
+
+  pca_data <- plotPCA(vsd_subset, intgroup = "sample_type", returnData = TRUE)
+  percentVar <- round(100 * attr(pca_data, "percentVar"))
+  pca_data$Bioassay_ID <- rownames(pca_data)
+  pca_data$sample_id <- subset_metadata$sample_id
+
+  # Now use sample_id for label
+  p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type, shape = sample_type)) +
+  geom_point(size = 3) +
+  scale_color_jco(name = "sample_type") +
+  geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
+  labs(title = paste("PCA -", tumor, "vs Controls"),
+       x = paste0("PC1: ", percentVar[1], "% variance"),
+       y = paste0("PC2: ", percentVar[2], "% variance")) +
+  theme_Publication()
+  
+  print(p)
+  
+  ggsave(filename = file.path(plot_dir, paste0("rna-pca-", tumor, "-vs-controls.pdf")), plot = p, width = 10, height = 6)
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+
+
+

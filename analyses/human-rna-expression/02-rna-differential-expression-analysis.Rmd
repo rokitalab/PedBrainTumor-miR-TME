@@ -5,7 +5,7 @@ output:
   toc: TRUE
 toc_float: TRUE
 author: Bicna Song
-date: "2025-05-23"
+date: "`r Sys.Date()`"
 ---
 
 This script performs differential expression analysis of RNA-seq data using DESeq2.
@@ -16,6 +16,7 @@ The goal is to identify differentially expressed genes for each brain tumor hist
 - Tumor vs. Disease-Free Normal brain samples (B1–B5)
 
 ### Setup
+
 ```{r load-packages, message=FALSE, warning=FALSE}
 # Load libraries
 library(DESeq2)
@@ -23,8 +24,6 @@ library(tidyverse)
 library(rprojroot)
 library(readr)
 library(EnhancedVolcano)
-
-#install.packages("ashr") # this will be added to Dockerfile later if needed.
 library(ashr)
 
 # Define directories
@@ -46,46 +45,53 @@ histology_file <- file.path(root_dir, "analyses", "histology-preprocessing", "re
 
 ### Data Wrangling
 
-```{r data-wrangle}
-gene_cts <- readRDS(gene_cts_file) %>%
-  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
-```
+```{r load-and-clean-histology}
+# define which histologies to keep
+keep_histologies <- c("DIPG or DMG", "EPN", "MB", "LGG", "Normal")
+batch1_ids <- c("2-1578-CC1", "3-1890-CC1")
 
-Remove pons with significant tumor infiltration
-
-```{r remove-tumor-infiltrated-sample}
-# Remove 5-1234-left-pons showing significant tumor infiltration
-gene_cts <- round(gene_cts[, !(colnames(gene_cts) == "BA_GBVGBCJG")])
-```
-
-Load histologies file and define conditions
-
-```{r load-histology}
-# Load and annotate histology file
 histology_df <- read_delim(histology_file) %>%
   filter(experimental_strategy == "RNA-Seq") %>%
-  filter(Bioassay_ID %in% names(gene_cts)) %>%
-  arrange(match(Bioassay_ID, names(gene_cts))) %>%
-  # Fill in any missing histology with "Normal"
-  mutate(histology = if_else(is.na(histology), "Normal", histology)) %>%
-  mutate(condition = case_when(
-      sample_type %in% c("Tumor", "Normal") ~ histology,
-      sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
-      TRUE ~ NA_character_
-    ),
-    histology_condition = case_when(
-      sample_type %in% c("Tumor", "Normal") ~ histology,
-      sample_type == "Normal-Tumor Adjacent" ~ "Normal-Tumor Adjacent",
-      TRUE ~ NA_character_
-    )
-  )
+  mutate(histology = coalesce(histology, "Normal"),
+         sample_id = case_when(
+           external_sample_id == "1516-T" ~ "7316-NA",
+           external_sample_id %in% paste0("B", 1:5) ~ external_sample_id,
+           TRUE ~ sample_id),
+         batch = if_else(external_sample_id %in% batch1_ids, "batch1", "batch2"),
+         condition = case_when(
+           sample_type %in% c("Tumor", "Normal") ~ histology,
+           sample_type == "Normal-Tumor Adjacent"~ paste0(histology, "-adjacent Normal"),
+           TRUE ~ NA_character_
+           ),
+         histology_condition = case_when(
+           sample_type %in% c("Tumor", "Normal") ~ histology,
+           sample_type == "Normal-Tumor Adjacent" ~ "Normal-Tumor Adjacent",
+           TRUE ~ NA_character_
+           )
+         ) %>%
+  filter(histology %in% keep_histologies)
+```
+
+```{r load-and-filter-counts}
+# load & filter genes with at least two non-zero samples
+gene_cts <- readRDS(gene_cts_file) %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+
+# subset to samples in histology
+valid_ids <- histology_df$Bioassay_ID
+gene_cts <- round(gene_cts[, intersect(colnames(gene_cts), valid_ids), drop = FALSE])
+```
+
+```{r align-metadata-to-counts}
+histology_df <- histology_df %>%
+  arrange(match(Bioassay_ID, names(gene_cts)))
 ```
 
 ### Perform Differential Expression for Each Histology
 
 ```{r run-de-by-histology, message=FALSE, warning=FALSE}
 normal_ids <- c("B1", "B2", "B3", "B4", "B5")
-histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "MB")
+histologies <- c("DIPG or DMG", "EPN", "MB")
 
 for (tumor in histologies) {
   adj_label <- paste0(tumor, "-adjacent Normal")
@@ -120,6 +126,7 @@ for (tumor in histologies) {
           file.path(results_dir, paste0("DESeq2_", tumor, "_vs_healthyNormal.csv")))
 }
 ```
+
 Handle LGG separately: only Tumor vs Healthy Normal
 
 ```{r run-de-lgg, message=FALSE, warning=FALSE}
@@ -142,10 +149,11 @@ res_lgg <- lfcShrink(dds_lgg, contrast = c("condition", tumor, "Normal"), res = 
 write_csv(as.data.frame(res_lgg) %>% rownames_to_column("gene_symbol"),
           file.path(results_dir, paste0("DESeq2_", tumor, "_vs_healthyNormal.csv")))
 ```
-Save Significant DE Results Separately
+
+### Save Significant DE Results Separately
 
 ```{r save-sig-de-res}
-all_histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "MB", "LGG")
+all_histologies <- c("DIPG or DMG", "EPN", "MB", "LGG")
 
 for (tumor in all_histologies) {
   comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
@@ -161,7 +169,7 @@ for (tumor in all_histologies) {
 }
 ```
 
-Summary Table: Number of Up/Down-regulated genes
+### Summary Table: Number of Up/Down-regulated genes
 
 ```{r summary-table}
 summary_df <- tibble()
@@ -230,7 +238,8 @@ for (tumor in all_histologies) {
   
 }
 ```
-Summarize: Count number of Tumor and Adjacent Normal per sample_id and histology
+
+### Summarize: Count number of Tumor and Adjacent Normal per sample_id and histology
 
 ```{r pair-status}
 paired_info <- histology_df %>%
@@ -254,7 +263,7 @@ summary_table <- paired_info %>%
 print(summary_table)
 ```
 
-Paired differential expression analysis
+### Paired differential expression analysis
 
 ```{r run-paired-de-by-histology}
 for (hist in all_histologies) {
@@ -309,7 +318,7 @@ for (hist in all_histologies) {
 
 ```
 
-Summary Table: Number of Up/Down-regulated miRNAs for paired analysis
+### Summary Table: Number of Up/Down-regulated miRNAs for paired analysis
 
 ```{r}
 summary_paired_df <- tibble()
@@ -338,7 +347,7 @@ summary_paired_df
 write_csv(summary_paired_df, file.path(results_dir, "DE_summary_counts_paired.csv"))
 ```
 
-Volcano Plots for paired DE Comparisons
+### Volcano Plots for paired DE Comparisons
 
 ```{r}
 for (tumor in all_histologies) {
@@ -372,7 +381,7 @@ for (tumor in all_histologies) {
 }
 ```
 
-Print session info
+### Session Info
 
 ```{r session-info}
 sessionInfo()

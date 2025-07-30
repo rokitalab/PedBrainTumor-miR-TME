@@ -11,7 +11,7 @@
 
 <meta name="author" content="Bicna Song" />
 
-<meta name="date" content="2025-05-23" />
+<meta name="date" content="2025-07-30" />
 
 <title>Differential RNA Expression Analysis</title>
 
@@ -422,7 +422,7 @@ font-size: 0.95em;
 
 <h1 class="title toc-ignore">Differential RNA Expression Analysis</h1>
 <h4 class="author">Bicna Song</h4>
-<h4 class="date">2025-05-23</h4>
+<h4 class="date">2025-07-30</h4>
 
 </div>
 
@@ -444,8 +444,6 @@ library(tidyverse)
 library(rprojroot)
 library(readr)
 library(EnhancedVolcano)
-
-#install.packages(&quot;ashr&quot;) # this will be added to Dockerfile later if needed.
 library(ashr)
 
 # Define directories
@@ -459,60 +457,58 @@ plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)
 source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))
 
 # File path for counts
-mirna_cts_file &lt;- file.path(data_dir, &quot;gene-counts-rsem-expected_count-collapsed.all.rds&quot;)
+gene_cts_file &lt;- file.path(data_dir, &quot;gene-counts-rsem-expected_count-collapsed.all.rds&quot;)
 
 # File path for histology
 histology_file &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;histology-preprocessing&quot;, &quot;results&quot;, &quot;histologies.tsv&quot;)</code></pre>
 </div>
 <div id="data-wrangling" class="section level3">
 <h3>Data Wrangling</h3>
-<pre class="r"><code>gene_cts &lt;- readRDS(mirna_cts_file) %&gt;%
-  filter(rowSums(across(everything(), ~ . != 0)) &gt;= 2)</code></pre>
-<pre class="r"><code># names(mirna_cts)[1] &lt;- &quot;4-1958-CC1&quot;
-# names(mirna_cts)[2] &lt;- &quot;2-1578-CC1&quot;
-# names(mirna_cts)[3] &lt;- &quot;5-1234-left-pons&quot;
-# names(mirna_cts)[4] &lt;- &quot;1-1855-CC1&quot;
-# names(mirna_cts)[5] &lt;- &quot;3-1890-CC1&quot;</code></pre>
-<pre class="r"><code># Remove 5-1234-left-pons showing significant tumor infiltration
-gene_cts &lt;- round(gene_cts[, !(colnames(gene_cts) == &quot;BA_GBVGBCJG&quot;)])</code></pre>
-<pre class="r"><code># Get current column names
-# current_colnames &lt;- colnames(gene_cts)
-# 
-# # Find the indices of the two samples
-# idx_T &lt;- which(current_colnames == &quot;2058-T&quot;)
-# idx_N &lt;- which(current_colnames == &quot;2058-N&quot;)
-# 
-# colnames(mirna_cts)[c(idx_T, idx_N)] &lt;- colnames(mirna_cts)[c(idx_N, idx_T)]</code></pre>
-<pre class="r"><code># Load and annotate histology file
+<pre class="r"><code># define which histologies to keep
+keep_histologies &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;MB&quot;, &quot;LGG&quot;, &quot;Normal&quot;)
+batch1_ids &lt;- c(&quot;2-1578-CC1&quot;, &quot;3-1890-CC1&quot;)
+
 histology_df &lt;- read_delim(histology_file) %&gt;%
   filter(experimental_strategy == &quot;RNA-Seq&quot;) %&gt;%
-  filter(Bioassay_ID %in% names(gene_cts)) %&gt;%
-  arrange(match(Bioassay_ID, names(gene_cts))) %&gt;%
-  # Fill in any missing histology with &quot;Normal&quot;
-  mutate(histology = if_else(is.na(histology), &quot;Normal&quot;, histology)) %&gt;%
-  mutate(condition = case_when(
-      sample_type %in% c(&quot;Tumor&quot;, &quot;Normal&quot;) ~ histology,
-      sample_type == &quot;Normal-Tumor Adjacent&quot; ~ paste0(histology, &quot;-adjacent Normal&quot;),
-      TRUE ~ NA_character_
-    ),
-    histology_condition = case_when(
-      sample_type %in% c(&quot;Tumor&quot;, &quot;Normal&quot;) ~ histology,
-      sample_type == &quot;Normal-Tumor Adjacent&quot; ~ &quot;Normal-Tumor Adjacent&quot;,
-      TRUE ~ NA_character_
-    )
-  )</code></pre>
-<pre><code>## Rows: 108 Columns: 10
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  mutate(histology = coalesce(histology, &quot;Normal&quot;),
+         sample_id = case_when(
+           external_sample_id == &quot;1516-T&quot; ~ &quot;7316-NA&quot;,
+           external_sample_id %in% paste0(&quot;B&quot;, 1:5) ~ external_sample_id,
+           TRUE ~ sample_id),
+         batch = if_else(external_sample_id %in% batch1_ids, &quot;batch1&quot;, &quot;batch2&quot;),
+         condition = case_when(
+           sample_type %in% c(&quot;Tumor&quot;, &quot;Normal&quot;) ~ histology,
+           sample_type == &quot;Normal-Tumor Adjacent&quot;~ paste0(histology, &quot;-adjacent Normal&quot;),
+           TRUE ~ NA_character_
+           ),
+         histology_condition = case_when(
+           sample_type %in% c(&quot;Tumor&quot;, &quot;Normal&quot;) ~ histology,
+           sample_type == &quot;Normal-Tumor Adjacent&quot; ~ &quot;Normal-Tumor Adjacent&quot;,
+           TRUE ~ NA_character_
+           )
+         ) %&gt;%
+  filter(histology %in% keep_histologies)</code></pre>
+<pre><code>## Rows: 102 Columns: 10
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (10): Bioassay_ID, experimental_strategy, sample_id, external_sample_id,...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code># load &amp; filter genes with at least two non-zero samples
+gene_cts &lt;- readRDS(gene_cts_file) %&gt;%
+  filter(rowSums(across(everything(), ~ . != 0)) &gt;= 2)
+
+# subset to samples in histology
+valid_ids &lt;- histology_df$Bioassay_ID
+gene_cts &lt;- round(gene_cts[, intersect(colnames(gene_cts), valid_ids), drop = FALSE])</code></pre>
+<pre class="r"><code>histology_df &lt;- histology_df %&gt;%
+  arrange(match(Bioassay_ID, names(gene_cts)))</code></pre>
 </div>
 <div id="perform-differential-expression-for-each-histology" class="section level3">
 <h3>Perform Differential Expression for Each Histology</h3>
 <pre class="r"><code>normal_ids &lt;- c(&quot;B1&quot;, &quot;B2&quot;, &quot;B3&quot;, &quot;B4&quot;, &quot;B5&quot;)
-histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;MB&quot;)
+histologies &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;MB&quot;)
 
 for (tumor in histologies) {
   adj_label &lt;- paste0(tumor, &quot;-adjacent Normal&quot;)
@@ -546,6 +542,7 @@ for (tumor in histologies) {
   write_csv(as.data.frame(res_healthy) %&gt;% rownames_to_column(&quot;gene_symbol&quot;),
           file.path(results_dir, paste0(&quot;DESeq2_&quot;, tumor, &quot;_vs_healthyNormal.csv&quot;)))
 }</code></pre>
+<p>Handle LGG separately: only Tumor vs Healthy Normal</p>
 <pre class="r"><code># Handle LGG separately: only Tumor vs Healthy Normal
 tumor &lt;- &quot;LGG&quot;
 meta_lgg &lt;- histology_df %&gt;%
@@ -564,8 +561,10 @@ res_lgg &lt;- lfcShrink(dds_lgg, contrast = c(&quot;condition&quot;, tumor, &quo
 
 write_csv(as.data.frame(res_lgg) %&gt;% rownames_to_column(&quot;gene_symbol&quot;),
           file.path(results_dir, paste0(&quot;DESeq2_&quot;, tumor, &quot;_vs_healthyNormal.csv&quot;)))</code></pre>
-<pre class="r"><code># Save Significant DE Results Separately
-all_histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;MB&quot;, &quot;LGG&quot;)
+</div>
+<div id="save-significant-de-results-separately" class="section level3">
+<h3>Save Significant DE Results Separately</h3>
+<pre class="r"><code>all_histologies &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;MB&quot;, &quot;LGG&quot;)
 
 for (tumor in all_histologies) {
   comparison_types &lt;- if (tumor == &quot;LGG&quot;) &quot;healthyNormal&quot; else c(&quot;adjNormal&quot;, &quot;healthyNormal&quot;)
@@ -580,7 +579,7 @@ for (tumor in all_histologies) {
   }
 }</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -588,7 +587,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -596,7 +595,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -604,7 +603,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -612,7 +611,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -620,7 +619,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -628,39 +627,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -690,7 +657,7 @@ for (tumor in all_histologies) {
   }
 }</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -698,7 +665,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -706,7 +673,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -714,7 +681,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -722,7 +689,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -730,7 +697,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -738,39 +705,7 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -778,20 +713,16 @@ for (tumor in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre class="r"><code>summary_df</code></pre>
-<pre><code>## # A tibble: 11 × 3
-##    Comparison                   Upregulated Downregulated
-##    &lt;chr&gt;                              &lt;int&gt;         &lt;int&gt;
-##  1 ATRT vs adjNormal                     48             0
-##  2 ATRT vs healthyNormal                  3             2
-##  3 DIPG or DMG vs adjNormal            3067          2794
-##  4 DIPG or DMG vs healthyNormal        1540          1866
-##  5 EPN vs adjNormal                     779          1325
-##  6 EPN vs healthyNormal                 952          1468
-##  7 HGG vs adjNormal                       5             1
-##  8 HGG vs healthyNormal                  97            93
-##  9 MB vs adjNormal                     1356          1029
-## 10 MB vs healthyNormal                  787           783
-## 11 LGG vs healthyNormal                 649          1096</code></pre>
+<pre><code>## # A tibble: 7 × 3
+##   Comparison                   Upregulated Downregulated
+##   &lt;chr&gt;                              &lt;int&gt;         &lt;int&gt;
+## 1 DIPG or DMG vs adjNormal            3067          2794
+## 2 DIPG or DMG vs healthyNormal        1540          1866
+## 3 EPN vs adjNormal                     779          1325
+## 4 EPN vs healthyNormal                 952          1468
+## 5 MB vs adjNormal                     1152           755
+## 6 MB vs healthyNormal                  872           903
+## 7 LGG vs healthyNormal                 649          1096</code></pre>
 <pre class="r"><code># Save to CSV
 write_csv(summary_df, file.path(results_dir, &quot;DE_summary_counts.csv&quot;))</code></pre>
 </div>
@@ -827,11 +758,17 @@ write_csv(summary_df, file.path(results_dir, &quot;DE_summary_counts.csv&quot;))
 
       ggsave(file.path(plot_dir, paste0(&quot;volcano_&quot;, tumor, &quot;_vs_&quot;, type, &quot;.pdf&quot;)),
              plot = plot, width = 8, height = 6)
+      
     }
+  
   }
+  
 }</code></pre>
-<pre class="r"><code># Summarize: Count number of Tumor and Adjacent Normal per sample_id and histology
-paired_info &lt;- histology_df %&gt;%
+</div>
+<div id="summarize-count-number-of-tumor-and-adjacent-normal-per-sample_id-and-histology" class="section level3">
+<h3>Summarize: Count number of Tumor and Adjacent Normal per sample_id
+and histology</h3>
+<pre class="r"><code>paired_info &lt;- histology_df %&gt;%
   group_by(histology, sample_id) %&gt;%
   summarize(
     tumor = any(sample_type == &quot;Tumor&quot;),
@@ -850,19 +787,18 @@ summary_table &lt;- paired_info %&gt;%
   pivot_wider(names_from = pair_status, values_from = n, values_fill = 0)
 
 print(summary_table)</code></pre>
-<pre><code>## # A tibble: 8 × 3
+<pre><code>## # A tibble: 5 × 3
 ##   histology   Paired Unpaired
 ##   &lt;chr&gt;        &lt;int&gt;    &lt;int&gt;
-## 1 ATRT             1        2
-## 2 DIPG or DMG      5        5
-## 3 EPN              2        1
-## 4 GNT              1        0
-## 5 HGG              4        0
-## 6 LGG              0        2
-## 7 MB               5        1
-## 8 Normal           0        1</code></pre>
-<pre class="r"><code># Paired differential expression analysis
-for (hist in all_histologies) {
+## 1 DIPG or DMG      5        5
+## 2 EPN              2        1
+## 3 LGG              0        2
+## 4 MB               4        1
+## 5 Normal           0        5</code></pre>
+</div>
+<div id="paired-differential-expression-analysis" class="section level3">
+<h3>Paired differential expression analysis</h3>
+<pre class="r"><code>for (hist in all_histologies) {
   
   paired_patients &lt;- paired_info %&gt;%
     filter(histology == hist, pair_status == &quot;Paired&quot;) %&gt;%
@@ -891,7 +827,7 @@ for (hist in all_histologies) {
     design = ~ sample_id + sample_type
   )
   
-  #dds$sample_type &lt;- factor(dds$sample_type)
+  # run DESeq
   dds &lt;- DESeq(dds)
   
   # Run results: Tumor vs Normal-Tumor Adjacent
@@ -911,7 +847,6 @@ for (hist in all_histologies) {
   
   message(paste(&quot;Completed DE analysis for:&quot;, hist))
 }</code></pre>
-<pre><code>## Skipping ATRT due to insufficient paired patients</code></pre>
 <pre><code>## converting counts to integer mode</code></pre>
 <pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
 ## design formula are characters, converting to factors</code></pre>
@@ -986,31 +921,6 @@ for (hist in all_histologies) {
 <pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
 ##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
 ##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
-<pre><code>## Completed DE analysis for: HGG</code></pre>
-<pre><code>## converting counts to integer mode</code></pre>
-<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
-## design formula are characters, converting to factors</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating size factors</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating dispersions</code></pre>
-<pre><code>## gene-wise dispersion estimates</code></pre>
-<pre><code>## mean-dispersion relationship</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## final dispersion estimates</code></pre>
-<pre><code>## fitting model and testing</code></pre>
-<pre><code>## using &#39;ashr&#39; for LFC shrinkage. If used in published research, please cite:
-##     Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.
-##     https://doi.org/10.1093/biostatistics/kxw041</code></pre>
 <pre><code>## Completed DE analysis for: MB</code></pre>
 <pre><code>## Skipping LGG due to insufficient paired patients</code></pre>
 </div>
@@ -1035,9 +945,8 @@ for (hist in all_histologies) {
     message(paste(&quot;Result file for&quot;, hist, &quot;not found.&quot;))
   }
 }</code></pre>
-<pre><code>## Result file for ATRT not found.</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1045,7 +954,7 @@ for (hist in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1053,15 +962,7 @@ for (hist in all_histologies) {
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1071,13 +972,12 @@ for (hist in all_histologies) {
 ## Result file for LGG not found.</code></pre>
 <pre class="r"><code># View the summary table
 summary_paired_df</code></pre>
-<pre><code>## # A tibble: 4 × 3
+<pre><code>## # A tibble: 3 × 3
 ##   Comparison               Upregulated Downregulated
 ##   &lt;chr&gt;                          &lt;int&gt;         &lt;int&gt;
 ## 1 DIPG or DMG vs adjNormal        2377          2785
 ## 2 EPN vs adjNormal                 585          1284
-## 3 HGG vs adjNormal                   3             0
-## 4 MB vs adjNormal                 1525          1817</code></pre>
+## 3 MB vs adjNormal                 1586          1787</code></pre>
 <pre class="r"><code># Save to CSV
 write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_paired.csv&quot;))</code></pre>
 </div>
@@ -1113,7 +1013,7 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
   }
 }</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1124,7 +1024,7 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 <pre><code>## Warning: ggrepel: 1440 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1135,7 +1035,7 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 <pre><code>## Warning: ggrepel: 1572 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1143,16 +1043,7 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
-<pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
-<pre><code>## Warning: ggrepel: 757 unlabeled data points (too many overlaps). Consider
+<pre><code>## Warning: ggrepel: 1019 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps</code></pre>
 </div>
 <div id="session-info" class="section level3">
@@ -1206,19 +1097,19 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## [22] withr_3.0.0             grid_4.4.0              fansi_1.0.6            
 ## [25] colorspace_2.1-0        scales_1.3.0            cli_3.6.2              
 ## [28] rmarkdown_2.27          crayon_1.5.2            ragg_1.3.2             
-## [31] generics_0.1.3          httr_1.4.7              tzdb_0.4.0             
-## [34] cachem_1.1.0            zlibbioc_1.50.0         parallel_4.4.0         
-## [37] XVector_0.44.0          vctrs_0.6.5             Matrix_1.7-0           
-## [40] jsonlite_1.8.8          hms_1.1.3               mixsqp_0.3-54          
-## [43] bit64_4.0.5             irlba_2.3.5.1           systemfonts_1.1.0      
-## [46] locfit_1.5-9.9          jquerylib_0.1.4         glue_1.7.0             
-## [49] codetools_0.2-20        stringi_1.8.4           gtable_0.3.5           
-## [52] UCSC.utils_1.0.0        munsell_0.5.1           pillar_1.9.0           
-## [55] htmltools_0.5.8.1       GenomeInfoDbData_1.2.12 truncnorm_1.0-9        
-## [58] R6_2.5.1                textshaping_0.4.0       vroom_1.6.5            
-## [61] evaluate_0.24.0         lattice_0.22-6          SQUAREM_2021.1         
-## [64] bslib_0.7.0             Rcpp_1.0.12             SparseArray_1.4.8      
-## [67] xfun_0.44               pkgconfig_2.0.3</code></pre>
+## [31] generics_0.1.3          rstudioapi_0.16.0       httr_1.4.7             
+## [34] tzdb_0.4.0              cachem_1.1.0            zlibbioc_1.50.0        
+## [37] parallel_4.4.0          XVector_0.44.0          vctrs_0.6.5            
+## [40] Matrix_1.7-0            jsonlite_1.8.8          hms_1.1.3              
+## [43] mixsqp_0.3-54           bit64_4.0.5             irlba_2.3.5.1          
+## [46] systemfonts_1.1.0       locfit_1.5-9.9          jquerylib_0.1.4        
+## [49] glue_1.7.0              codetools_0.2-20        stringi_1.8.4          
+## [52] gtable_0.3.5            UCSC.utils_1.0.0        munsell_0.5.1          
+## [55] pillar_1.9.0            htmltools_0.5.8.1       GenomeInfoDbData_1.2.12
+## [58] truncnorm_1.0-9         R6_2.5.1                textshaping_0.4.0      
+## [61] vroom_1.6.5             evaluate_0.24.0         lattice_0.22-6         
+## [64] SQUAREM_2021.1          bslib_0.7.0             Rcpp_1.0.12            
+## [67] SparseArray_1.4.8       xfun_0.44               pkgconfig_2.0.3</code></pre>
 </div>
 
 
