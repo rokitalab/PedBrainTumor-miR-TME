@@ -9,7 +9,6 @@
 2. `02-differential-expression.Rmd`: Run DESeq2 differential expression (DE) analyses on tumors versus matched normal and healthy normals.
 3. `03-GO-enrichment.Rmd`: Run GO enrichment using TopGO on tumor DEGs.
 4. `04-GSEA-hallmark.Rmd`: Run GSEA on RNA-seq DE results across multiple histologies to identify enriched Hallmark pathways.
-5. `05-GSVA-GOBP.Rmd`: Perform Gene Set Variation Analysis (GSVA) on RSEM-derived TPM expression for multiple histologies, using GO Biological Process terms, and assess differential pathway activity.
 
 ## Analysis module directory structure
 
@@ -21,21 +20,17 @@
 ├── 03-GO-enrichment.html
 ├── 04-GSEA-hallmark.Rmd
 ├── 04-GSEA-hallmark.html
-├── 05-GSVA-GOBP.Rmd
-├── 05-GSVA-GOBP.html
 ├── README.md
 ├── plots
 │   ├── DIPG or DMG-downregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── DIPG or DMG-downregulated-genes-paired-go-term-enrichment-dotplot.pdf
 │   ├── DIPG or DMG-upregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── DIPG or DMG-upregulated-genes-paired-go-term-enrichment-dotplot.pdf
-│   ├── DIPG or DMG_healthyNormal_GSVA_DE_heatmap.pdf
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_ANGIOGENESIS_GSEA.pdf
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_E2F_TARGETS_GSEA.pdf
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION_GSEA.pdf
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_MITOTIC_SPINDLE_GSEA.pdf
-│   ├── DIPG or DMG_paired_GSVA_DE_heatmap.pdf
 │   ├── DIPG or DMG_paired_HALLMARK_E2F_TARGETS_GSEA.pdf
 │   ├── DIPG or DMG_paired_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── DIPG or DMG_paired_HALLMARK_INTERFERON_ALPHA_RESPONSE_GSEA.pdf
@@ -55,6 +50,11 @@
 │   ├── EPN_paired_HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION_GSEA.pdf
 │   ├── EPN_paired_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── EPN_paired_HALLMARK_TNFA_SIGNALING_VIA_NFKB_GSEA.pdf
+│   ├── HGG_healthyNormal_HALLMARK_ALLOGRAFT_REJECTION_GSEA.pdf
+│   ├── HGG_healthyNormal_HALLMARK_E2F_TARGETS_GSEA.pdf
+│   ├── HGG_healthyNormal_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
+│   ├── HGG_healthyNormal_HALLMARK_IL6_JAK_STAT3_SIGNALING_GSEA.pdf
+│   ├── HGG_healthyNormal_HALLMARK_MITOTIC_SPINDLE_GSEA.pdf
 │   ├── LGG-downregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── LGG-upregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── LGG_healthyNormal_HALLMARK_COAGULATION_GSEA.pdf
@@ -65,13 +65,11 @@
 │   ├── MB-downregulated-genes-paired-go-term-enrichment-dotplot.pdf
 │   ├── MB-upregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── MB-upregulated-genes-paired-go-term-enrichment-dotplot.pdf
-│   ├── MB_healthyNormal_GSVA_DE_heatmap.pdf
 │   ├── MB_healthyNormal_HALLMARK_E2F_TARGETS_GSEA.pdf
 │   ├── MB_healthyNormal_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── MB_healthyNormal_HALLMARK_MITOTIC_SPINDLE_GSEA.pdf
 │   ├── MB_healthyNormal_HALLMARK_MYC_TARGETS_V1_GSEA.pdf
 │   ├── MB_healthyNormal_HALLMARK_MYC_TARGETS_V2_GSEA.pdf
-│   ├── MB_paired_GSVA_DE_heatmap.pdf
 │   ├── MB_paired_HALLMARK_E2F_TARGETS_GSEA.pdf
 │   ├── MB_paired_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── MB_paired_HALLMARK_MITOTIC_SPINDLE_GSEA.pdf
@@ -93,6 +91,7 @@
 │   ├── volcano_MB_vs_adjNormal.pdf
 │   └── volcano_MB_vs_healthyNormal.pdf
 ├── results
+│   ├── ATRT_healthyNormal_GSEA_results.tsv
 │   ├── DESeq2_ATRT_vs_adjNormal.csv
 │   ├── DESeq2_ATRT_vs_adjNormal_sig.csv
 │   ├── DESeq2_ATRT_vs_healthyNormal.csv
@@ -130,9 +129,7 @@
 │   ├── DIPG or DMG-upregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── DIPG or DMG-upregulated-genes-paired-enriched-go-terms.tsv
 │   ├── DIPG or DMG_healthyNormal_GSEA_results.tsv
-│   ├── DIPG or DMG_healthyNormal_GSVA_DE_results.tsv
 │   ├── DIPG or DMG_paired_GSEA_results.tsv
-│   ├── DIPG or DMG_paired_GSVA_DE_results.tsv
 │   ├── EPN-downregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── EPN-downregulated-genes-paired-enriched-go-terms.tsv
 │   ├── EPN-upregulated-genes-healthyNormal-enriched-go-terms.tsv
@@ -142,6 +139,7 @@
 │   ├── HGG-downregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── HGG-upregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── HGG-upregulated-genes-paired-enriched-go-terms.tsv
+│   ├── HGG_healthyNormal_GSEA_results.tsv
 │   ├── LGG-downregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── LGG-upregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── LGG_healthyNormal_GSEA_results.tsv
@@ -150,9 +148,6 @@
 │   ├── MB-upregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── MB-upregulated-genes-paired-enriched-go-terms.tsv
 │   ├── MB_healthyNormal_GSEA_results.tsv
-│   ├── MB_healthyNormal_GSVA_DE_results.tsv
-│   ├── MB_paired_GSEA_results.tsv
-│   ├── MB_paired_GSVA_DE_results.tsv
-│   └── gobp-gsva-scores.tsv
+│   └── MB_paired_GSEA_results.tsv
 └── run_module.sh
 ```
