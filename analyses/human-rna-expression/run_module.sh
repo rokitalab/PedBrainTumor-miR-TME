@@ -3,8 +3,8 @@
 set -e
 set -o pipefail
 
-# PCA/UMAP
-#Rscript -e "rmarkdown::render('01-merge-miRNA-counts.Rmd')"
+# PCA
+Rscript -e "rmarkdown::render('01-rna-pca.Rmd')"
 
 # Run differential expression
 Rscript -e "rmarkdown::render('02-differential-expression.Rmd')"
