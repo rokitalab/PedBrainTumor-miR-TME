@@ -6,6 +6,7 @@
 
 ## Folder contents
 
+1. `01-rna-pca-umap.Rmd`: generates PCA (batch comparison, histology, tumor-only) and UMAP plots using top 500 most variable RNAs across samples.
 2. `02-differential-expression.Rmd`: Run DESeq2 differential expression (DE) analyses on tumors versus matched normal and healthy normals.
 3. `03-GO-enrichment.Rmd`: Run GO enrichment using TopGO on tumor DEGs.
 4. `04-GSEA-hallmark.Rmd`: Run GSEA on RNA-seq DE results across multiple histologies to identify enriched Hallmark pathways.
@@ -15,8 +16,10 @@
 
 ```
 .
-├── 02-differential-expression.Rmd
-├── 02-differential-expression.html
+├── 01-rna-pca.Rmd
+├── 01-rna-pca.html
+├── 02-rna-differential-expression-analysis.Rmd
+├── 02-rna-differential-expression-analysis.html
 ├── 03-GO-enrichment.Rmd
 ├── 03-GO-enrichment.html
 ├── 04-GSEA-hallmark.Rmd
@@ -62,6 +65,7 @@
 │   ├── LGG_healthyNormal_HALLMARK_INTERFERON_GAMMA_RESPONSE_GSEA.pdf
 │   ├── LGG_healthyNormal_HALLMARK_TGF_BETA_SIGNALING_GSEA.pdf
 │   ├── LGG_healthyNormal_HALLMARK_UV_RESPONSE_DN_GSEA.pdf
+│   ├── MB-downregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── MB-downregulated-genes-paired-go-term-enrichment-dotplot.pdf
 │   ├── MB-upregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── MB-upregulated-genes-paired-go-term-enrichment-dotplot.pdf
@@ -72,31 +76,27 @@
 │   ├── MB_healthyNormal_HALLMARK_MYC_TARGETS_V1_GSEA.pdf
 │   ├── MB_healthyNormal_HALLMARK_MYC_TARGETS_V2_GSEA.pdf
 │   ├── MB_paired_GSVA_DE_heatmap.pdf
+│   ├── MB_paired_HALLMARK_DNA_REPAIR_GSEA.pdf
 │   ├── MB_paired_HALLMARK_E2F_TARGETS_GSEA.pdf
 │   ├── MB_paired_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
-│   ├── MB_paired_HALLMARK_MITOTIC_SPINDLE_GSEA.pdf
 │   ├── MB_paired_HALLMARK_MTORC1_SIGNALING_GSEA.pdf
 │   ├── MB_paired_HALLMARK_MYC_TARGETS_V1_GSEA.pdf
-│   ├── volcano_ATRT_vs_adjNormal.pdf
-│   ├── volcano_ATRT_vs_healthyNormal.pdf
+│   ├── rna-pca-DIPG or DMG-vs-controls.pdf
+│   ├── rna-pca-EPN-vs-controls.pdf
+│   ├── rna-pca-LGG-vs-controls.pdf
+│   ├── rna-pca-MB-vs-controls.pdf
+│   ├── rna-pca.pdf
 │   ├── volcano_DIPG or DMG_paired.pdf
 │   ├── volcano_DIPG or DMG_vs_adjNormal.pdf
 │   ├── volcano_DIPG or DMG_vs_healthyNormal.pdf
 │   ├── volcano_EPN_paired.pdf
 │   ├── volcano_EPN_vs_adjNormal.pdf
 │   ├── volcano_EPN_vs_healthyNormal.pdf
-│   ├── volcano_HGG_paired.pdf
-│   ├── volcano_HGG_vs_adjNormal.pdf
-│   ├── volcano_HGG_vs_healthyNormal.pdf
 │   ├── volcano_LGG_vs_healthyNormal.pdf
 │   ├── volcano_MB_paired.pdf
 │   ├── volcano_MB_vs_adjNormal.pdf
 │   └── volcano_MB_vs_healthyNormal.pdf
 ├── results
-│   ├── DESeq2_ATRT_vs_adjNormal.csv
-│   ├── DESeq2_ATRT_vs_adjNormal_sig.csv
-│   ├── DESeq2_ATRT_vs_healthyNormal.csv
-│   ├── DESeq2_ATRT_vs_healthyNormal_sig.csv
 │   ├── DESeq2_DIPG or DMG_paired_full.csv
 │   ├── DESeq2_DIPG or DMG_paired_sig.csv
 │   ├── DESeq2_DIPG or DMG_vs_adjNormal.csv
@@ -109,12 +109,6 @@
 │   ├── DESeq2_EPN_vs_adjNormal_sig.csv
 │   ├── DESeq2_EPN_vs_healthyNormal.csv
 │   ├── DESeq2_EPN_vs_healthyNormal_sig.csv
-│   ├── DESeq2_HGG_paired_full.csv
-│   ├── DESeq2_HGG_paired_sig.csv
-│   ├── DESeq2_HGG_vs_adjNormal.csv
-│   ├── DESeq2_HGG_vs_adjNormal_sig.csv
-│   ├── DESeq2_HGG_vs_healthyNormal.csv
-│   ├── DESeq2_HGG_vs_healthyNormal_sig.csv
 │   ├── DESeq2_LGG_vs_healthyNormal.csv
 │   ├── DESeq2_LGG_vs_healthyNormal_sig.csv
 │   ├── DESeq2_MB_paired_full.csv
