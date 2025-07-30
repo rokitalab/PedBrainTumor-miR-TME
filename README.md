@@ -46,20 +46,10 @@ cd /home/rstudio/haydar-mirna/analyses/module_of_interest
 ├── README.md
 ├── analyses
 ├── data
-│   ├── 30-931106737-miRNA-all.fpkm.xls -> v1/30-931106737-miRNA-all.fpkm.xls
-│   ├── 30-931106737-miRNA_expression.xls -> v1/30-931106737-miRNA_expression.xls
-│   ├── 30-963755216-miRNA-all.fpkm.xls -> v1/30-963755216-miRNA-all.fpkm.xls
-│   ├── 30-963755216-miRNA_expression.xls -> v1/30-963755216-miRNA_expression.xls
-│   ├── 30-992989426-RNA-TPM_values.csv -> v1/30-992989426-RNA-TPM_values.csv
-│   ├── 30-992989426-RNA_raw_counts.csv -> v1/30-992989426-RNA_raw_counts.csv
-│   ├── miRNA_Target_anno.xls -> v1/miRNA_Target_anno.xls
-│   ├── release-notes.md -> v1/release-notes.md
-│   └── v1
 ├── download_data.sh
 ├── figures
 └── scripts
 ```
-
 
 ## Miniconda End User License Agreement
 

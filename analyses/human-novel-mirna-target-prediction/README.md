@@ -28,7 +28,7 @@
 ├── 04-annotate-parsed-miranda-output.html
 ├── README.md
 ├── results
-│   ├── comined_all_novel_mirna_fa
-│   └── comined_all_novel_mirna_tsv
+│   ├── comined_all_novel_mirna.fa
+│   └── comined_all_novel_mirna.tsv
 └── run_module.sh
 ```

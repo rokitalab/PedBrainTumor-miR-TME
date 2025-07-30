@@ -14,3 +14,6 @@ Rscript -e "rmarkdown::render('03-GO-enrichment.Rmd')"
 
 # Run GSEA enrichment
 Rscript -e "rmarkdown::render('04-GSEA-hallmark.Rmd')"
+
+# Run GSVA analysis
+Rscript -e "rmarkdown::render('05-GSVA-GOBP.Rmd')"
