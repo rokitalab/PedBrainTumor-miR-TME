@@ -66,6 +66,7 @@ RUN R -e 'BiocManager::install(c( \
 # Install the rest of packages
 RUN R -e 'BiocManager::install(c( \
   "AnnotationDbi", \
+  "ashr", \
   "Biobase", \
   "broom", \
   "circlize", \
@@ -95,6 +96,7 @@ RUN R -e 'BiocManager::install(c( \
   "sva", \
   "topGO", \
   "UpSetR", \
+  "umap", \
   "txdbmaker", \
   "GenomicFeatures", \
   "Biostrings", \
