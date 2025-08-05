@@ -338,10 +338,21 @@ for (tumor in tumor_types) {
   pca_data$sample_id <- histology_df$sample_id[
   match(pca_data$external_sample_id, histology_df$external_sample_id)
   ]
+  
+  #define color mapping
+  col_map <- c(
+    "Tumor" = "#868686FF",
+    "Normal" = "#0073C2FF",
+    "Normal-Tumor Adjacent" = "#EFC000FF"
+  )
+  
+  # only keep the ones actually present
+  present <- unique(pca_data$sample_type)
+  col_map <- col_map[present]
 
   p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type)) +
     geom_point(size = 3) +
-    scale_color_jco(name = "sample_type") +
+    scale_color_manual(name = "Sample Type", values = col_map) +
     geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
     labs(
       title = paste("PCA -", tumor, "vs Controls"),

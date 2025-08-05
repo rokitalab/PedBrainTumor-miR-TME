@@ -53,6 +53,12 @@
 │   ├── DESeq2_DIPG or DMG_vs_adjNormal_sig.csv
 │   ├── DESeq2_DIPG or DMG_vs_healthyNormal.csv
 │   ├── DESeq2_DIPG or DMG_vs_healthyNormal_sig.csv
+│   ├── DESeq2_EPN_paired_full.csv
+│   ├── DESeq2_EPN_paired_sig.csv
+│   ├── DESeq2_EPN_vs_adjNormal.csv
+│   ├── DESeq2_EPN_vs_adjNormal_sig.csv
+│   ├── DESeq2_EPN_vs_healthyNormal.csv
+│   ├── DESeq2_EPN_vs_healthyNormal_sig.csv
 │   ├── DESeq2_LGG_vs_healthyNormal.csv
 │   ├── DESeq2_LGG_vs_healthyNormal_sig.csv
 │   ├── DESeq2_MB_paired_full.csv
