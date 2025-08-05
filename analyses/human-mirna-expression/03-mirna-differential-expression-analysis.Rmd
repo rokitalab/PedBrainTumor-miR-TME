@@ -5,7 +5,7 @@ output:
   toc: TRUE
 toc_float: TRUE
 author: Bicna Song
-date: "2025-05-23"
+date: "`r Sys.Date()`"
 ---
 
 This script performs differential expression analysis of miRNA-seq data using DESeq2.
@@ -60,9 +60,9 @@ names(mirna_cts)[4] <- "1-1855-CC1"
 names(mirna_cts)[5] <- "3-1890-CC1"
 ```
 
-```{r remove-tumor-infiltrated-sample}
-# Remove 5-1234-left-pons showing significant tumor infiltration
-mirna_cts <- mirna_cts[, !(colnames(mirna_cts) == "5-1234-left-pons")]
+```{r remove-samples}
+# Remove 5-1234-left-pons showing significant tumor infiltration, duplicated DIPG tumor, and mismatch MB pair
+mirna_cts <- mirna_cts[, !(colnames(mirna_cts) %in% c("5-1234-left-pons", "1-1855-CC1", "2237-T", "2237-N"))]
 ```
 
 ```{r fix-tumor-normal-swap}
@@ -79,14 +79,14 @@ colnames(mirna_cts)[c(idx_T, idx_N)] <- colnames(mirna_cts)[c(idx_N, idx_T)]
 ```{r load-histology}
 # Load and annotate histology file
 histology_df <- read_delim(histology_file) %>%
-  filter(experimental_strategy == "miRNA-Seq") %>%
-  filter(external_sample_id %in% names(mirna_cts)) %>%
+  filter(experimental_strategy == "miRNA-Seq",
+         external_sample_id %in% names(mirna_cts)) %>%
   arrange(match(external_sample_id, names(mirna_cts))) %>%
   # Fill in any missing histology with "Normal"
   mutate(histology = if_else(is.na(histology), "Normal", histology)) %>%
   mutate(
-    batch             = if_else(row_number() <= 4, "batch1", "batch2"),
-    condition         = case_when(
+    batch = if_else(row_number() <= 3, "batch1", "batch2"),
+    condition = case_when(
       sample_type %in% c("Tumor", "Normal") ~ histology,
       sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
       TRUE ~ NA_character_
@@ -103,7 +103,7 @@ histology_df <- read_delim(histology_file) %>%
 
 ```{r run-de-by-histology, message=FALSE, warning=FALSE}
 normal_ids <- c("B1", "B2", "B3", "B4", "B5")
-histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "MB")
+histologies <- c("DIPG or DMG", "EPN", "MB")
 
 for (tumor in histologies) {
   adj_label <- paste0(tumor, "-adjacent Normal")
@@ -162,7 +162,7 @@ write_csv(as.data.frame(res_lgg) %>% rownames_to_column("miRNA"),
 
 ```{r save-sig-de-res}
 # Save Significant DE Results Separately
-all_histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "MB", "LGG")
+all_histologies <- c("DIPG or DMG", "EPN", "MB", "LGG")
 
 for (tumor in all_histologies) {
   comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
@@ -390,3 +390,5 @@ for (tumor in all_histologies) {
 ```{r session-info}
 sessionInfo()
 ```
+
+
