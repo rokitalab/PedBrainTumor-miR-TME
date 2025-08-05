@@ -131,12 +131,14 @@ merged_hist <- merged_manifest %>%
   dplyr::select(-histology) %>%
   rename(histology = short_histology)
 
+# remove the mismatched 2237-T/N pair samples
+merged_hist <- merged_hist %>%
+  filter(!external_sample_id %in% c("2237-T", "2237-N", "5-1234-left-pons"))
+
 # Write out the final TSV
 write_tsv(
   merged_hist,
   file.path(results_dir, "histologies.tsv")
 )
-
-
 
 

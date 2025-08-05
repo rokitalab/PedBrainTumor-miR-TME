@@ -5,10 +5,11 @@ output:
     toc: true
     toc_float: true
 author: Bicna Song
-date: "2025-06-16"
+date: "`r Sys.Date()`"
 ---
 
 ### Setup
+
 ```{r setup, message=FALSE, warning=FALSE}
 # Load libraries
 suppressPackageStartupMessages({
@@ -43,6 +44,7 @@ histology_file <- file.path(root_dir, "analyses", "histology-preprocessing", "re
 ```
 
 ### Data Wrangling
+
 ```{r data-wrangle}
 # Load and filter miRNA counts
 mirna_cts <- read_tsv(mirna_cts_file) %>%
@@ -58,9 +60,9 @@ names(mirna_cts)[4] <- "1-1855-CC1"
 names(mirna_cts)[5] <- "3-1890-CC1"
 ```
 
-```{r remove-tumor-infiltrated-sample}
-# Remove 5-1234-left-pons showing significant tumor infiltration
-mirna_cts <- mirna_cts[, !(colnames(mirna_cts) == "5-1234-left-pons")]
+```{r remove-samples}
+# Remove 5-1234-left-pons showing significant tumor infiltration, duplicated DIPG tumor, and mismatch MB pair
+mirna_cts <- mirna_cts[, !(colnames(mirna_cts) %in% c("5-1234-left-pons", "1-1855-CC1", "2237-T", "2237-N"))]
 ```
 
 ```{r fix-tumor-normal-swap}
@@ -77,14 +79,14 @@ colnames(mirna_cts)[c(idx_T, idx_N)] <- colnames(mirna_cts)[c(idx_N, idx_T)]
 ```{r load-histology}
 # Load and annotate histology file
 histology_df <- read_delim(histology_file) %>%
-  filter(experimental_strategy == "miRNA-Seq") %>%
-  filter(external_sample_id %in% names(mirna_cts)) %>%
+  filter(experimental_strategy == "miRNA-Seq",
+         external_sample_id %in% names(mirna_cts)) %>%
   arrange(match(external_sample_id, names(mirna_cts))) %>%
   # Fill in any missing histology with "Normal"
   mutate(histology = if_else(is.na(histology), "Normal", histology)) %>%
   mutate(
-    batch             = if_else(row_number() <= 4, "batch1", "batch2"),
-    condition         = case_when(
+    batch = if_else(row_number() <= 3, "batch1", "batch2"),
+    condition = case_when(
       sample_type %in% c("Tumor", "Normal") ~ histology,
       sample_type == "Normal-Tumor Adjacent" ~ paste0(histology, "-adjacent Normal"),
       TRUE ~ NA_character_
@@ -112,7 +114,23 @@ histology_df <- histology_df %>%
   )
 ```
 
+```{r}
+interest_ext_sample_ids <- histology_df %>%
+  filter(histology %in% c("DIPG or DMG", "MB", "LGG", "EPN", "Normal")) %>%
+  pull(external_sample_id)
+```
+
+```{r}
+mirna_cts <- mirna_cts[, interest_ext_sample_ids, drop = FALSE]
+```
+
+```{r}
+histology_df <- histology_df %>%
+  filter(external_sample_id %in% interest_ext_sample_ids)
+```
+
 ### PCA: Uncorrected vs Batch-Corrected
+
 ```{r get-vsd}
 # DESeq2 dataset and VST
 dds <- DESeqDataSetFromMatrix(countData = mirna_cts,
@@ -172,14 +190,15 @@ print(P2)
 ```
 
 ### Run more stringent filtering of miRNA counts
+
 ```{r filtering-mirna-counts}
-# Run more stringent filtering of miRNA counts, retaining only those with non-zero counts in >50 samples
-mirna_cts_n50 <- mirna_cts %>%
-  filter(rowSums(across(everything(), ~ . != 0)) > 50)
+# Run more stringent filtering of miRNA counts, retaining only those with non-zero counts in >35 samples
+mirna_cts_n35 <- mirna_cts %>%
+  filter(rowSums(across(everything(), ~ . != 0)) > 35)
 ```
 
 ```{r create-dds-filtered}
-dds_filtered <- DESeqDataSetFromMatrix(countData = mirna_cts_n50, 
+dds_filtered <- DESeqDataSetFromMatrix(countData = mirna_cts_n35, 
                               colData = histology_df, 
                               design = ~ batch + histology_condition)
 ```
@@ -207,15 +226,15 @@ print(P3)
 outlier <- "1886-N"
 
 # Subset counts and metadata to exclude outlier
-mirna_cts_n50_rm_outlier   <- mirna_cts_n50[, setdiff(colnames(mirna_cts_n50), outlier)]
+mirna_cts_n35_rm_outlier   <- mirna_cts_n35[, setdiff(colnames(mirna_cts_n35), outlier)]
 histology_df_filt <- histology_df   %>% filter(external_sample_id != outlier)
 
 # sanity check
-stopifnot(identical(colnames(mirna_cts_n50_rm_outlier), histology_df_filt$external_sample_id))
+stopifnot(identical(colnames(mirna_cts_n35_rm_outlier), histology_df_filt$external_sample_id))
 
 # Re-create DESeqDataSet and VST
 dds_filt <- DESeqDataSetFromMatrix(
-  countData = mirna_cts_n50_rm_outlier,
+  countData = mirna_cts_n35_rm_outlier,
   colData   = histology_df_filt,
   design    = ~ batch + condition
 )
@@ -235,6 +254,7 @@ print(P4)
 ```
 
 ### Save PCA plots
+
 ```{r save-pca-plots}
 ggsave(file.path(plot_dir, "mirna-pca-uncorrected.pdf"), plot = P1, width = 8, height = 5)
 ggsave(file.path(plot_dir, "mirna-pca-corrected.pdf"), plot = P2, width = 8, height = 5)
@@ -243,6 +263,7 @@ ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered-outlier-removed.pdf")
 ```
 
 ### PCA: Tumor-Only Analyses
+
 ```{r pca-tumor-only-uncorrected}
 # Subset tumor samples
 tum_df  <- histology_df %>% filter(sample_type == "Tumor")
@@ -282,14 +303,16 @@ print(P6)
 ```
 
 ### Save PCA plots
+
 ```{r save-pca-tumor-only-plots}
 ggsave(file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = P5, width = 8, height = 5)
 ggsave(file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = P6, width = 8, height = 5)
 ```
 
 ### PCA by Tumor Type vs Controls
+
 ```{r pca-each-tumor-vs-controls, message=FALSE, warning=FALSE}
-tumor_types <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB", "GNT")
+tumor_types <- c("DIPG or DMG", "EPN", "LGG", "MB")
 controls    <- c("B1", "B2", "B3", "B4", "B5")
 
 for (tumor in tumor_types) {
@@ -298,7 +321,7 @@ for (tumor in tumor_types) {
   healthy_normals  <- histology_df %>% filter(external_sample_id %in% controls)
 
   subset_metadata <- bind_rows(tumor_samples, adjacent_normals, healthy_normals)
-  subset_cts      <- mirna_cts_n50[, subset_metadata$external_sample_id]
+  subset_cts      <- mirna_cts_n35[, subset_metadata$external_sample_id]
 
   dds_subset <- DESeqDataSetFromMatrix(
     countData = subset_cts,
@@ -315,10 +338,21 @@ for (tumor in tumor_types) {
   pca_data$sample_id <- histology_df$sample_id[
   match(pca_data$external_sample_id, histology_df$external_sample_id)
   ]
+  
+  #define color mapping
+  col_map <- c(
+    "Tumor" = "#868686FF",
+    "Normal" = "#0073C2FF",
+    "Normal-Tumor Adjacent" = "#EFC000FF"
+  )
+  
+  # only keep the ones actually present
+  present <- unique(pca_data$sample_type)
+  col_map <- col_map[present]
 
   p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type)) +
     geom_point(size = 3) +
-    scale_color_jco(name = "sample_type") +
+    scale_color_manual(name = "Sample Type", values = col_map) +
     geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
     labs(
       title = paste("PCA -", tumor, "vs Controls"),
@@ -339,6 +373,7 @@ for (tumor in tumor_types) {
 ```
 
 ### UMAP Analyses
+
 ```{r umap, message=FALSE, warning=FALSE}
 # Select top 500 most variable miRNAs
 miRNA_vars <- rowVars(assay(vsd))
