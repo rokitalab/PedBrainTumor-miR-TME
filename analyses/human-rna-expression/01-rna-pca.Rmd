@@ -153,11 +153,22 @@ for (tumor in tumor_types) {
   percentVar <- round(100 * attr(pca_data, "percentVar"))
   pca_data$Bioassay_ID <- rownames(pca_data)
   pca_data$sample_id <- subset_metadata$sample_id
+  
+  #define color mapping
+  col_map <- c(
+    "Tumor" = "#868686FF",
+    "Normal" = "#0073C2FF",
+    "Normal-Tumor Adjacent" = "#EFC000FF"
+  )
+  
+  # only keep the ones actually present
+  present <- unique(pca_data$sample_type)
+  col_map <- col_map[present]
 
   # Now use sample_id for label
   p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type, shape = sample_type)) +
   geom_point(size = 3) +
-  scale_color_jco(name = "sample_type") +
+  scale_color_manual(name = "Sample Type", values = col_map) +
   geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
   labs(title = paste("PCA -", tumor, "vs Controls"),
        x = paste0("PC1: ", percentVar[1], "% variance"),
