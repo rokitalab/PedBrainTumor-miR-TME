@@ -31,3 +31,7 @@ Rscript --vanilla 01-run-immune-deconvolution.R \
 --clin_file '../histology-preprocessing/results/histologies.tsv' \
 --deconv_method 'quantiseq' \
 --output_dir 'results'
+
+
+# Plot cell fractions by histology and tumor/normal
+R -e "rmarkdown::render('02-immune-deconv-summary.Rmd')"
