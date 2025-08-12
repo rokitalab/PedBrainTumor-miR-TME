@@ -1644,8 +1644,8 @@ dev.off()</code></pre>
 <pre><code>## png 
 ##   2</code></pre>
 </div>
-<div id="significant-mirnapathway-pairs" class="section level1">
-<h1>significant miRNA–pathway pairs</h1>
+<div id="significant-mirnapathway-pairs" class="section level3">
+<h3>significant miRNA–pathway pairs</h3>
 <pre class="r"><code>signif_corr &lt;- corr_df %&gt;%
   filter(abs(rho) &gt; 0.5, padj &lt; 0.1)
 
@@ -1765,6 +1765,53 @@ print(ht2)
 dev.off()</code></pre>
 <pre><code>## png 
 ##   2</code></pre>
+<pre class="r"><code># Order rows/cols to match the heatmap
+row_idx &lt;- unlist(row_order(ht2))
+col_idx &lt;- unlist(column_order(ht2))
+rho_mat_ordered &lt;- rho_mat_sig[row_idx, col_idx, drop = FALSE]
+
+# Add TargetGenes next to Pathway
+tg_map &lt;- read_tsv(file.path(results_dir, &quot;gobp-gsva-scores-with-target-genes.tsv&quot;), show_col_types = FALSE) %&gt;%
+  select(Pathway, TargetGenes = Genes) %&gt;%
+  distinct(Pathway, .keep_all = TRUE)
+
+rho_df &lt;- as.data.frame(rho_mat_ordered, stringsAsFactors = FALSE) %&gt;%
+  rownames_to_column(&quot;Pathway&quot;) %&gt;%
+  left_join(tg_map, by = &quot;Pathway&quot;) %&gt;%
+  relocate(TargetGenes, .after = Pathway)
+
+# Build annotation rows
+miRNA_cols &lt;- colnames(rho_mat_ordered)
+
+anno_lkp &lt;- sample_anno %&gt;%
+  filter(miRNA %in% miRNA_cols) %&gt;%
+  arrange(factor(miRNA, levels = miRNA_cols))
+
+comp_vec &lt;- as.character(anno_lkp$Category)
+dir_vec &lt;- as.character(anno_lkp$direction)
+
+rho_df_chr &lt;- rho_df %&gt;%
+  mutate(across(all_of(miRNA_cols), ~ formatC(., digits = 3, format = &quot;f&quot;)))
+
+# two annotation rows as tibbles
+comp_row &lt;- tibble::tibble(
+  Pathway     = &quot;Comparison&quot;,
+  TargetGenes = &quot;&quot;,
+  !!! rlang::set_names(as.list(comp_vec), miRNA_cols)
+)
+dir_row &lt;- tibble::tibble(
+  Pathway     = &quot;Direction&quot;,
+  TargetGenes = &quot;&quot;,
+  !!! rlang::set_names(as.list(dir_vec), miRNA_cols)
+)
+
+# Combine and save
+out_tbl &lt;- bind_rows(comp_row, dir_row, rho_df_chr)
+
+write.table(out_tbl,
+            file = file.path(results_dir, &quot;correlation_matrix_heatmap_order.tsv&quot;),
+            sep = &quot;\t&quot;, quote = FALSE, row.names = FALSE)</code></pre>
+</div>
 <div id="session-info" class="section level3">
 <h3>Session Info</h3>
 <pre class="r"><code>sessionInfo()</code></pre>
@@ -1820,7 +1867,6 @@ dev.off()</code></pre>
 ## [58] rlang_1.1.4         Rcpp_1.0.12         glue_1.7.0         
 ## [61] BiocGenerics_0.50.0 rstudioapi_0.16.0   vroom_1.6.5        
 ## [64] jsonlite_1.8.8      R6_2.5.1            systemfonts_1.1.0</code></pre>
-</div>
 </div>
 
 

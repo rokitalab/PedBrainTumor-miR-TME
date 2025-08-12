@@ -68,7 +68,6 @@ gsva_scores <- read_tsv(file.path(results_dir, "gobp-gsva-scores.tsv"), col_type
   as.matrix()
 ```
 
-
 ### Select DIPG/DMG tumor samples and subset matrices
 
 ```{r select-samples}
@@ -180,7 +179,7 @@ print(ht1)
 dev.off()
 ```
 
-# significant miRNA–pathway pairs
+### significant miRNA–pathway pairs
 
 ```{r}
 signif_corr <- corr_df %>%
@@ -314,6 +313,55 @@ draw(ht2)
 pdf(file.path(plot_dir, "heatmap_sig_cluster.pdf"))
 print(ht2)
 dev.off()
+```
+
+```{r message=FALSE, warning=FALSE}
+# Order rows/cols to match the heatmap
+row_idx <- unlist(row_order(ht2))
+col_idx <- unlist(column_order(ht2))
+rho_mat_ordered <- rho_mat_sig[row_idx, col_idx, drop = FALSE]
+
+# Add TargetGenes next to Pathway
+tg_map <- read_tsv(file.path(results_dir, "gobp-gsva-scores-with-target-genes.tsv"), show_col_types = FALSE) %>%
+  select(Pathway, TargetGenes = Genes) %>%
+  distinct(Pathway, .keep_all = TRUE)
+
+rho_df <- as.data.frame(rho_mat_ordered, stringsAsFactors = FALSE) %>%
+  rownames_to_column("Pathway") %>%
+  left_join(tg_map, by = "Pathway") %>%
+  relocate(TargetGenes, .after = Pathway)
+
+# Build annotation rows
+miRNA_cols <- colnames(rho_mat_ordered)
+
+anno_lkp <- sample_anno %>%
+  filter(miRNA %in% miRNA_cols) %>%
+  arrange(factor(miRNA, levels = miRNA_cols))
+
+comp_vec <- as.character(anno_lkp$Category)
+dir_vec <- as.character(anno_lkp$direction)
+
+rho_df_chr <- rho_df %>%
+  mutate(across(all_of(miRNA_cols), ~ formatC(., digits = 3, format = "f")))
+
+# two annotation rows as tibbles
+comp_row <- tibble::tibble(
+  Pathway     = "Comparison",
+  TargetGenes = "",
+  !!! rlang::set_names(as.list(comp_vec), miRNA_cols)
+)
+dir_row <- tibble::tibble(
+  Pathway     = "Direction",
+  TargetGenes = "",
+  !!! rlang::set_names(as.list(dir_vec), miRNA_cols)
+)
+
+# Combine and save
+out_tbl <- bind_rows(comp_row, dir_row, rho_df_chr)
+
+write.table(out_tbl,
+            file = file.path(results_dir, "correlation_matrix_heatmap_order.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
 ### Session Info
