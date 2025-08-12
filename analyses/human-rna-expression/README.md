@@ -11,6 +11,7 @@
 3. `03-GO-enrichment.Rmd`: Run GO enrichment using TopGO on tumor DEGs.
 4. `04-GSEA-hallmark.Rmd`: Run GSEA on RNA-seq DE results across multiple histologies to identify enriched Hallmark pathways.
 5. `05-GSVA-GOBP.Rmd`: Perform Gene Set Variation Analysis (GSVA) on RSEM-derived TPM expression for multiple histologies, using GO Biological Process terms, and assess differential pathway activity.
+6. `06-miRNA-GSVA-correlation.Rmd`: Correlate DE miRNA expression with GSVA pathway scores in DIPG/DMG tumors; generate full and significant-pairs heatmaps with stable annotations.
 
 ## Analysis module directory structure
 
@@ -26,7 +27,12 @@
 ├── 04-GSEA-hallmark.html
 ├── 05-GSVA-GOBP.Rmd
 ├── 05-GSVA-GOBP.html
+├── 06-miRNA-GSVA-correlation.Rmd
+├── 06-miRNA-GSVA-correlation.html
 ├── README.md
+├── input
+│   ├── DIPG or DMG_sig_DE_miRNA_list.csv
+│   └── mirna-tpm.rds
 ├── plots
 │   ├── DIPG or DMG-downregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
 │   ├── DIPG or DMG-downregulated-genes-paired-go-term-enrichment-dotplot.pdf
@@ -81,11 +87,14 @@
 │   ├── MB_paired_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── MB_paired_HALLMARK_MTORC1_SIGNALING_GSEA.pdf
 │   ├── MB_paired_HALLMARK_MYC_TARGETS_V1_GSEA.pdf
+│   ├── heatmap_all.pdf
+│   ├── heatmap_sig_cluster.pdf
 │   ├── rna-pca-DIPG or DMG-vs-controls.pdf
 │   ├── rna-pca-EPN-vs-controls.pdf
 │   ├── rna-pca-LGG-vs-controls.pdf
 │   ├── rna-pca-MB-vs-controls.pdf
 │   ├── rna-pca.pdf
+│   ├── silhouette_curves_ht2.pdf
 │   ├── volcano_DIPG or DMG_paired.pdf
 │   ├── volcano_DIPG or DMG_vs_adjNormal.pdf
 │   ├── volcano_DIPG or DMG_vs_healthyNormal.pdf
@@ -147,6 +156,7 @@
 │   ├── MB_healthyNormal_GSVA_DE_results.tsv
 │   ├── MB_paired_GSEA_results.tsv
 │   ├── MB_paired_GSVA_DE_results.tsv
+│   ├── gobp-gsva-scores-with-target-genes.tsv
 │   └── gobp-gsva-scores.tsv
 └── run_module.sh
 ```
