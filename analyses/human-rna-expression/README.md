@@ -153,6 +153,7 @@
 │   ├── MB_healthyNormal_GSVA_DE_results.tsv
 │   ├── MB_paired_GSEA_results.tsv
 │   ├── MB_paired_GSVA_DE_results.tsv
+│   ├── correlation_matrix_heatmap_order.tsv
 │   ├── gobp-gsva-scores-with-target-genes.tsv
 │   └── gobp-gsva-scores.tsv
 └── run_module.sh
