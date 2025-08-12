@@ -9,9 +9,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Ryan Corbett" />
+<meta name="author" content="Ryan Corbett, Bicna Song" />
 
-<meta name="date" content="2025-01-01" />
+<meta name="date" content="2025-07-30" />
 
 <title>GO enrichment analysis of DEGs</title>
 
@@ -421,8 +421,8 @@ font-size: 0.95em;
 
 
 <h1 class="title toc-ignore">GO enrichment analysis of DEGs</h1>
-<h4 class="author">Ryan Corbett</h4>
-<h4 class="date">2025</h4>
+<h4 class="author">Ryan Corbett, Bicna Song</h4>
+<h4 class="date">2025-07-30</h4>
 
 </div>
 
@@ -431,13 +431,13 @@ font-size: 0.95em;
 genes in tumors versus healthy and tumor-adjacent normal brain</p>
 <p>Load packages</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
 ## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
 ## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
 ## ✔ purrr     1.0.2     
-## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
@@ -568,41 +568,31 @@ source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))</code></pr
 <p>Loop through tumors and contrasts to run GO enrichment analyses and
 plot sig results</p>
 <pre class="r"><code># define hist groups
-histologies &lt;- c(&quot;ATRT&quot;, &quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;HGG&quot;, &quot;LGG&quot;, &quot;MB&quot;)
+histologies &lt;- c(&quot;DIPG or DMG&quot;, &quot;EPN&quot;, &quot;LGG&quot;, &quot;MB&quot;)
 
 # loop through histologies
 for (hist in histologies){
   
   # define contrasts for each hist
-  #only healthy normal contrast in ATRT, LGG
-  if (hist %in% c(&quot;ATRT&quot;, &quot;LGG&quot;)){
+  if (hist == &quot;LGG&quot;){
     contrasts &lt;- &quot;healthyNormal&quot;
-    
     # healthy normal and tumor-adjacent normal in other contrasts
   } else {
-    
     contrasts &lt;- c(&quot;healthyNormal&quot;, &quot;paired&quot;)
-    
   }
   
   # loop through contrasts
   for (contrast in contrasts){
-    
     # load DE results file
     if (contrast == &quot;healthyNormal&quot;){
-      
       de_df &lt;- read_csv(file.path(results_dir,
                                 glue::glue(&quot;DESeq2_{hist}_vs_healthyNormal.csv&quot;)))
-      
     } else {
-    
       de_df &lt;- read_csv(file.path(results_dir,
                           glue::glue(&quot;DESeq2_{hist}_paired_full.csv&quot;)))
-    
     }
     
     # extract up- and downregulated genes in tumor vs. normal
-    
     upregulated_genes &lt;- de_df %&gt;%
       dplyr::filter(padj &lt; 0.05,
                     log2FoldChange &gt; 1) %&gt;%
@@ -663,7 +653,7 @@ for (hist in histologies){
         head(40)
       
       # if sig enriched GO terms, plot top terms and save output 
-      if (nrow(plot_table) &gt; 0){
+      if (nrow(plot_table) &gt;= 5){
       
         GO_plot &lt;- plot_table %&gt;%
                 arrange(gene_ratio) %&gt;%
@@ -684,7 +674,7 @@ for (hist in histologies){
         pdf(NULL)
       
         pdf(file.path(plot_dir, glue::glue(&quot;{hist}-{plot_name}-{contrast}-go-term-enrichment-dotplot.pdf&quot;)),
-             width = 10, height = 1 + (nrow(plot_table)/5))
+             width = 10, height = 2 + (nrow(plot_table)/6))
         
         print(GO_plot)
         
@@ -708,68 +698,12 @@ for (hist in histologies){
         write_tsv(sig_table,
                 file.path(results_dir,
                           glue::glue(&quot;{hist}-{plot_name}-{contrast}-enriched-go-terms.tsv&quot;)))
-        
       }
-      
     }
-    
   }
-  
 }</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## 
-## Building most specific GOs .....
-## 
-##  ( 12176 GO terms found. )
-## 
-## 
-## Build GO DAG topology ..........
-## 
-##  ( 15417 GO terms and 34698 relations. )
-## 
-## 
-## Annotating nodes ...............
-## 
-##  ( 17298 genes annotated to the GO terms. )
-## 
-## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 9 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher
-## 
-## 
-## Building most specific GOs .....
-## 
-##  ( 12176 GO terms found. )
-## 
-## 
-## Build GO DAG topology ..........
-## 
-##  ( 15417 GO terms and 34698 relations. )
-## 
-## 
-## Annotating nodes ...............
-## 
-##  ( 17298 genes annotated to the GO terms. )
-## 
-## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 134 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher
-## 
-## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -798,7 +732,8 @@ for (hist in histologies){
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## 
@@ -823,7 +758,7 @@ for (hist in histologies){
 ##       the algorithm is scoring 6601 nontrivial nodes
 ##       parameters: 
 ##           test statistic: fisher
-## Rows: 46838 Columns: 6── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Rows: 46838 Columns: 6── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -844,7 +779,8 @@ for (hist in histologies){
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## 
@@ -863,11 +799,12 @@ for (hist in histologies){
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -914,15 +851,16 @@ for (hist in histologies){
 ## 
 ##           -- Classic Algorithm -- 
 ## 
-##       the algorithm is scoring 6564 nontrivial nodes
+##       the algorithm is scoring 6570 nontrivial nodes
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -951,7 +889,8 @@ for (hist in histologies){
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## 
@@ -970,116 +909,12 @@ for (hist in histologies){
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## 
-## Building most specific GOs .....
-## 
-##  ( 12176 GO terms found. )
-## 
-## 
-## Build GO DAG topology ..........
-## 
-##  ( 15417 GO terms and 34698 relations. )
-## 
-## 
-## Annotating nodes ...............
-## 
-##  ( 17298 genes annotated to the GO terms. )
-## 
-## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 2232 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher
-## 
-## 
-## Building most specific GOs .....
-## 
-##  ( 12176 GO terms found. )
-## 
-## 
-## Build GO DAG topology ..........
-## 
-##  ( 15417 GO terms and 34698 relations. )
-## 
-## 
-## Annotating nodes ...............
-## 
-##  ( 17298 genes annotated to the GO terms. )
-## 
-## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 2034 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher
-## 
-## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): gene_symbol
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## 
-## Building most specific GOs .....
-## 
-##  ( 12176 GO terms found. )
-## 
-## 
-## Build GO DAG topology ..........
-## 
-##  ( 15417 GO terms and 34698 relations. )
-## 
-## 
-## Annotating nodes ...............
-## 
-##  ( 17298 genes annotated to the GO terms. )
-## 
-## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 464 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher
-## 
-## 
-## Building most specific GOs .....
-## 
-##  ( 12176 GO terms found. )
-## 
-## 
-## Build GO DAG topology ..........
-## 
-##  ( 15417 GO terms and 34698 relations. )
-## 
-## 
-## Annotating nodes ...............
-## 
-##  ( 17298 genes annotated to the GO terms. )
-## 
-## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 0 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>## Warning in .local(object, test.stat, ...): No enrichment can pe performed -
-## there are no feasible GO terms!</code></pre>
-<pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1108,7 +943,8 @@ for (hist in histologies){
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## 
@@ -1127,11 +963,12 @@ for (hist in histologies){
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1156,11 +993,12 @@ for (hist in histologies){
 ## 
 ##           -- Classic Algorithm -- 
 ## 
-##       the algorithm is scoring 5041 nontrivial nodes
+##       the algorithm is scoring 5063 nontrivial nodes
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## 
@@ -1175,10 +1013,10 @@ for (hist in histologies){
 ## 
 ##           -- Classic Algorithm -- 
 ## 
-##       the algorithm is scoring 4647 nontrivial nodes
+##       the algorithm is scoring 5286 nontrivial nodes
 ##       parameters: 
 ##           test statistic: fisher
-## Rows: 46838 Columns: 6── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Rows: 46838 Columns: 6── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): gene_symbol
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1195,11 +1033,12 @@ for (hist in histologies){
 ## 
 ##           -- Classic Algorithm -- 
 ## 
-##       the algorithm is scoring 6942 nontrivial nodes
+##       the algorithm is scoring 7220 nontrivial nodes
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <pre><code>## 
@@ -1214,11 +1053,12 @@ for (hist in histologies){
 ## 
 ##           -- Classic Algorithm -- 
 ## 
-##       the algorithm is scoring 6647 nontrivial nodes
+##       the algorithm is scoring 6679 nontrivial nodes
 ##       parameters: 
 ##           test statistic: fisher</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30, TRUE ~ as.numeric(classicFisher))`.
+## ℹ In argument: `classicFisher = case_when(grepl(&quot;&lt;&quot;, classicFisher) ~ 1e-30,
+##   TRUE ~ as.numeric(classicFisher))`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
 <p>Print session info</p>
@@ -1260,8 +1100,8 @@ for (hist in histologies){
 ##  [4] bslib_0.7.0             lattice_0.22-6          tzdb_0.4.0             
 ##  [7] vctrs_0.6.5             tools_4.4.0             generics_0.1.3         
 ## [10] parallel_4.4.0          fansi_1.0.6             RSQLite_2.3.7          
-## [13] blob_1.2.4              pkgconfig_2.0.3         lifecycle_1.0.4        
-## [16] GenomeInfoDbData_1.2.12 farver_2.1.2            compiler_4.4.0         
+## [13] blob_1.2.4              pkgconfig_2.0.3         GenomeInfoDbData_1.2.12
+## [16] lifecycle_1.0.4         farver_2.1.2            compiler_4.4.0         
 ## [19] Biostrings_2.72.1       munsell_0.5.1           GenomeInfoDb_1.40.1    
 ## [22] htmltools_0.5.8.1       sass_0.4.9              yaml_2.3.8             
 ## [25] pillar_1.9.0            crayon_1.5.2            jquerylib_0.1.4        
@@ -1275,7 +1115,8 @@ for (hist in histologies){
 ## [49] png_0.1-8               hms_1.1.3               memoise_2.0.1          
 ## [52] evaluate_0.24.0         knitr_1.47              rlang_1.1.4            
 ## [55] glue_1.7.0              DBI_1.2.3               vroom_1.6.5            
-## [58] jsonlite_1.8.8          R6_2.5.1                zlibbioc_1.50.0</code></pre>
+## [58] rstudioapi_0.16.0       jsonlite_1.8.8          R6_2.5.1               
+## [61] zlibbioc_1.50.0</code></pre>
 
 
 

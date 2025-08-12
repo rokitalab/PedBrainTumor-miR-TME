@@ -1,0 +1,388 @@
+---
+title: "Differential RNA Expression Analysis"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+This script performs differential expression analysis of RNA-seq data using DESeq2.
+
+The goal is to identify differentially expressed genes for each brain tumor histology by comparing:
+
+- Tumor vs. Tumor-Adjacent Normal samples (e.g., DIPG vs DIPG-adjacent normal)
+- Tumor vs. Disease-Free Normal brain samples (B1–B5)
+
+### Setup
+
+```{r load-packages, message=FALSE, warning=FALSE}
+# Load libraries
+library(DESeq2)
+library(tidyverse)
+library(rprojroot)
+library(readr)
+library(EnhancedVolcano)
+library(ashr)
+
+# Define directories
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+# Source custom theme
+source(file.path(root_dir, "figures", "theme.R"))
+
+# File path for counts
+gene_cts_file <- file.path(data_dir, "gene-counts-rsem-expected_count-collapsed.all.rds")
+
+# File path for histology
+histology_file <- file.path(root_dir, "analyses", "histology-preprocessing", "results", "histologies.tsv")
+```
+
+### Data Wrangling
+
+```{r load-and-clean-histology}
+# define which histologies to keep
+keep_histologies <- c("DIPG or DMG", "EPN", "MB", "LGG", "Normal")
+batch1_ids <- c("2-1578-CC1", "3-1890-CC1")
+
+histology_df <- read_delim(histology_file) %>%
+  filter(experimental_strategy == "RNA-Seq") %>%
+  mutate(histology = coalesce(histology, "Normal"),
+         sample_id = case_when(
+           external_sample_id == "1516-T" ~ "7316-NA",
+           external_sample_id %in% paste0("B", 1:5) ~ external_sample_id,
+           TRUE ~ sample_id),
+         batch = if_else(external_sample_id %in% batch1_ids, "batch1", "batch2"),
+         condition = case_when(
+           sample_type %in% c("Tumor", "Normal") ~ histology,
+           sample_type == "Normal-Tumor Adjacent"~ paste0(histology, "-adjacent Normal"),
+           TRUE ~ NA_character_
+           ),
+         histology_condition = case_when(
+           sample_type %in% c("Tumor", "Normal") ~ histology,
+           sample_type == "Normal-Tumor Adjacent" ~ "Normal-Tumor Adjacent",
+           TRUE ~ NA_character_
+           )
+         ) %>%
+  filter(histology %in% keep_histologies)
+```
+
+```{r load-and-filter-counts}
+# load & filter genes with at least two non-zero samples
+gene_cts <- readRDS(gene_cts_file) %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 2)
+
+# subset to samples in histology
+valid_ids <- histology_df$Bioassay_ID
+gene_cts <- round(gene_cts[, intersect(colnames(gene_cts), valid_ids), drop = FALSE])
+```
+
+```{r align-metadata-to-counts}
+histology_df <- histology_df %>%
+  arrange(match(Bioassay_ID, names(gene_cts)))
+```
+
+### Perform Differential Expression for Each Histology
+
+```{r run-de-by-histology, message=FALSE, warning=FALSE}
+normal_ids <- c("B1", "B2", "B3", "B4", "B5")
+histologies <- c("DIPG or DMG", "EPN", "MB")
+
+for (tumor in histologies) {
+  adj_label <- paste0(tumor, "-adjacent Normal")
+
+  # Subset metadata
+  meta_adj <- histology_df %>% filter(condition %in% c(tumor, adj_label))
+  meta_healthy <- histology_df %>% filter(external_sample_id %in% c(normal_ids, external_sample_id[condition == tumor])) %>% 
+    filter(condition %in% c(tumor, "Normal"))
+
+  # Select count data
+  counts_adj <- gene_cts[, meta_adj$Bioassay_ID]
+  counts_healthy <- gene_cts[, meta_healthy$Bioassay_ID]
+
+  # Tumor vs Adjacent Normal
+  design_adj <- if (tumor == "DIPG or DMG") ~ condition else ~ condition
+  dds_adj <- DESeqDataSetFromMatrix(countData = counts_adj, colData = meta_adj, design = design_adj)
+  dds_adj$condition <- droplevels(dds_adj$condition)
+  dds_adj <- DESeq(dds_adj)
+  res_adj <- results(dds_adj, contrast = c("condition", tumor, adj_label))
+  res_adj <- lfcShrink(dds_adj, contrast = c("condition", tumor, adj_label), res = res_adj, type = "ashr")
+  write_csv(as.data.frame(res_adj) %>% rownames_to_column("gene_symbol"),
+          file.path(results_dir, paste0("DESeq2_", tumor, "_vs_adjNormal.csv")))
+
+  # Tumor vs Healthy Normal
+  design_healthy <- if (tumor == "DIPG or DMG") ~ condition else ~ condition
+  dds_healthy <- DESeqDataSetFromMatrix(countData = counts_healthy, colData = meta_healthy, design = design_healthy)
+  dds_healthy$condition <- droplevels(dds_healthy$condition)
+  dds_healthy <- DESeq(dds_healthy)
+  res_healthy <- results(dds_healthy, contrast = c("condition", tumor, "Normal"))
+  res_healthy <- lfcShrink(dds_healthy, contrast = c("condition", tumor, "Normal"), res = res_healthy, type = "ashr")
+  write_csv(as.data.frame(res_healthy) %>% rownames_to_column("gene_symbol"),
+          file.path(results_dir, paste0("DESeq2_", tumor, "_vs_healthyNormal.csv")))
+}
+```
+
+Handle LGG separately: only Tumor vs Healthy Normal
+
+```{r run-de-lgg, message=FALSE, warning=FALSE}
+# Handle LGG separately: only Tumor vs Healthy Normal
+tumor <- "LGG"
+meta_lgg <- histology_df %>%
+  filter(external_sample_id %in% c(normal_ids, external_sample_id[condition == tumor])) %>%
+  filter(condition %in% c(tumor, "Normal"))
+counts_lgg <- gene_cts[, meta_lgg$Bioassay_ID]
+
+design_lgg <- ~ condition
+dds_lgg <- DESeqDataSetFromMatrix(countData = counts_lgg, colData = meta_lgg, design = design_lgg)
+
+dds_lgg$condition <- droplevels(dds_lgg$condition)
+dds_lgg <- DESeq(dds_lgg)
+
+res_lgg <- results(dds_lgg, contrast = c("condition", tumor, "Normal"))
+res_lgg <- lfcShrink(dds_lgg, contrast = c("condition", tumor, "Normal"), res = res_lgg, type = "ashr")
+
+write_csv(as.data.frame(res_lgg) %>% rownames_to_column("gene_symbol"),
+          file.path(results_dir, paste0("DESeq2_", tumor, "_vs_healthyNormal.csv")))
+```
+
+### Save Significant DE Results Separately
+
+```{r save-sig-de-res}
+all_histologies <- c("DIPG or DMG", "EPN", "MB", "LGG")
+
+for (tumor in all_histologies) {
+  comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
+  
+  for (type in comparison_types) {
+    file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
+    if (file.exists(file_path)) {
+      res_df <- read_csv(file_path)
+      sig_df <- res_df %>% filter(!is.na(padj) & padj < 0.05)
+      write_csv(sig_df, file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, "_sig.csv")))
+    }
+  }
+}
+```
+
+### Summary Table: Number of Up/Down-regulated genes
+
+```{r summary-table}
+summary_df <- tibble()
+
+for (tumor in all_histologies) {
+  comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
+  
+  for (type in comparison_types) {
+    file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
+    if (file.exists(file_path)) {
+      res_df <- read_csv(file_path) %>%
+        filter(!is.na(padj) & padj < 0.05)
+      up <- sum(res_df$log2FoldChange > 0)
+      down <- sum(res_df$log2FoldChange < 0)
+      summary_df <- bind_rows(summary_df, 
+        tibble(Comparison = paste0(tumor, " vs ", type), 
+               Upregulated = up, 
+               Downregulated = down))
+    }
+  }
+}
+
+summary_df
+
+# Save to CSV
+write_csv(summary_df, file.path(results_dir, "DE_summary_counts.csv"))
+```
+
+### Volcano Plots for DE Comparisons
+
+```{r volcano-plots, message=FALSE, warning=FALSE}
+for (tumor in all_histologies) {
+  comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
+  
+  for (type in comparison_types) {
+    file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
+    if (file.exists(file_path)) {
+      res_df <- read_csv(file_path)
+      rownames(res_df) <- res_df$gene_symbol %||% rownames(res_df)
+      p_cut <- max(res_df$pvalue[res_df$padj < 0.05], na.rm = TRUE)
+      comp_label <- paste(tumor, "vs", gsub("Normal", "normal", type))
+      
+      plot <- EnhancedVolcano(res_df,
+                              lab = rownames(res_df),
+                              x = "log2FoldChange",
+                              y = "pvalue",
+                              title = comp_label,
+                              subtitle = NULL,
+                              caption = NULL,
+                              pCutoff = p_cut,
+                              FCcutoff = 2,
+                              pointSize = 3.5,
+                              labSize = 3,
+                              typeConnectors = "closed",
+                              drawConnectors = TRUE,
+                              widthConnectors = 0.75,
+                              colConnectors = 'grey30',
+                              max.overlaps = 10)
+
+      ggsave(file.path(plot_dir, paste0("volcano_", tumor, "_vs_", type, ".pdf")),
+             plot = plot, width = 8, height = 6)
+      
+    }
+  
+  }
+  
+}
+```
+
+### Summarize: Count number of Tumor and Adjacent Normal per sample_id and histology
+
+```{r pair-status}
+paired_info <- histology_df %>%
+  group_by(histology, sample_id) %>%
+  summarize(
+    tumor = any(sample_type == "Tumor"),
+    adjacent_normal = any(sample_type == "Normal-Tumor Adjacent"),
+    .groups = "drop"
+  ) %>%
+  mutate(pair_status = case_when(
+    tumor & adjacent_normal ~ "Paired",
+    TRUE ~ "Unpaired"
+  ))
+
+# Create table of paired/unpaired counts per histology
+summary_table <- paired_info %>%
+  group_by(histology, pair_status) %>%
+  summarize(n = n(), .groups = "drop") %>%
+  pivot_wider(names_from = pair_status, values_from = n, values_fill = 0)
+
+print(summary_table)
+```
+
+### Paired differential expression analysis
+
+```{r run-paired-de-by-histology}
+for (hist in all_histologies) {
+  
+  paired_patients <- paired_info %>%
+    filter(histology == hist, pair_status == "Paired") %>%
+    pull(sample_id)
+  
+  if (length(paired_patients) < 2) {
+    message(paste("Skipping", hist, "due to insufficient paired patients"))
+    next
+  }
+  
+  paired_samples_metadata <- histology_df %>%
+    filter(histology == hist, sample_id %in% paired_patients) %>%
+    filter(sample_type %in% c("Tumor", "Normal-Tumor Adjacent"))
+  
+  paired_external_sample_ids <- paired_samples_metadata$Bioassay_ID
+  
+  gene_cts_paired <- gene_cts[, paired_external_sample_ids]
+  
+  # Confirm external_sample_id matches column names
+  stopifnot(identical(paired_samples_metadata$Bioassay_ID, colnames(gene_cts_paired)))
+  
+  # Create DESeq2 object
+  dds <- DESeqDataSetFromMatrix(
+    countData = gene_cts_paired,
+    colData = paired_samples_metadata,
+    design = ~ sample_id + sample_type
+  )
+  
+  # run DESeq
+  dds <- DESeq(dds)
+  
+  # Run results: Tumor vs Normal-Tumor Adjacent
+  res <- results(dds, contrast = c("sample_type", "Tumor", "Normal-Tumor Adjacent"))
+  res_adj <- lfcShrink(dds, contrast = c("sample_type", "Tumor", "Normal-Tumor Adjacent"), res = res, type = "ashr")
+  
+  # Save full and significant results
+  res_df <- as.data.frame(res_adj) %>% 
+    rownames_to_column("gene_symbol")
+  
+  write_csv(res_df, file.path(results_dir, paste0("DESeq2_", hist, "_paired_full.csv")))
+  
+  res_sig <- res_df %>%
+    filter(!is.na(padj) & padj < 0.05)
+  
+  write_csv(res_sig, file.path(results_dir, paste0("DESeq2_", hist, "_paired_sig.csv")))
+  
+  message(paste("Completed DE analysis for:", hist))
+}
+
+```
+
+### Summary Table: Number of Up/Down-regulated miRNAs for paired analysis
+
+```{r}
+summary_paired_df <- tibble()
+
+for (hist in all_histologies) {
+  file_path <- file.path(results_dir, paste0("DESeq2_", hist, "_paired_full.csv"))
+  
+  if (file.exists(file_path)) {
+      res_df <- read_csv(file_path) %>%
+        filter(!is.na(padj) & padj < 0.05)
+      up <- sum(res_df$log2FoldChange > 0)
+      down <- sum(res_df$log2FoldChange < 0)
+      summary_paired_df <- bind_rows(summary_paired_df, 
+        tibble(Comparison = paste0(hist, " vs ", "adjNormal"), 
+               Upregulated = up, 
+               Downregulated = down))
+  } else {
+    message(paste("Result file for", hist, "not found."))
+  }
+}
+
+# View the summary table
+summary_paired_df
+
+# Save to CSV
+write_csv(summary_paired_df, file.path(results_dir, "DE_summary_counts_paired.csv"))
+```
+
+### Volcano Plots for paired DE Comparisons
+
+```{r}
+for (tumor in all_histologies) {
+  file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_paired_full.csv"))
+  
+  if (file.exists(file_path)) {
+    res_df <- read_csv(file_path)
+    rownames(res_df) <- res_df$gene_symbol %||% rownames(res_df)
+    p_cut <- max(res_df$pvalue[res_df$padj < 0.05], na.rm = TRUE)
+    comp_label <- paste(tumor, "Paired Analysis")
+    plot <- EnhancedVolcano(res_df,
+                             lab = rownames(res_df),
+                             x = "log2FoldChange",
+                             y = "pvalue",
+                             title = comp_label,
+                             subtitle = NULL,
+                             caption = NULL,
+                             pCutoff = p_cut,
+                             FCcutoff = 2,
+                             pointSize = 3.5,
+                             labSize = 3,
+                             typeConnectors = "closed",
+                             drawConnectors = TRUE,
+                             widthConnectors = 0.75,
+                             colConnectors = 'grey30',
+                             max.overlaps = 10)
+
+    ggsave(file.path(plot_dir, paste0("volcano_", tumor, "_paired.pdf")),
+           plot = plot, width = 8, height = 6)
+  }
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```

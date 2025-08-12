@@ -4,8 +4,8 @@ output:
   html_document:
   toc: TRUE
 toc_float: TRUE
-author: Ryan Corbett
-date: "2025"
+author: Ryan Corbett, Bicna Song
+date: "`r Sys.Date()`"
 ---
 
 This script performs gene ontology (GO) enrichment analysis on DE genes in tumors versus healthy and tumor-adjacent normal brain
@@ -44,41 +44,31 @@ Loop through tumors and contrasts to run GO enrichment analyses and plot sig res
 
 ```{r run GO enrichment}
 # define hist groups
-histologies <- c("ATRT", "DIPG or DMG", "EPN", "HGG", "LGG", "MB")
+histologies <- c("DIPG or DMG", "EPN", "LGG", "MB")
 
 # loop through histologies
 for (hist in histologies){
   
   # define contrasts for each hist
-  #only healthy normal contrast in ATRT, LGG
-  if (hist %in% c("ATRT", "LGG")){
+  if (hist == "LGG"){
     contrasts <- "healthyNormal"
-    
     # healthy normal and tumor-adjacent normal in other contrasts
   } else {
-    
     contrasts <- c("healthyNormal", "paired")
-    
   }
   
   # loop through contrasts
   for (contrast in contrasts){
-    
     # load DE results file
     if (contrast == "healthyNormal"){
-      
       de_df <- read_csv(file.path(results_dir,
                                 glue::glue("DESeq2_{hist}_vs_healthyNormal.csv")))
-      
     } else {
-    
       de_df <- read_csv(file.path(results_dir,
                           glue::glue("DESeq2_{hist}_paired_full.csv")))
-    
     }
     
     # extract up- and downregulated genes in tumor vs. normal
-    
     upregulated_genes <- de_df %>%
       dplyr::filter(padj < 0.05,
                     log2FoldChange > 1) %>%
@@ -184,15 +174,10 @@ for (hist in histologies){
         write_tsv(sig_table,
                 file.path(results_dir,
                           glue::glue("{hist}-{plot_name}-{contrast}-enriched-go-terms.tsv")))
-        
       }
-      
     }
-    
   }
-  
 }
-
 ```
 
 Print session info
@@ -200,3 +185,5 @@ Print session info
 ```{r}
 sessionInfo()
 ```
+
+
