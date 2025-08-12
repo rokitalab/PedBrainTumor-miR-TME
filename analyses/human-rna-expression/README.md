@@ -142,9 +142,6 @@
 │   ├── EPN-upregulated-genes-paired-enriched-go-terms.tsv
 │   ├── EPN_healthyNormal_GSEA_results.tsv
 │   ├── EPN_paired_GSEA_results.tsv
-│   ├── HGG-downregulated-genes-healthyNormal-enriched-go-terms.tsv
-│   ├── HGG-upregulated-genes-healthyNormal-enriched-go-terms.tsv
-│   ├── HGG-upregulated-genes-paired-enriched-go-terms.tsv
 │   ├── LGG-downregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── LGG-upregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── LGG_healthyNormal_GSEA_results.tsv
