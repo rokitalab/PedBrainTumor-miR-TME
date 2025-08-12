@@ -28,6 +28,7 @@ library(ComplexHeatmap)
 library(circlize)
 library(grid)
 library(cluster)
+library(purrr)
 ```
 
 ### Paths and Files
@@ -166,7 +167,7 @@ ht1 <- Heatmap(rho_mat_filtered,
                show_row_names = FALSE, 
                show_column_names = FALSE,
                top_annotation = ha_all,
-               use_raster = FALSE,
+               use_raster = TRUE,
                heatmap_legend_param = list(legend_gp = gpar(fontsize = 10),
                                            labels_gp = gpar(fontsize = 10)))
 print(ht1)
@@ -223,30 +224,73 @@ ha_sig <- HeatmapAnnotation(
 ```
 
 ```{r}
-# ---- Find optimal k (silhouette) for rows and columns ----
-dist_rows <- dist(rho_mat_sig, method = "euclidean")
-dist_cols <- dist(t(rho_mat_sig), method = "euclidean")
-hc_rows   <- hclust(dist_rows, method = "complete")
-hc_cols   <- hclust(dist_cols, method = "complete")
-
-# silhouette-based optimal k (deterministic)
-opt_k_sil <- function(dist_mat, hc, k_min = 2, k_max = 10) {
-  n <- attr(dist_mat, "Size"); k_max <- min(k_max, n - 1L)
-  if (n <= k_min) return(1L)
-  sil <- rep(NA_real_, k_max)
-  for (k in k_min:k_max) {
+# ---- Silhouette analysis and optimal k for rows & columns ----
+silhouette_analysis <- function(mat, which = c("rows", "cols"),
+                                k_min = 2, k_max = 10,
+                                dist_method = "euclidean",
+                                hc_method = "complete") {
+  which <- match.arg(which)
+  X <- if (which == "rows") mat else t(mat)
+  n <- nrow(X)
+  if (n < k_min) return(tibble(k = integer(), sil = numeric(), which = character()))
+  
+  k_max <- min(k_max, n - 1L)
+  if (k_max < k_min) return(tibble(k = 1L, sil = NA_real_, which = which))
+  
+  d  <- dist(X, method = dist_method)
+  hc <- hclust(d, method = hc_method)
+  
+  sil_vals <- map_dbl(k_min:k_max, function(k) {
     cl <- cutree(hc, k)
-    sil[k] <- mean(silhouette(cl, dist_mat)[, 3])
-  }
-  best <- which.max(sil); if (length(best)==0 || is.na(sil[best])) 1L else best
+    mean(silhouette(cl, d)[, 3])
+  })
+  
+  tibble(k = k_min:k_max, sil = sil_vals, which = which, hc = list(hc), dist = list(d))
 }
-opt_row_k <- opt_k_sil(dist_rows, hc_rows)
-opt_col_k <- opt_k_sil(dist_cols, hc_cols)
 
+# Compute silhouette curves
+sil_rows <- silhouette_analysis(rho_mat_sig, which = "rows")
+sil_cols <- silhouette_analysis(rho_mat_sig, which = "cols")
+
+# Extract optimal k
+opt_row_k <- sil_rows$k[which.max(sil_rows$sil)]
+opt_col_k <- sil_cols$k[which.max(sil_cols$sil)]
+
+# Corresponding hc/dist for later use
+hc_rows <- sil_rows$hc[[1]]
+hc_cols <- sil_cols$hc[[1]]
+dist_rows <- sil_rows$dist[[1]]
+dist_cols <- sil_cols$dist[[1]]
+
+# Assign clusters using optimal k
 row_groups <- cutree(hc_rows, k = opt_row_k)
 col_groups <- cutree(hc_cols, k = opt_col_k)
 
 message("Optimal clusters — rows: ", opt_row_k, " | columns: ", opt_col_k)
+
+# Plot silhouette curves
+sil_df <- bind_rows(
+  select(sil_rows, k, sil, which),
+  select(sil_cols, k, sil, which)
+)
+
+p_sil <- ggplot(sil_df, aes(k, sil, color = which)) +
+  geom_line() +
+  geom_point() +
+  geom_vline(xintercept = opt_row_k, linetype = 2, color = "#1b9e77") +
+  geom_vline(xintercept = opt_col_k, linetype = 2, color = "#d95f02") +
+  scale_x_continuous(breaks = unique(sil_df$k)) +
+  labs(x = "Number of clusters (k)",
+       y = "Average silhouette width",
+       color = NULL,
+       title = "Silhouette Scores by k",
+       subtitle = "Dashed lines mark the best k for rows (green) and columns (orange)") +
+  theme_minimal(base_size = 12)
+
+print(p_sil)
+
+# Save plot
+ggsave(file.path(plot_dir, "silhouette_curves_ht2.pdf"), p_sil, width = 7, height = 4.5)
 ```
 
 ```{r}
@@ -258,7 +302,10 @@ ht2 <- Heatmap(
   column_split = opt_col_k,
   col = col_fun, na_col = "gray", name = "cor",
   show_row_names = FALSE, show_column_names = FALSE,
-  top_annotation = ha_sig
+  top_annotation = ha_sig,
+  use_raster = TRUE,
+  heatmap_legend_param = list(legend_gp = gpar(fontsize = 10),
+                              labels_gp = gpar(fontsize = 10))
 )
 draw(ht2)
 ```
