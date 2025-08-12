@@ -1529,7 +1529,7 @@ histology_file &lt;- file.path(root_dir, &quot;analyses&quot;,
 mirna_cts &lt;- read_tsv(mirna_cts_file) %&gt;%
   column_to_rownames(&quot;miRNA&quot;)</code></pre>
 <pre><code>## Rows: 5119 Columns: 56
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr  (1): miRNA
 ## dbl (55): 7316-9631-CC1, 7316-8049-CC1, 7316-7585-left-pons, 7316-10409-CC1,...
@@ -1543,8 +1543,8 @@ names(mirna_cts)[3] &lt;- &quot;5-1234-left-pons&quot;
 names(mirna_cts)[4] &lt;- &quot;1-1855-CC1&quot;
 names(mirna_cts)[5] &lt;- &quot;3-1890-CC1&quot;</code></pre>
 <p>Remove infiltrated pons samples</p>
-<pre class="r"><code># Remove 5-1234-left-pons showing significant tumor infiltration
-mirna_cts &lt;- mirna_cts[, !(colnames(mirna_cts) == &quot;5-1234-left-pons&quot;)]</code></pre>
+<pre class="r"><code># Remove 5-1234-left-pons showing significant tumor infiltration, duplicated DIPG tumor, and mismatch MB pair
+mirna_cts &lt;- mirna_cts[, !(colnames(mirna_cts) %in% c(&quot;5-1234-left-pons&quot;, &quot;1-1855-CC1&quot;, &quot;2237-T&quot;, &quot;2237-N&quot;))]</code></pre>
 <p>Fix tumor-normal mismatch</p>
 <pre class="r"><code># Get current column names
 current_colnames &lt;- colnames(mirna_cts)
@@ -1556,8 +1556,8 @@ idx_N &lt;- which(current_colnames == &quot;2058-N&quot;)
 colnames(mirna_cts)[c(idx_T, idx_N)] &lt;- colnames(mirna_cts)[c(idx_N, idx_T)]</code></pre>
 <p>Load histológies file</p>
 <pre class="r"><code>hist &lt;- read_tsv(histology_file)</code></pre>
-<pre><code>## Rows: 108 Columns: 10
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+<pre><code>## Rows: 102 Columns: 10
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (10): Bioassay_ID, experimental_strategy, sample_id, external_sample_id,...
 ## 
@@ -1585,9 +1585,8 @@ saveRDS(mirna_tpm,
 matrix</p>
 <pre class="r"><code>samples_of_interest &lt;- hist %&gt;%
   dplyr::filter(experimental_strategy == &quot;miRNA-Seq&quot;,
-                histology %in% c(&quot;DIPG or DMG&quot;, &quot;MB&quot;),
-                external_sample_id != &quot;5-1234-left-pons&quot;,
-                !grepl(&quot;2237&quot;, external_sample_id)) %&gt;%
+                external_sample_id %in% names(mirna_cts),
+                histology %in% c(&quot;DIPG or DMG&quot;, &quot;MB&quot;)) %&gt;%
   pull(external_sample_id)
 
 mirna_tpm &lt;- mirna_tpm[,samples_of_interest]</code></pre>
@@ -1611,8 +1610,7 @@ for (group in groups){
   group_samples &lt;- hist %&gt;% 
     dplyr::filter(histology == group,
                   !grepl(&quot;Adjacent&quot;, sample_type),
-                  external_sample_id != &quot;5-1234-left-pons&quot;,
-                !grepl(&quot;2237&quot;, external_sample_id)) %&gt;%
+                  external_sample_id != &quot;1-1855-CC1&quot;) %&gt;%
     distinct(external_sample_id) %&gt;%
     pull(external_sample_id)
   
@@ -1714,16 +1712,16 @@ for (group in groups){
         file.path(results_dir, glue::glue(&quot;{group}-de-mirna-quantiseq-fraction-correlations.tsv&quot;)))
   
 }</code></pre>
-<pre><code>## Rows: 69 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+<pre><code>## Rows: 70 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 122 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Rows: 141 Columns: 6
+## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1734,50 +1732,30 @@ for (group in groups){
 <pre><code>## Warning in full_join(., quantiseq_res %&gt;% dplyr::filter(external_sample_id %in% : Detected an unexpected many-to-many relationship between `x` and `y`.
 ## ℹ Row 1 of `x` matches multiple rows in `y`.
 ## ℹ Row 1 of `y` matches multiple rows in `x`.
-## ℹ If a many-to-many relationship is expected, set `relationship = &quot;many-to-many&quot;` to silence this warning.</code></pre>
+## ℹ If a many-to-many relationship is expected, set `relationship =
+##   &quot;many-to-many&quot;` to silence this warning.</code></pre>
+<pre><code>## Joining with `by = join_by(miRNA)`
+## Rows: 44 Columns: 6
+## ── Column specification
+## ──────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## (1): miRNA dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+## Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 33 Columns: 6
+## ── Column specification
+## ──────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## (1): miRNA dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+## Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Joining with `by = join_by(external_sample_id)`</code></pre>
+<pre><code>## Warning in full_join(., quantiseq_res %&gt;% dplyr::filter(external_sample_id %in% : Detected an unexpected many-to-many relationship between `x` and `y`.
+## ℹ Row 1 of `x` matches multiple rows in `y`.
+## ℹ Row 1 of `y` matches multiple rows in `x`.
+## ℹ If a many-to-many relationship is expected, set `relationship =
+##   &quot;many-to-many&quot;` to silence this warning.</code></pre>
 <pre><code>## Joining with `by = join_by(miRNA)`</code></pre>
 <pre><code>## Warning in cor(x, y): the standard deviation is zero</code></pre>
 <pre><code>## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero</code></pre>
-<pre><code>## Rows: 41 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): miRNA
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 41 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): miRNA
-## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Joining with `by = join_by(external_sample_id)`</code></pre>
-<pre><code>## Warning in full_join(., quantiseq_res %&gt;% dplyr::filter(external_sample_id %in% : Detected an unexpected many-to-many relationship between `x` and `y`.
-## ℹ Row 1 of `x` matches multiple rows in `y`.
-## ℹ Row 1 of `y` matches multiple rows in `x`.
-## ℹ If a many-to-many relationship is expected, set `relationship = &quot;many-to-many&quot;` to silence this warning.</code></pre>
-<pre><code>## Joining with `by = join_by(miRNA)`</code></pre>
-<pre><code>## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
 ## Warning in cor(x, y): the standard deviation is zero
 ## Warning in cor(x, y): the standard deviation is zero
 ## Warning in cor(x, y): the standard deviation is zero
@@ -1855,7 +1833,8 @@ for (group in groups){
 ## [45] bit64_4.0.5       timechange_0.3.0  rmarkdown_2.27    bit_4.0.5        
 ## [49] ggsignif_0.6.4    ragg_1.3.2        hms_1.1.3         evaluate_0.24.0  
 ## [53] knitr_1.47        mgcv_1.9-1        rlang_1.1.4       glue_1.7.0       
-## [57] vroom_1.6.5       jsonlite_1.8.8    R6_2.5.1          systemfonts_1.1.0</code></pre>
+## [57] rstudioapi_0.16.0 vroom_1.6.5       jsonlite_1.8.8    R6_2.5.1         
+## [61] systemfonts_1.1.0</code></pre>
 </div>
 
 
