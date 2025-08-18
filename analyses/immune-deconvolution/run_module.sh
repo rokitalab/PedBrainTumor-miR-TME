@@ -32,6 +32,8 @@ Rscript --vanilla 01-run-immune-deconvolution.R \
 --deconv_method 'quantiseq' \
 --output_dir 'results'
 
-
 # Plot cell fractions by histology and tumor/normal
 R -e "rmarkdown::render('02-immune-deconv-summary.Rmd')"
+
+# Run quantiseq cell fraction versus miRNA tpm correlation analyses 
+R -e "rmarkdown::render('03-mirna-quantiseq-fraction-correlations.Rmd')"
