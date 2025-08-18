@@ -13,7 +13,7 @@ This module runs immune deconvolution of tumor and normal bulk RNA-seq data to o
 1. `01-run-immune-deconvolution.R`: runs immune deconvolution of bulk-RNA seq data using quantiseq and Xcell methods
 2. `02-immune-deconv-summary.Rmd`; plot immune cell fraction and scores by histology and sample type (Tumor, adj and healthy normal)
 3. `03-mirna-quantiseq-fraction-correlations.Rmd`; calculate correlations between DE miRNA TPM and quantiseq-derived immune cell fractions.
-4. `03-mirna-xcell-score-correlations.Rmd`; calculate correlations between DE miRNA TPM and Xcell-derived cell scores.
+4. `04-mirna-xcell-score-correlations.Rmd`; calculate correlations between DE miRNA TPM and Xcell-derived cell scores.
 
 ## Analysis module directory structure
 
@@ -172,11 +172,8 @@ This module runs immune deconvolution of tumor and normal bulk RNA-seq data to o
 ├── README.md
 ├── results
 │   ├── DIPG or DMG-de-mirna-quantiseq-fraction-correlations.tsv
-│   ├── DIPG or DMG-de-mirna-xcell-fraction-correlations.tsv
 │   ├── MB-de-mirna-quantiseq-fraction-correlations.tsv
-│   ├── MB-de-mirna-xcell-fraction-correlations.tsv
 │   ├── mirna-tpm.rds
-│   ├── mirna-tpm.tsv
 │   ├── quantiseq_output.rds
 │   └── xcell_output.rds
 └── run_module.sh

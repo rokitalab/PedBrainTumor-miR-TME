@@ -64,9 +64,9 @@ names(mirna_cts)[5] <- "3-1890-CC1"
 
 Remove infiltrated pons samples
 
-```{r remove-tumor-infiltrated-sample}
-# Remove 5-1234-left-pons showing significant tumor infiltration
-mirna_cts <- mirna_cts[, !(colnames(mirna_cts) == "5-1234-left-pons")]
+```{r remove-samples}
+# Remove 5-1234-left-pons showing significant tumor infiltration, duplicated DIPG tumor, and mismatch MB pair
+mirna_cts <- mirna_cts[, !(colnames(mirna_cts) %in% c("5-1234-left-pons", "1-1855-CC1", "2237-T", "2237-N"))]
 ```
 
 Fix tumor-normal mismatch
@@ -115,9 +115,8 @@ Define samples of interest (DIPG/DMG and MB samples) and filter TPM matrix
 ```{r}
 samples_of_interest <- hist %>%
   dplyr::filter(experimental_strategy == "miRNA-Seq",
-                histology %in% c("DIPG or DMG", "MB"),
-                external_sample_id != "5-1234-left-pons",
-                !grepl("2237", external_sample_id)) %>%
+                external_sample_id %in% names(mirna_cts),
+                histology %in% c("DIPG or DMG", "MB")) %>%
   pull(external_sample_id)
 
 mirna_tpm <- mirna_tpm[,samples_of_interest]
@@ -147,8 +146,7 @@ for (group in groups){
   group_samples <- hist %>% 
     dplyr::filter(histology == group,
                   !grepl("Adjacent", sample_type),
-                  external_sample_id != "5-1234-left-pons",
-                !grepl("2237", external_sample_id)) %>%
+                  external_sample_id != "1-1855-CC1") %>%
     distinct(external_sample_id) %>%
     pull(external_sample_id)
   
