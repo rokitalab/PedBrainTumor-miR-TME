@@ -1524,8 +1524,8 @@ histology_file &lt;- file.path(root_dir, &quot;analyses&quot;,
 <pre class="r"><code>mirna_tpm &lt;- readRDS(mirna_tpm_file)
 
 hist &lt;- read_tsv(histology_file)</code></pre>
-<pre><code>## Rows: 108 Columns: 10
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+<pre><code>## Rows: 102 Columns: 10
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (10): Bioassay_ID, experimental_strategy, sample_id, external_sample_id,...
 ## 
@@ -1534,9 +1534,8 @@ hist &lt;- read_tsv(histology_file)</code></pre>
 <pre class="r"><code>samples_of_interest &lt;- hist %&gt;%
   dplyr::filter(experimental_strategy == &quot;miRNA-Seq&quot;,
                 histology %in% c(&quot;DIPG or DMG&quot;, &quot;MB&quot;),
-                !grepl(&quot;Adjacent&quot;, sample_type),
-                external_sample_id != &quot;5-1234-left-pons&quot;,
-                !grepl(&quot;2237&quot;, external_sample_id)) %&gt;%
+                external_sample_id != &quot;1-1855-CC1&quot;,
+                !grepl(&quot;Adjacent&quot;, sample_type)) %&gt;%
   pull(external_sample_id)
 
 mirna_tpm &lt;- mirna_tpm[,samples_of_interest]</code></pre>
@@ -1572,8 +1571,7 @@ for (group in groups){
   group_samples &lt;- hist %&gt;% 
     dplyr::filter(histology == group,
                   !grepl(&quot;Adjacent&quot;, sample_type),
-                  external_sample_id != &quot;5-1234-left-pons&quot;,
-                !grepl(&quot;2237&quot;, external_sample_id)) %&gt;%
+                  external_sample_id != &quot;1-1855-CC1&quot;) %&gt;%
     distinct(external_sample_id) %&gt;%
     pull(external_sample_id)
   
@@ -1622,24 +1620,24 @@ for (group in groups){
       dplyr::filter(miRNA == mirna,
                     !is.na(cell_type)) %&gt;%
       
-      ggscatter(x = &quot;log2_tpm&quot;, 
-              y= &quot;fraction&quot;, 
+      ggscatter(x = &quot;log2_tpm&quot;,
+              y= &quot;fraction&quot;,
               color = &quot;sample_type&quot;,
-              add = &quot;reg.line&quot;, 
-              conf.int = TRUE, 
-              cor.coef = TRUE, 
+              add = &quot;reg.line&quot;,
+              conf.int = TRUE,
+              cor.coef = TRUE,
               cor.method = &quot;pearson&quot;,
               add.params = list(color = &quot;black&quot;,
                                 fill = NA),
               ticks = TRUE,
-              alpha = 0.6) + 
-      facet_wrap(&quot;cell_type&quot;, labeller = labeller(cell_type = label_wrap_gen(width = 18)), 
+              alpha = 0.6) +
+      facet_wrap(&quot;cell_type&quot;, labeller = labeller(cell_type = label_wrap_gen(width = 18)),
                  nrow  = 5,
                  scales = &quot;free_y&quot;) +
-      theme_Publication() + 
+      theme_Publication() +
       labs(x = glue::glue(&quot;{mirna} log2-TPM&quot;),
-           y = &quot;Cell fraction&quot;) + 
-      theme(strip.text = element_text(size = 13))  # Adjust the size here
+           y = &quot;Cell fraction&quot;) +
+      theme(strip.text = element_text(size = 13)) 
     
     # save to output
     ggsave(file.path(plot_dir,
@@ -1674,149 +1672,42 @@ for (group in groups){
         file.path(results_dir, glue::glue(&quot;{group}-de-mirna-xcell-fraction-correlations.tsv&quot;)))
   
 }</code></pre>
-<pre><code>## Rows: 69 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+<pre><code>## Rows: 70 Columns: 6
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 122 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Rows: 141 Columns: 6
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Joining with `by = join_by(external_sample_id)`</code></pre>
-<pre><code>## Warning in full_join(., xcell_res %&gt;% dplyr::filter(external_sample_id %in% : Detected an unexpected many-to-many relationship between `x` and `y`.
-## ℹ Row 1 of `x` matches multiple rows in `y`.
-## ℹ Row 1 of `y` matches multiple rows in `x`.
-## ℹ If a many-to-many relationship is expected, set `relationship = &quot;many-to-many&quot;` to silence this warning.</code></pre>
-<pre><code>## Joining with `by = join_by(miRNA)`</code></pre>
-<pre><code>## Warning in cor(x, y): the standard deviation is zero</code></pre>
-<pre><code>## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero</code></pre>
-<pre><code>## Rows: 41 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Joining with `by = join_by(external_sample_id)`
+## Joining with `by = join_by(miRNA)`
+## Rows: 44 Columns: 6
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 41 Columns: 6
-## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Rows: 33 Columns: 6
+## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Joining with `by = join_by(external_sample_id)`</code></pre>
-<pre><code>## Warning in full_join(., xcell_res %&gt;% dplyr::filter(external_sample_id %in% : Detected an unexpected many-to-many relationship between `x` and `y`.
-## ℹ Row 1 of `x` matches multiple rows in `y`.
-## ℹ Row 1 of `y` matches multiple rows in `x`.
-## ℹ If a many-to-many relationship is expected, set `relationship = &quot;many-to-many&quot;` to silence this warning.</code></pre>
-<pre><code>## Joining with `by = join_by(miRNA)`</code></pre>
-<pre><code>## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero</code></pre>
+## Joining with `by = join_by(external_sample_id)`
+## Joining with `by = join_by(miRNA)`</code></pre>
 <p>print session info</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 4.4.0 (2024-04-24)

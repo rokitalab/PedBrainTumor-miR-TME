@@ -50,9 +50,8 @@ hist <- read_tsv(histology_file)
 samples_of_interest <- hist %>%
   dplyr::filter(experimental_strategy == "miRNA-Seq",
                 histology %in% c("DIPG or DMG", "MB"),
-                !grepl("Adjacent", sample_type),
-                external_sample_id != "5-1234-left-pons",
-                !grepl("2237", external_sample_id)) %>%
+                external_sample_id != "1-1855-CC1",
+                !grepl("Adjacent", sample_type)) %>%
   pull(external_sample_id)
 
 mirna_tpm <- mirna_tpm[,samples_of_interest]
@@ -81,7 +80,7 @@ xcell_res <- xcell_res %>%
 
 Loop through DIPG/DMG and MB histologies to calculate DE miRNA - Xcell score correlations
 
-```{r}
+```{r, warning=FALSE, message=TRUE}
 groups <- c("DIPG or DMG", "MB")
 
 cor_list <- list()
@@ -95,8 +94,7 @@ for (group in groups){
   group_samples <- hist %>% 
     dplyr::filter(histology == group,
                   !grepl("Adjacent", sample_type),
-                  external_sample_id != "5-1234-left-pons",
-                !grepl("2237", external_sample_id)) %>%
+                  external_sample_id != "1-1855-CC1") %>%
     distinct(external_sample_id) %>%
     pull(external_sample_id)
   
