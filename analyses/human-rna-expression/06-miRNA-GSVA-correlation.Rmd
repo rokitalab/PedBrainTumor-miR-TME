@@ -31,9 +31,14 @@ library(cluster)
 library(purrr)
 ```
 
+```{r}
+#install.packages("factoextra") # needs to be added to docker image
+library(factoextra)
+```
+
 ### Paths and Files
 
-```{r paths}
+```{r define-paths}
 root_dir <- find_root(has_dir(".git"))
 data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "human-rna-expression")
@@ -116,9 +121,9 @@ corr_df <- as.data.frame(as.table(rho_mat_filtered)) %>%
   arrange(miRNA, desc(abs(rho)))
 ```
 
-### Heatmap: all pairs (filtered to non-NA rows)
+### Heatmap: all pairs
 
-```{r}
+```{r draw-heatmap}
 rho_mat_filtered <- corr_df %>%
   select(miRNA, Pathway, rho) %>%
   pivot_wider(names_from = miRNA, values_from = rho) %>%
@@ -171,9 +176,7 @@ ht1 <- Heatmap(rho_mat_filtered,
                                            labels_gp = gpar(fontsize = 10)))
 print(ht1)
 
-```
 
-```{r}
 pdf(file.path(plot_dir, "heatmap_all.pdf"))
 print(ht1)
 dev.off()
@@ -181,7 +184,7 @@ dev.off()
 
 ### significant miRNA–pathway pairs
 
-```{r}
+```{r get-signif-corr-df}
 signif_corr <- corr_df %>%
   filter(abs(rho) > 0.5, padj < 0.1)
 
@@ -198,7 +201,57 @@ rho_mat_sig <- corr_df_sig %>%
   as.matrix()
 ```
 
-```{r}
+### Determining Optimal Clusters
+
+1. Elbow method
+2. Silhouette method
+3. Gap statistic
+
+```{r run-elbow}
+set.seed(123)
+
+# rows (pathways)
+fviz_nbclust(rho_mat_sig, # data
+             hcut, # clustering algorithm
+             method = "wss")  # elbow method
+
+# columns (miRNAs)
+fviz_nbclust(t(rho_mat_sig), # data
+             hcut, # clustering algorithm
+             method = "wss")  # elbow method
+```
+
+```{r run-silhouette}
+# rows (pathways)
+silhouette_pathways <- fviz_nbclust(rho_mat_sig, hcut, method = "silhouette")
+print(silhouette_pathways)
+
+# columns (miRNAs)
+silhouette_mirnas <- fviz_nbclust(t(rho_mat_sig), hcut, method = "silhouette")
+print(silhouette_mirnas)
+```
+
+```{r run-gap-stat}
+# rows (pathways)
+fviz_nbclust(rho_mat_sig, hcut, nboot = 10, method = "gap_stat")
+
+# columns (miRNAs)
+fviz_nbclust(t(rho_mat_sig), hcut, nboot = 10, method = "gap_stat")
+```
+
+```{r find-optimal-k}
+# here silhouette score was used to find optimal k 
+sil_dat_row <- silhouette_pathways$data
+opt_row_k <- as.integer(sil_dat_row$clusters[which.max(sil_dat_row$y)])
+opt_row_k
+
+sil_dat_col <- silhouette_mirnas$data
+opt_col_k <- as.integer(sil_dat_col$clusters[which.max(sil_dat_col$y)])
+opt_col_k
+```
+
+```{r define-sample-anno}
+# define sample annotation 
 sample_anno <- data.frame(miRNA = colnames(rho_mat_sig)) %>%
   left_join(DIPG_sig_DE_miRNA_list, by = "miRNA")
 
@@ -206,10 +259,6 @@ sample_anno$Category  <- factor(sample_anno$Category,
                                 levels = c("Paired T vs AN", "Shared", "T vs HN"))
 sample_anno$direction <- factor(sample_anno$direction,
                                 levels = c("up", "down"))
-```
-
-```{r}
-# define sample annotation 
 ha_sig <- HeatmapAnnotation(
   Comparison = sample_anno$Category,
   Direction  = sample_anno$direction,
@@ -222,81 +271,11 @@ ha_sig <- HeatmapAnnotation(
 )
 ```
 
-```{r}
-# ---- Silhouette analysis and optimal k for rows & columns ----
-silhouette_analysis <- function(mat, which = c("rows", "cols"),
-                                k_min = 2, k_max = 10,
-                                dist_method = "euclidean",
-                                hc_method = "complete") {
-  which <- match.arg(which)
-  X <- if (which == "rows") mat else t(mat)
-  n <- nrow(X)
-  if (n < k_min) return(tibble(k = integer(), sil = numeric(), which = character()))
-  
-  k_max <- min(k_max, n - 1L)
-  if (k_max < k_min) return(tibble(k = 1L, sil = NA_real_, which = which))
-  
-  d  <- dist(X, method = dist_method)
-  hc <- hclust(d, method = hc_method)
-  
-  sil_vals <- map_dbl(k_min:k_max, function(k) {
-    cl <- cutree(hc, k)
-    mean(silhouette(cl, d)[, 3])
-  })
-  
-  tibble(k = k_min:k_max, sil = sil_vals, which = which, hc = list(hc), dist = list(d))
-}
-
-# Compute silhouette curves
-sil_rows <- silhouette_analysis(rho_mat_sig, which = "rows")
-sil_cols <- silhouette_analysis(rho_mat_sig, which = "cols")
-
-# Extract optimal k
-opt_row_k <- sil_rows$k[which.max(sil_rows$sil)]
-opt_col_k <- sil_cols$k[which.max(sil_cols$sil)]
-
-# Corresponding hc/dist for later use
-hc_rows <- sil_rows$hc[[1]]
-hc_cols <- sil_cols$hc[[1]]
-dist_rows <- sil_rows$dist[[1]]
-dist_cols <- sil_cols$dist[[1]]
-
-# Assign clusters using optimal k
-row_groups <- cutree(hc_rows, k = opt_row_k)
-col_groups <- cutree(hc_cols, k = opt_col_k)
-
-message("Optimal clusters — rows: ", opt_row_k, " | columns: ", opt_col_k)
-
-# Plot silhouette curves
-sil_df <- bind_rows(
-  select(sil_rows, k, sil, which),
-  select(sil_cols, k, sil, which)
-)
-
-p_sil <- ggplot(sil_df, aes(k, sil, color = which)) +
-  geom_line() +
-  geom_point() +
-  geom_vline(xintercept = opt_row_k, linetype = 2, color = "#1b9e77") +
-  geom_vline(xintercept = opt_col_k, linetype = 2, color = "#d95f02") +
-  scale_x_continuous(breaks = unique(sil_df$k)) +
-  labs(x = "Number of clusters (k)",
-       y = "Average silhouette width",
-       color = NULL,
-       title = "Silhouette Scores by k",
-       subtitle = "Dashed lines mark the best k for rows (green) and columns (orange)") +
-  theme_minimal(base_size = 12)
-
-print(p_sil)
-
-# Save plot
-ggsave(file.path(plot_dir, "silhouette_curves_ht2.pdf"), p_sil, width = 7, height = 4.5)
-```
-
-```{r}
+```{r draw-sig-heatmap, message=FALSE, warning=FALSE}
 ht2 <- Heatmap(
   rho_mat_sig,
-  cluster_rows    = as.dendrogram(hc_rows),
-  cluster_columns = as.dendrogram(hc_cols),
+  cluster_rows = TRUE,
+  cluster_columns = TRUE,
   row_split = opt_row_k,
   column_split = opt_col_k,
   col = col_fun, na_col = "gray", name = "cor",
@@ -306,20 +285,45 @@ ht2 <- Heatmap(
   heatmap_legend_param = list(legend_gp = gpar(fontsize = 10),
                               labels_gp = gpar(fontsize = 10))
 )
-draw(ht2)
-```
 
-```{r}
-pdf(file.path(plot_dir, "heatmap_sig_cluster.pdf"))
-print(ht2)
-dev.off()
-```
+ht2 <- draw(ht2)
 
-```{r message=FALSE, warning=FALSE}
-# Order rows/cols to match the heatmap
 row_idx <- unlist(row_order(ht2))
 col_idx <- unlist(column_order(ht2))
+
+row_idx_list <- row_order(ht2)
+col_idx_list <- column_order(ht2)
+
+row_cluster_by_order <- rep(seq_along(row_idx_list), lengths(row_idx_list))
+col_cluster_by_order <- rep(seq_along(col_idx_list), lengths(col_idx_list))
+
+## Pathway (row) clusters
+pathway_clusters <- tibble::tibble(
+  Pathway = rownames(rho_mat_sig)[row_idx],
+  row_cluster = row_cluster_by_order
+)
+
+write_tsv(pathway_clusters, file.path(results_dir, "cor_heatmap_pathway_clusters.tsv"))
+
+## miRNA (column) clusters
+mirna_clusters <- tibble::tibble(
+  miRNA = colnames(rho_mat_sig)[col_idx],
+  col_cluster = col_cluster_by_order
+)
+
+write_tsv(mirna_clusters, file.path(results_dir, "cor_heatmap_miRNA_clusters.tsv"))
+```
+
+```{r save-heatmap-table, message=FALSE, warning=FALSE}
+# Order rows/cols to match the heatmap
 rho_mat_ordered <- rho_mat_sig[row_idx, col_idx, drop = FALSE]
+miRNA_cols <- colnames(rho_mat_ordered)
+
+mir_lookup <- setNames(mirna_clusters$col_cluster, mirna_clusters$miRNA)
+mir_clust_vec  <- as.character(mir_lookup[miRNA_cols])
+
+path_lookup    <- setNames(pathway_clusters$row_cluster, pathway_clusters$Pathway)
+path_clust_vec <- unname(path_lookup[rownames(rho_mat_ordered)])
 
 # Add TargetGenes next to Pathway
 tg_map <- read_tsv(file.path(results_dir, "gobp-gsva-scores-with-target-genes.tsv"), show_col_types = FALSE) %>%
@@ -331,8 +335,10 @@ rho_df <- as.data.frame(rho_mat_ordered, stringsAsFactors = FALSE) %>%
   left_join(tg_map, by = "Pathway") %>%
   relocate(TargetGenes, .after = Pathway)
 
-# Build annotation rows
-miRNA_cols <- colnames(rho_mat_ordered)
+rho_df_chr <- rho_df %>%
+  mutate(PathwayCluster = as.character(path_clust_vec)) %>%
+  relocate(PathwayCluster, .after = TargetGenes) %>%
+  mutate(across(all_of(miRNA_cols), ~ formatC(., digits = 3, format = "f")))
 
 anno_lkp <- sample_anno %>%
   filter(miRNA %in% miRNA_cols) %>%
@@ -341,27 +347,39 @@ anno_lkp <- sample_anno %>%
 comp_vec <- as.character(anno_lkp$Category)
 dir_vec <- as.character(anno_lkp$direction)
 
-rho_df_chr <- rho_df %>%
-  mutate(across(all_of(miRNA_cols), ~ formatC(., digits = 3, format = "f")))
-
-# two annotation rows as tibbles
 comp_row <- tibble::tibble(
   Pathway     = "Comparison",
   TargetGenes = "",
+  PathwayCluster = "",
   !!! rlang::set_names(as.list(comp_vec), miRNA_cols)
 )
+
 dir_row <- tibble::tibble(
   Pathway     = "Direction",
   TargetGenes = "",
+  PathwayCluster = "",
   !!! rlang::set_names(as.list(dir_vec), miRNA_cols)
 )
 
+mir_row <- tibble::tibble(
+  Pathway = "miRNA_cluster",
+  TargetGenes = "",
+  PathwayCluster = "",
+  !!! rlang::set_names(as.list(mir_clust_vec), miRNA_cols)
+)
+
 # Combine and save
-out_tbl <- bind_rows(comp_row, dir_row, rho_df_chr)
+out_tbl <- bind_rows(comp_row, dir_row, mir_row, rho_df_chr)
 
 write.table(out_tbl,
             file = file.path(results_dir, "correlation_matrix_heatmap_order.tsv"),
             sep = "\t", quote = FALSE, row.names = FALSE)
+```
+
+```{r save-sig-heatmap}
+pdf(file.path(plot_dir, "heatmap_sig_cluster.pdf"))
+print(ht2)
+dev.off()
 ```
 
 ### Session Info
