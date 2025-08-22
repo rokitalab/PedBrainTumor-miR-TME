@@ -37,3 +37,6 @@ R -e "rmarkdown::render('02-immune-deconv-summary.Rmd')"
 
 # Run quantiseq cell fraction versus miRNA tpm correlation analyses 
 R -e "rmarkdown::render('03-mirna-quantiseq-fraction-correlations.Rmd')"
+
+# Run quantiseq cell fraction versus miRNA tpm correlation analyses 
+R -e "rmarkdown::render('04-mirna-xcell-score-correlations.Rmd')"

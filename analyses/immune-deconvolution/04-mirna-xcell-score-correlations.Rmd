@@ -1,0 +1,204 @@
+---
+title: "Calculate miRNA expression-xcell immune score correlations"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+author: Ryan Corbett
+date: "2025-07-09"
+---
+
+### Setup
+```{r setup, message=FALSE, warning=FALSE}
+# Load libraries
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(ggsci)
+})
+
+# Define directories
+root_dir     <- rprojroot::find_root(rprojroot::has_dir(".git"))
+data_dir     <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "immune-deconvolution")
+results_dir  <- file.path(analysis_dir, "results")
+plot_dir     <- file.path(analysis_dir, "plots")
+
+# Source custom theme
+source(file.path(root_dir, "figures", "theme.R"))
+
+# File path for counts
+mirna_tpm_file <- file.path(results_dir, 
+                            "mirna-tpm.rds")
+
+# File path for immune cell proportions
+xcell_file <- file.path(results_dir, "xcell_output.rds")
+
+# File path for histology
+histology_file <- file.path(root_dir, "analyses", 
+                            "histology-preprocessing", 
+                            "results", "histologies.tsv")
+```
+
+### Data Wrangling
+```{r data-wrangle}
+mirna_tpm <- readRDS(mirna_tpm_file)
+
+hist <- read_tsv(histology_file)
+
+samples_of_interest <- hist %>%
+  dplyr::filter(experimental_strategy == "miRNA-Seq",
+                histology %in% c("DIPG or DMG", "MB"),
+                external_sample_id != "1-1855-CC1",
+                !grepl("Adjacent", sample_type)) %>%
+  pull(external_sample_id)
+
+mirna_tpm <- mirna_tpm[,samples_of_interest]
+```
+
+Load xcell results
+
+```{r}
+xcell_res <- readRDS(xcell_file) %>%
+  left_join(hist %>% dplyr::select(external_sample_id,
+                                   Bioassay_ID))
+
+# remove cell types with low proportions
+mean_cell_proportions <- xcell_res %>%
+  group_by(cell_type) %>%
+  summarise(mean_proportion = mean(fraction, na.rm = TRUE)) %>%
+  arrange(mean_proportion)
+
+cell_types_retain <- mean_cell_proportions %>%
+  dplyr::filter(mean_proportion >= 1e-3) %>%
+  pull(cell_type)
+
+xcell_res <- xcell_res %>% 
+  dplyr::filter(cell_type %in% cell_types_retain)
+```
+
+Loop through DIPG/DMG and MB histologies to calculate DE miRNA - Xcell score correlations
+
+```{r, warning=FALSE, message=TRUE}
+groups <- c("DIPG or DMG", "MB")
+
+cor_list <- list()
+
+for (group in groups){
+  
+  plot_dir <- file.path(analysis_dir, "plots",
+                           group)
+  
+  # filter for samples in hist
+  group_samples <- hist %>% 
+    dplyr::filter(histology == group,
+                  !grepl("Adjacent", sample_type),
+                  external_sample_id != "1-1855-CC1") %>%
+    distinct(external_sample_id) %>%
+    pull(external_sample_id)
+  
+  # Load DE miRNA results (healthy N and adjacent N references)
+  mirna_de_healthyN <- read_csv(file.path(root_dir, "analyses",
+                                          "human-mirna-expression",
+                                          "results",
+                                          glue::glue("DESeq2_{group}_vs_healthyNormal_sig.csv")))
+  
+  mirna_de_adjN <- read_csv(file.path(root_dir, "analyses",
+                                          "human-mirna-expression",
+                                          "results",
+                                          glue::glue("DESeq2_{group}_paired_sig.csv")))
+  
+  # identify common DE mirnas
+  common_de_mirnas <- intersect(mirna_de_healthyN$miRNA,
+                                mirna_de_adjN$miRNA)
+  
+  # filter tpm matrix for DE mirnas and samples in group
+  de_mirna_tpm <- mirna_tpm[common_de_mirnas, group_samples]
+  
+  # convert tpm matrix to data frame
+  de_mirna_df <- de_mirna_tpm %>%
+    t() %>%
+    as.data.frame() %>%
+    rownames_to_column("external_sample_id") %>%
+    pivot_longer(-external_sample_id,
+                 names_to = "miRNA",
+                 values_to = "tpm") %>%
+    # append cell type enr scores
+    full_join(xcell_res %>% 
+                dplyr::filter(external_sample_id %in% colnames(de_mirna_tpm)) %>%
+                dplyr::select(external_sample_id,
+                              cell_type,
+                              sample_type,
+                              fraction)) %>%
+    # calculate log2 tpm
+    dplyr::mutate(log2_tpm = log2(tpm+0.01)) %>%
+    dplyr::filter(!is.na(log2_tpm))
+  
+  # loop through miRNAs and generate tpm-cell score scatter plots
+  for (mirna in unique(de_mirna_df$miRNA)) {
+    
+  # generate scatter plot  
+  de_mirna_df %>%
+      dplyr::filter(miRNA == mirna,
+                    !is.na(cell_type)) %>%
+      
+      ggscatter(x = "log2_tpm",
+              y= "fraction",
+              color = "sample_type",
+              add = "reg.line",
+              conf.int = TRUE,
+              cor.coef = TRUE,
+              cor.method = "pearson",
+              add.params = list(color = "black",
+                                fill = NA),
+              ticks = TRUE,
+              alpha = 0.6) +
+      facet_wrap("cell_type", labeller = labeller(cell_type = label_wrap_gen(width = 18)),
+                 nrow  = 5,
+                 scales = "free_y") +
+      theme_Publication() +
+      labs(x = glue::glue("{mirna} log2-TPM"),
+           y = "Cell fraction") +
+      theme(strip.text = element_text(size = 13)) 
+    
+    # save to output
+    ggsave(file.path(plot_dir,
+                   glue::glue("{mirna}-tpm-vs-xcell-cell-proportions-{group}.pdf")),
+         width = 25, height = 12)
+    
+  }
+    
+    # generate correlation data frame and append empty pearson correlation and p-value columns
+    cor_list[[group]] <- tibble(miRNA = unique(de_mirna_df$miRNA)) %>%
+      left_join(de_mirna_df %>% dplyr::select(miRNA,
+                                              cell_type)) %>%
+      dplyr::filter(!is.na(cell_type)) %>%
+      distinct() %>%
+      dplyr::mutate(pearson_r = NA_integer_,
+                    pearson_pvalue = NA_integer_)
+    
+    # run correlation analysis on each miRNA-cell type pair
+    for (i in 1:nrow(cor_list[[group]])){
+      
+      cor_test <- cor.test(de_mirna_df$log2_tpm[de_mirna_df$miRNA == cor_list[[group]]$miRNA[i] & de_mirna_df$cell_type == cor_list[[group]]$cell_type[i]],
+                           de_mirna_df$fraction[de_mirna_df$miRNA == cor_list[[group]]$miRNA[i] & de_mirna_df$cell_type == cor_list[[group]]$cell_type[i]],
+                           method = "pearson")
+      
+      cor_list[[group]]$pearson_r[i] <- cor_test$estimate
+      cor_list[[group]]$pearson_pvalue[i] <- cor_test$p.value
+      
+    }
+    
+  # write to output
+  write_tsv(cor_list[[group]],
+        file.path(results_dir, glue::glue("{group}-de-mirna-xcell-fraction-correlations.tsv")))
+  
+}
+```
+
+print session info
+
+```{r}
+sessionInfo()
+```
