@@ -6,11 +6,16 @@ output:
     toc_float: true
 author: "Bicna Song"
 date: "`r Sys.Date()`"
+params:
+  histology: "DIPG or DMG" # MB
+  de_list_file: "input/DIPG or DMG_sig_DE_miRNA_list.csv" # input/MB_sig_DE_miRNA_list.csv
+  exclude_miRNA: !r character()
+  # exclude_miRNA: "hsa-miR-378d" for MB
 ---
 
 ### Overview
 
-Correlate DE miRNA expression with GSVA pathway scores in DIPG/DMG tumors; generate full and significant-pairs heatmaps with stable annotations.
+Correlate DE miRNA expression with GSVA pathway scores in the selected histology; generate full and significant-pairs heatmaps with stable annotations.
 
 
 ### Setup
@@ -29,11 +34,7 @@ library(circlize)
 library(grid)
 library(cluster)
 library(purrr)
-```
-
-```{r}
-#install.packages("factoextra") # needs to be added to docker image
-library(factoextra)
+library(factoextra) # add to docker
 ```
 
 ### Paths and Files
@@ -49,8 +50,13 @@ input_dir <- file.path(analysis_dir, "input")
 miRNA_tpm <- file.path(input_dir, "mirna-tpm.rds")
 histology_file <- file.path(root_dir, "analyses", "histology-preprocessing", "results", "histologies.tsv")
 
-all_hist <- c("DIPG or DMG","EPN","LGG","MB")
-normal_ids <- c("B1","B2","B3","B4","B5")
+# Precomputed GSVA scores
+gsva_file <- file.path(results_dir, "gobp-gsva-scores.tsv")
+
+# Parameters
+histology_label <- params$histology
+de_list_file    <- params$de_list_file
+exclude_miRNA   <- params$exclude_miRNA
 ```
 
 ### Load Data
@@ -62,47 +68,48 @@ mirna_tpm <- log2(as.matrix(mirna_tpm) + 1)
 
 # Histology
 histology_df <- read_delim(histology_file, show_col_types = FALSE)
-```
 
-### Load precomputed GSVA scores
-
-```{r load-gsva-scores}
-# read in GSVA scores from previous run
-gsva_scores <- read_tsv(file.path(results_dir, "gobp-gsva-scores.tsv"), col_types = cols()) %>%
+# GSVA scores
+gsva_scores <- read_tsv(gsva_file, show_col_types = FALSE) %>%
   column_to_rownames("Pathway") %>%
   as.matrix()
 ```
 
-### Select DIPG/DMG tumor samples and subset matrices
+### Select tumor samples and subset matrices
 
 ```{r select-samples}
-dipg_tumor_bioassay_ids <- histology_df %>%
+tumor_bioassay_ids <- histology_df %>%
   filter(experimental_strategy == "RNA-Seq",
          sample_type == "Tumor",
-         histology == "DIPG or DMG") %>%
+         histology == histology_label) %>%
   pull(Bioassay_ID)
 
-dipg_tumor_ext_ids <- histology_df %>%
+tumor_ext_ids <- histology_df %>%
   filter(experimental_strategy == "RNA-Seq",
          sample_type == "Tumor",
-         histology == "DIPG or DMG") %>%
+         histology == histology_label) %>%
   pull(external_sample_id)
 
 # Subset GSVA and miRNA matrices
-pathway_scores <- gsva_scores[, dipg_tumor_bioassay_ids, drop=FALSE]
-miRNA_expr <- mirna_tpm  [, dipg_tumor_ext_ids, drop=FALSE]
+pathway_scores <- gsva_scores[, tumor_bioassay_ids, drop=FALSE]
+miRNA_expr <- mirna_tpm  [, tumor_ext_ids, drop=FALSE]
 ```
 
 ### Correlate miRNA Expression with Pathway Scores
 
 ```{r correlation, message=FALSE, warning=FALSE}
-# Select DE miRNAs of interest (170 genes)
-DIPG_sig_DE_miRNA_list <- read.csv(file = "input/DIPG or DMG_sig_DE_miRNA_list.csv")
+# Load subtype-specific DE miRNA list
+sig_DE_miRNA_list <- read.csv(file = de_list_file)
 
-de_mirnas <- DIPG_sig_DE_miRNA_list$miRNA
+# Optional: exclude specific miRNAs
+if (length(exclude_miRNA) > 0) {
+  sig_DE_miRNA_list <- sig_DE_miRNA_list %>% filter(!miRNA %in% exclude_miRNA)
+}
+
+de_mirnas <- sig_DE_miRNA_list$miRNA
 miRNA_expr_sub <- miRNA_expr[rownames(miRNA_expr) %in% de_mirnas, , drop=FALSE]
 
-# Spearman correlation for all pairs
+# Spearman correlation
 rho_mat <- cor(t(miRNA_expr_sub), t(pathway_scores), method = "spearman")
 rho_mat_filtered <- rho_mat[rowSums(is.na(rho_mat)) != ncol(rho_mat), ]
 
@@ -124,20 +131,26 @@ corr_df <- as.data.frame(as.table(rho_mat_filtered)) %>%
 ### Heatmap: all pairs
 
 ```{r draw-heatmap}
-rho_mat_filtered <- corr_df %>%
+rho_mat_all <- corr_df %>%
   select(miRNA, Pathway, rho) %>%
   pivot_wider(names_from = miRNA, values_from = rho) %>%
   column_to_rownames("Pathway") %>%
   as.matrix()
 
-# Annotation mapping for "all pairs" view 
-sample_anno <- data.frame(miRNA = colnames(rho_mat_filtered)) %>%
-  left_join(DIPG_sig_DE_miRNA_list, by = "miRNA")
+# Ensure excluded miRNAs are not present
+if (length(exclude_miRNA) > 0) {
+  keep_cols <- setdiff(colnames(rho_mat_all), exclude_miRNA)
+  rho_mat_all <- rho_mat_all[, keep_cols, drop = FALSE]
+}
 
-sample_anno$Category  <- factor(sample_anno$Category,
-                                levels = c("Paired T vs AN", "Shared", "T vs HN"))
-sample_anno$direction <- factor(sample_anno$direction,
-                                levels = c("up", "down"))
+# Annotation mapping for "all pairs" view 
+sample_anno_all <- tibble(miRNA = colnames(rho_mat_all)) %>%
+  left_join(sig_DE_miRNA_list, by = "miRNA")
+
+sample_anno_all$Category  <- factor(sample_anno_all$Category,
+                                    levels = c("Paired T vs AN", "Shared", "T vs HN"))
+sample_anno_all$direction <- factor(sample_anno_all$direction,
+                                    levels = c("up", "down"))
 
 comp_cols <- c("Paired T vs AN" = "#1b9e77",
                "Shared"         = "#d95f02",
@@ -148,17 +161,17 @@ dir_cols  <- c(up = "#E41A1C", down = "#377EB8")
 col_fun <- colorRamp2(c(-1, 0, 1), c("blue", "white", "red"))
 
 ha_all <- HeatmapAnnotation(
-  Comparison = sample_anno$Category,
-  Direction  = sample_anno$direction,
+  Comparison = sample_anno_all$Category,
+  Direction  = sample_anno_all$direction,
   col = list(Comparison = comp_cols, Direction = dir_cols),
   annotation_name_gp = gpar(fontsize = 10),
   annotation_legend_param = list(
-    Comparison = list(title = "Comparison", at = levels(sample_anno$Category)),
-    Direction  = list(title = "Direction",  at = levels(sample_anno$direction))
+    Comparison = list(title = "Comparison", at = levels(sample_anno_all$Category)),
+    Direction  = list(title = "Direction",  at = levels(sample_anno_all$direction))
   )
 )
 
-ht1 <- Heatmap(rho_mat_filtered,
+ht1 <- Heatmap(rho_mat_all,
                cluster_columns = TRUE, 
                clustering_distance_columns = "euclidean",
                clustering_method_columns = "complete",
@@ -177,7 +190,7 @@ ht1 <- Heatmap(rho_mat_filtered,
 print(ht1)
 
 
-pdf(file.path(plot_dir, "heatmap_all.pdf"))
+pdf(file.path(plot_dir, paste0(histology_label, "_heatmap_all.pdf")))
 print(ht1)
 dev.off()
 ```
@@ -250,23 +263,25 @@ opt_col_k <- as.integer(sil_dat_col$clusters[which.max(sil_dat_col$y)])
 opt_col_k
 ```
 
-```{r define-sample-anno}
-# define sample annotation 
-sample_anno <- data.frame(miRNA = colnames(rho_mat_sig)) %>%
-  left_join(DIPG_sig_DE_miRNA_list, by = "miRNA")
+### Heatmap: significant pairs + tables
 
-sample_anno$Category  <- factor(sample_anno$Category,
-                                levels = c("Paired T vs AN", "Shared", "T vs HN"))
-sample_anno$direction <- factor(sample_anno$direction,
-                                levels = c("up", "down"))
+```{r define-sample-anno}
+# Annotation for significant set
+sample_anno_sig <- tibble(miRNA = colnames(rho_mat_sig)) %>%
+  left_join(sig_DE_miRNA_list, by = "miRNA") %>%
+  mutate(
+    Category = factor(Category, levels = c("Paired T vs AN", "Shared", "T vs HN")),
+    direction = factor(direction, levels = c("up", "down"))
+  )
+
 ha_sig <- HeatmapAnnotation(
-  Comparison = sample_anno$Category,
-  Direction  = sample_anno$direction,
+  Comparison = sample_anno_sig$Category,
+  Direction  = sample_anno_sig$direction,
   col = list(Comparison = comp_cols, Direction = dir_cols),
   annotation_name_gp = gpar(fontsize = 10),
   annotation_legend_param = list(
-    Comparison = list(title = "Comparison", at = levels(sample_anno$Category)),
-    Direction  = list(title = "Direction",  at = levels(sample_anno$direction))
+    Comparison = list(title = "Comparison", at = levels(sample_anno_sig$Category)),
+    Direction  = list(title = "Direction",  at = levels(sample_anno_sig$direction))
   )
 )
 ```
@@ -284,102 +299,106 @@ ht2 <- Heatmap(
   use_raster = TRUE,
   heatmap_legend_param = list(legend_gp = gpar(fontsize = 10),
                               labels_gp = gpar(fontsize = 10))
-)
-
-ht2 <- draw(ht2)
-
-row_idx <- unlist(row_order(ht2))
-col_idx <- unlist(column_order(ht2))
+) %>% draw()
 
 row_idx_list <- row_order(ht2)
 col_idx_list <- column_order(ht2)
+row_idx <- unlist(row_idx_list)
+col_idx <- unlist(col_idx_list)
 
-row_cluster_by_order <- rep(seq_along(row_idx_list), lengths(row_idx_list))
-col_cluster_by_order <- rep(seq_along(col_idx_list), lengths(col_idx_list))
+row_cluster_ids <- rep(seq_along(row_idx_list), lengths(row_idx_list))
+col_cluster_ids <- rep(seq_along(col_idx_list), lengths(col_idx_list))
 
-## Pathway (row) clusters
-pathway_clusters <- tibble::tibble(
-  Pathway = rownames(rho_mat_sig)[row_idx],
-  row_cluster = row_cluster_by_order
+write_tsv(
+  tibble(Pathway = rownames(rho_mat_sig)[row_idx], row_cluster = row_cluster_ids),
+  file.path(results_dir, paste0(histology_label, "_cor_heatmap_pathway_clusters.tsv"))
 )
 
-write_tsv(pathway_clusters, file.path(results_dir, "cor_heatmap_pathway_clusters.tsv"))
-
-## miRNA (column) clusters
-mirna_clusters <- tibble::tibble(
-  miRNA = colnames(rho_mat_sig)[col_idx],
-  col_cluster = col_cluster_by_order
+write_tsv(
+  tibble(miRNA = colnames(rho_mat_sig)[col_idx], col_cluster = col_cluster_ids),
+  file.path(results_dir, paste0(histology_label, "_cor_heatmap_miRNA_clusters.tsv"))
 )
 
-write_tsv(mirna_clusters, file.path(results_dir, "cor_heatmap_miRNA_clusters.tsv"))
+# Save figure
+pdf(file.path(plot_dir, paste0(histology_label, "_heatmap_sig_cluster.pdf")))
+ht2
+dev.off()
 ```
+
+### Export heatmap-ordered matrix with targe genes + annotations
 
 ```{r save-heatmap-table, message=FALSE, warning=FALSE}
 # Order rows/cols to match the heatmap
 rho_mat_ordered <- rho_mat_sig[row_idx, col_idx, drop = FALSE]
 miRNA_cols <- colnames(rho_mat_ordered)
 
-mir_lookup <- setNames(mirna_clusters$col_cluster, mirna_clusters$miRNA)
-mir_clust_vec  <- as.character(mir_lookup[miRNA_cols])
+mir_lookup  <- setNames(col_cluster_ids, colnames(rho_mat_sig)[col_idx])
+path_lookup <- setNames(row_cluster_ids, rownames(rho_mat_sig)[row_idx])
 
-path_lookup    <- setNames(pathway_clusters$row_cluster, pathway_clusters$Pathway)
-path_clust_vec <- unname(path_lookup[rownames(rho_mat_ordered)])
-
-# Add TargetGenes next to Pathway
+# Target genes mapping
 tg_map <- read_tsv(file.path(results_dir, "gobp-gsva-scores-with-target-genes.tsv"), show_col_types = FALSE) %>%
   select(Pathway, TargetGenes = Genes) %>%
   distinct(Pathway, .keep_all = TRUE)
 
-rho_df <- as.data.frame(rho_mat_ordered, stringsAsFactors = FALSE) %>%
+rho_df_chr <- as.data.frame(rho_mat_ordered, stringsAsFactors = FALSE) %>%
   rownames_to_column("Pathway") %>%
   left_join(tg_map, by = "Pathway") %>%
-  relocate(TargetGenes, .after = Pathway)
-
-rho_df_chr <- rho_df %>%
-  mutate(PathwayCluster = as.character(path_clust_vec)) %>%
+  relocate(TargetGenes, .after = Pathway) %>%
+  mutate(
+    PathwayCluster = as.character(path_lookup[Pathway])
+  ) %>%
   relocate(PathwayCluster, .after = TargetGenes) %>%
   mutate(across(all_of(miRNA_cols), ~ formatC(., digits = 3, format = "f")))
 
-anno_lkp <- sample_anno %>%
+anno_lkp <- sample_anno_sig %>%
   filter(miRNA %in% miRNA_cols) %>%
   arrange(factor(miRNA, levels = miRNA_cols))
 
-comp_vec <- as.character(anno_lkp$Category)
-dir_vec <- as.character(anno_lkp$direction)
-
-comp_row <- tibble::tibble(
-  Pathway     = "Comparison",
-  TargetGenes = "",
-  PathwayCluster = "",
-  !!! rlang::set_names(as.list(comp_vec), miRNA_cols)
+comp_row <- tibble(
+  Pathway = "Comparison", TargetGenes = "", PathwayCluster = "",
+  !!! rlang::set_names(as.list(as.character(anno_lkp$Category)), miRNA_cols)
+)
+dir_row  <- tibble(
+  Pathway = "Direction",  TargetGenes = "", PathwayCluster = "",
+  !!! rlang::set_names(as.list(as.character(anno_lkp$direction)), miRNA_cols)
+)
+mir_row  <- tibble(
+  Pathway = "miRNA_cluster", TargetGenes = "", PathwayCluster = "",
+  !!! rlang::set_names(as.list(as.character(mir_lookup[miRNA_cols])), miRNA_cols)
 )
 
-dir_row <- tibble::tibble(
-  Pathway     = "Direction",
-  TargetGenes = "",
-  PathwayCluster = "",
-  !!! rlang::set_names(as.list(dir_vec), miRNA_cols)
-)
-
-mir_row <- tibble::tibble(
-  Pathway = "miRNA_cluster",
-  TargetGenes = "",
-  PathwayCluster = "",
-  !!! rlang::set_names(as.list(mir_clust_vec), miRNA_cols)
-)
-
-# Combine and save
 out_tbl <- bind_rows(comp_row, dir_row, mir_row, rho_df_chr)
 
 write.table(out_tbl,
-            file = file.path(results_dir, "correlation_matrix_heatmap_order.tsv"),
+            file = file.path(results_dir, paste0(histology_label, "_correlation_matrix_heatmap_order.tsv")),
             sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
-```{r save-sig-heatmap}
-pdf(file.path(plot_dir, "heatmap_sig_cluster.pdf"))
-print(ht2)
-dev.off()
+### Tidy long table
+
+```{r get-tidy-long-table}
+miRNA_cluster_df <- tibble(
+  miRNA   = colnames(rho_mat_sig)[col_idx],
+  Cluster = paste0("C", col_cluster_ids)
+)
+
+df_long <- corr_df %>%
+  semi_join(
+    expand.grid(miRNA = miRNA_cols, Pathway = rownames(rho_mat_sig)[row_idx],
+                stringsAsFactors = FALSE),
+    by = c("miRNA", "Pathway")
+  ) %>%
+  left_join(sample_anno_sig %>% select(miRNA, Category, direction), by = "miRNA") %>%
+  left_join(miRNA_cluster_df, by = "miRNA") %>%
+  left_join(tg_map, by = "Pathway") %>%
+  mutate(
+    row_rank = match(Pathway, rownames(rho_mat_sig)[row_idx]),
+    col_rank = match(miRNA,  colnames(rho_mat_sig)[col_idx])
+  ) %>%
+  arrange(row_rank, col_rank) %>%
+  select(miRNA, Category, direction, Cluster, Pathway, TargetGenes, rho, pval, padj)
+
+write_tsv(df_long, file.path(results_dir, paste0(histology_label, "_miRNA_pathway_correlations_tidy.tsv")))
 ```
 
 ### Session Info
@@ -387,3 +406,5 @@ dev.off()
 ```{r session-info}
 sessionInfo()
 ```
+
+
