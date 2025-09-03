@@ -7,10 +7,10 @@ output:
 author: "Bicna Song"
 date: "`r Sys.Date()`"
 params:
-  histology: "DIPG or DMG" # MB
-  de_list_file: "input/DIPG or DMG_sig_DE_miRNA_list.csv" # input/MB_sig_DE_miRNA_list.csv
-  exclude_miRNA: !r character()
-  # exclude_miRNA: "hsa-miR-378d" for MB
+  histology: "MB" # DIPG or DMG
+  de_list_file: "input/MB_sig_DE_miRNA_list.csv" # input/DIPG or DMG_sig_DE_miRNA_list.csv
+  # exclude_miRNA: !r character() for DIPG or DMG
+  exclude_miRNA: "hsa-miR-378d" # for MB
 ---
 
 ### Overview
@@ -126,6 +126,9 @@ corr_df <- as.data.frame(as.table(rho_mat_filtered)) %>%
   mutate(padj = p.adjust(pval, method = "BH")) %>%
   ungroup() %>%
   arrange(miRNA, desc(abs(rho)))
+
+# Save the table
+write_tsv(corr_df, file.path(results_dir, paste0(histology_label, "_miRNA_GSVA_pathway_correlation.tsv")))
 ```
 
 ### Heatmap: all pairs
@@ -200,6 +203,9 @@ dev.off()
 ```{r get-signif-corr-df}
 signif_corr <- corr_df %>%
   filter(abs(rho) > 0.5, padj < 0.1)
+
+# Save the table
+write_tsv(signif_corr, file.path(results_dir, paste0(histology_label, "_miRNA_GSVA_pathway_significnat_correlation.tsv")))
 
 sig_pathway <- unique(signif_corr$Pathway)
 sig_mirna   <- unique(signif_corr$miRNA)
