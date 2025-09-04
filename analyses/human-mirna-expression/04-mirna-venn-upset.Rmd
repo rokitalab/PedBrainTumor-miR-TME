@@ -294,6 +294,46 @@ if (nrow(down_df_hn) > 0) {
 }
 ```
 
+```{r}
+# ---- All up and down-regulated ----
+up_lists   <- to_named_list(sig_tbl_all, "up")
+down_lists <- to_named_list(sig_tbl_all, "down")
+
+up_df   <- as_membership_df(up_lists)
+down_df <- as_membership_df(down_lists)
+
+if (nrow(up_df) > 0) {
+  p_up <- upset(
+    up_df,
+    intersect = subtypes_full,
+    name = "Upregulated miRNAs",
+    width_ratio = 0.2,
+    min_size = 1,
+    sort_intersections = "descending",
+    set_sizes = upset_set_size() + labs(title = "Set sizes (Up)"),
+    base_annotations = list('Intersection size' = intersection_size() + labs(title = "Intersections (Up)"))
+  ) + ggplot2::ggtitle("UpSet: Upregulated miRNAs")
+  print(p_up)
+  ggsave(file.path(plot_dir, "upset_upregulated_miRNAs.pdf"), p_up, width = 8, height = 5)
+}
+
+if (nrow(down_df) > 0) {
+  p_down <- upset(
+    down_df,
+    intersect = subtypes_full,
+    name = "Downregulated miRNAs",
+    width_ratio = 0.2,
+    min_size = 1,
+    sort_intersections = "descending",
+    set_sizes = upset_set_size() + labs(title = "Set sizes (Down)"),
+    base_annotations = list('Intersection size' = intersection_size() + labs(title = "Intersections (Down)"))
+  ) + ggplot2::ggtitle("UpSet: Downregulated miRNAs")
+  print(p_down)
+  ggsave(file.path(plot_dir, "upset_downregulated_miRNAs.pdf"), p_down, width = 8, height = 5)
+}
+```
+
+
 ### Session Info
 
 ```{r session-info}
