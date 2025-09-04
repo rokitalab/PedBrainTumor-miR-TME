@@ -53,3 +53,9 @@ analyses/human-novel-mirna-target-prediction/results/gencode.v39.3utr.fa
 
 # Ignore miranda ouput
 analyses/human-novel-mirna-target-prediction/result/miranda_output.txt
+
+# Ignore large files
+analyses/human-rna-expression/result/MB_miRNA_pathway_correlations_tidy.tsv
+analyses/human-rna-expression/result/MB_miRNA_pathway_correlations.tsv
+analyses/human-rna-expression/result/DIPG or DMG_miRNA_pathway_correlations_tidy.tsv
+analyses/human-rna-expression/result/DIPG or DMG_miRNA_pathway_correlations.tsv

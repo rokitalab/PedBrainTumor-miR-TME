@@ -135,11 +135,32 @@ gsva_scores_param <- gsvaParam(expr_mat,
 gsva_scores <- gsva(gsva_scores_param, verbose = TRUE)
 ```
 
+
 ```{r save gsva-scores}
 gsva_scores %>%
   as.data.frame() %>%
   rownames_to_column("Pathway") %>%
   write_tsv(file.path(results_dir, "gobp-gsva-scores.tsv"))
+```
+
+```{r save gsva-scores-with-target-genes}
+scores_df <- gsva_scores %>%
+  as.data.frame() %>%
+  rownames_to_column("Pathway")
+
+# Build mapping: Pathway -> semicolon-joined gene symbols (and counts)
+genes_map <- vapply(go_bp_list, function(g) paste(unique(g), collapse = ";"), character(1))
+gene_count <- lengths(go_bp_list)
+
+# Add as columns, right after Pathway
+scores_df <- scores_df %>%
+  dplyr::mutate(
+    Genes     = genes_map[Pathway],
+    GeneCount = unname(gene_count[Pathway])
+  ) %>%
+  dplyr::relocate(Genes, GeneCount, .after = Pathway)
+
+readr::write_tsv(scores_df, file.path(results_dir, "gobp-gsva-scores-with-target-genes.tsv"))
 ```
 
 ### Run differential expression analysis on pathway GSVA scores

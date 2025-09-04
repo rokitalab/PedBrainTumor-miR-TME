@@ -17,3 +17,6 @@ Rscript -e "rmarkdown::render('04-GSEA-hallmark.Rmd')"
 
 # Run GSVA analysis
 Rscript -e "rmarkdown::render('05-GSVA-GOBP.Rmd')"
+
+# Run miRNA-GSVA-corrleation analysis
+Rscript -e "rmarkdown::render('06-miRNA-GSVA-correlation.Rmd')"
