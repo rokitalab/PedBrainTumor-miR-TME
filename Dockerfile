@@ -72,6 +72,7 @@ RUN R -e 'BiocManager::install(c( \
   "circlize", \
   "clusterProfiler", \
   "ComplexHeatmap", \
+  "ComplexUpset", \
   "corrplot", \
   "cowplot", \
   "DESeq2", \
@@ -79,10 +80,12 @@ RUN R -e 'BiocManager::install(c( \
   "EnhancedVolcano", \
   "fgsea", \
   "future.apply", \
+  "factoextra", \
   "ggpubr", \
   "ggstatsplot", \
   "ggthemes", \
   "gridExtra", \
+  "ggvenn", \
   "GO.db", \
   "GSVA", \
   "limma", \
