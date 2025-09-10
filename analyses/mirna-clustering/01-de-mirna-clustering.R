@@ -36,6 +36,8 @@ results_dir <- file.path(analysis_dir, "results")
 plot_dir <- file.path(analysis_dir, "plots")
 input_dir <- file.path(analysis_dir, "input")
 
+# Set file paths
+
 miRNA_tpm <- file.path(root_dir, 
                        "analyses",
                        "immune-deconvolution",
@@ -45,7 +47,7 @@ histology_file <- file.path(root_dir, "analyses",
                             "histology-preprocessing", 
                             "results", "histologies.tsv")
 
-### Load Data
+# Wrangle data
 
 # miRNA TPM
 mirna_tpm <- readRDS(miRNA_tpm)
@@ -54,12 +56,15 @@ mirna_tpm <- log2(as.matrix(mirna_tpm) + 1)
 # Histology
 histology_df <- read_delim(histology_file, show_col_types = FALSE)
 
-
+# define histology groups to cluster & plot
 groups <- c("DIPG or DMG", "MB")
-normal_ids <- c("B1","B2","B3","B4","B5")
 
+# loop through groups
 for (group in groups){
   
+  # load histology-specific miRNA-immune cell fraction correlation results
+  
+  # XCell results
   xcell_scores <- read_tsv(file.path(root_dir, 
                                      "analyses",
                                      "immune-deconvolution",
@@ -72,6 +77,7 @@ for (group in groups){
                 names_from = cell_type,
                 values_from = pearson_r)
   
+  # quanti-seq results
   quantiseq_scores <- read_tsv(file.path(root_dir, 
                                          "analyses",
                                          "immune-deconvolution",
@@ -85,8 +91,7 @@ for (group in groups){
                 values_from = pearson_r)
   
   
-  ### Select DIPG/DMG tumor samples and subset matrices
-  
+  # Subset histologies file and pull miRNA sample IDS
   group_hist <- histology_df %>%
     filter(experimental_strategy == "RNA-Seq",
            histology == group)
@@ -94,30 +99,31 @@ for (group in groups){
   group_ids <- group_hist %>%
     pull(external_sample_id)
   
-  # Subset GSVA and miRNA matrices
+  # Subset miRNA tpm matrix
   miRNA_expr <- mirna_tpm  [, group_ids, drop=FALSE]
   
+  # normalize miRNA TPMs
   miRNA_zscores <- t(apply(miRNA_expr, 1, function(x) (x - mean(x)) / sd(x)))
   miRNA_zscores <- miRNA_zscores[rowSums(is.nan(miRNA_zscores)) == 0,]
   
-  ### Correlate miRNA Expression with Pathway Scores
-  
-  # Select DE miRNAs of interest (170 genes)
+  # Load DE miRNAs
   sig_DE_miRNA_list <- read.csv(file.path(root_dir, "analyses", 
                                           "human-mirna-expression",
                                           "results", 
                                          glue::glue("{group}_sig_DE_miRNA_list.csv")))
   
   de_mirnas <- sig_DE_miRNA_list$miRNA
+  
+  # subset miRNA expr matrix
   miRNA_expr_sub <- miRNA_zscores[rownames(miRNA_zscores) %in% de_mirnas, , drop=FALSE]
   
-  ### Heatmap: all pairs
-  
-  # Annotation mapping for "all pairs" view 
+  # Create miRNA annotation df
   mirna_anno <- data.frame(miRNA = rownames(miRNA_expr_sub)) %>%
     left_join(sig_DE_miRNA_list, by = "miRNA") %>%
+    # add immune cell fraction correlation coefficients
     left_join(xcell_scores) %>%
     left_join(quantiseq_scores) %>%
+    # add column indicating if miRNA is annotated or novel
     dplyr::mutate(Annotated = case_when(
       grepl("hsa", miRNA) ~ "Yes",
       TRUE ~ "No"
@@ -133,11 +139,12 @@ for (group in groups){
             "No" = "#d95f02")
   dir_cols  <- c(up = "#E41A1C", down = "#377EB8")
   
+  # Create sample annotation df
   sample_anno <- data.frame(external_sample_id = colnames(miRNA_expr_sub)) %>%
     left_join(group_hist %>% dplyr::select(sample_type,
                                           external_sample_id))
   
-  # Color mapping for correlation
+  # Left annotation object for discrete miRNA annotations 
   ra_left <- rowAnnotation(
     Annotated = mirna_anno$Annotated,
     Direction  = mirna_anno$direction,
@@ -149,6 +156,7 @@ for (group in groups){
     )
   )
   
+  # Right annotation object for correlation annotations 
   ra_right <- rowAnnotation(
     "Immune\nscore (x)" = anno_barplot(
       mirna_anno$`immune score (x)`,     # numeric vector, one value per row
@@ -185,6 +193,7 @@ for (group in groups){
     annotation_name_gp = gpar(fontsize = 10)
   )
   
+  # sample annotation 
   ha_all <- HeatmapAnnotation(
     Condition = sample_anno$sample_type,
     col = list(Condition = c("Tumor" = "black",
@@ -195,14 +204,14 @@ for (group in groups){
   
   col_fun <- colorRamp2(c(-4, 0, 4), c("navyblue", "white", "orangered"))
   
-  ### Determining Optimal Clusters
-  
   set.seed(123)
   
+  # define cluster number
   clusters <- ifelse(group == "DIPG or DMG",
                      9, 6)
   
-  ht2 <- Heatmap(
+  # Generate heatmap
+  mirna_ht <- Heatmap(
     miRNA_expr_sub,
     cluster_rows = TRUE,
     cluster_columns = TRUE,
@@ -221,6 +230,7 @@ for (group in groups){
                                 labels_gp = gpar(fontsize = 10))
   )
   
+  # Save heatmap
   ht <- ifelse(group == "DIPG or DMG",
                     8, 5)
   
@@ -228,28 +238,26 @@ for (group in groups){
                 glue::glue("{group}-de-mirna-heatmap.pdf")),
       width = 15, height = ht)
   
-  ht2 <- draw(ht2)
+  mirna_ht <- draw(mirna_ht)
   
   dev.off()
   
-  row_idx <- unlist(row_order(ht2))
-  col_idx <- unlist(column_order(ht2))
+  # create miRNA df that includes cluster assignment
   
-  row_idx_list <- row_order(ht2)
-  col_idx_list <- column_order(ht2)
-  
+  row_idx <- unlist(row_order(mirna_ht))
+  row_idx_list <- row_order(mirna_ht)
   row_cluster_by_order <- rep(seq_along(row_idx_list), lengths(row_idx_list))
-  col_cluster_by_order <- rep(seq_along(col_idx_list), lengths(col_idx_list))
-  
-  ## Pathway (row) clusters
+
   mirna_clusters <- tibble::tibble(
     miRNA = rownames(miRNA_expr_sub)[row_idx],
     row_cluster = row_cluster_by_order
   )
   
+  # add other annotation columns
   mirna_clusters <- mirna_clusters %>%
     left_join(mirna_anno) 
   
+  # write to output
   write_tsv(mirna_clusters,
             file.path(results_dir,
                       glue::glue("{group}-de-mirna-cluster-membership-immune-scores.tsv")))
