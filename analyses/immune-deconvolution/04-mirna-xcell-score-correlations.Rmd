@@ -49,7 +49,7 @@ hist <- read_tsv(histology_file)
 
 samples_of_interest <- hist %>%
   dplyr::filter(experimental_strategy == "miRNA-Seq",
-                histology %in% c("DIPG or DMG", "MB", "EPN"),
+                histology %in% c("DIPG or DMG", "MB"),
                 external_sample_id != "1-1855-CC1",
                 !grepl("Adjacent", sample_type)) %>%
   pull(external_sample_id)
