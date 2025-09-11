@@ -1,6 +1,36 @@
 # release notes
 
-## current release (v4)
+## current release (v5)
+- Data release date: 2025-09-11
+- status: available
+
+Added files:
+- `mouse-gene-counts-rsem-expected_count.all.rds`; Mouse RNA-seq raw counts
+- `mouse-gene-expression-rsem-fpkm.all.rds`; Mouse RNA-seq FPKMs 
+- `mouse-gene-expression-rsem-tpm.all.rds`; Mouse RNA-seq TPMs 
+
+```
+v5
+├── 30-1075661268-all_novel_miRNA.xls
+├── 30-1075661268-miRNA_expression.xls
+├── 30-1075661268-miRNA_Target_anno.xls
+├── 30-931106737-miRNA_expression.csv
+├── 30-931106737-miRNA-all.fpkm.csv
+├── 30-963755216-miRNA_expression.csv
+├── 30-963755216-miRNA-all.fpkm.csv
+├── all_novel_miRNA.xls
+├── gene-counts-rsem-expected_count-collapsed.all.rds
+├── gene-expression-rsem-fpkm-collapsed.all.rds
+├── gene-expression-rsem-tpm-collapsed.all.rds
+├── mouse-gene-counts-rsem-expected_count.all.rds
+├── mouse-gene-expression-rsem-fpkm.all.rds
+├── mouse-gene-expression-rsem-tpm.all.rds
+├── miRNA_Target_anno.csv
+├── miRNA-sample-metadata.txt
+└── release-notes.md
+```
+
+## archived release (v4)
 - Data release date: 2025-05-30
 - status: available
 
