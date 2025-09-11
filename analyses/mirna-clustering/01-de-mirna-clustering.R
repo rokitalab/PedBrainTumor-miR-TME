@@ -54,7 +54,8 @@ mirna_tpm <- readRDS(miRNA_tpm)
 mirna_tpm <- log2(as.matrix(mirna_tpm) + 1)
 
 # Histology
-histology_df <- read_delim(histology_file, show_col_types = FALSE)
+histology_df <- read_delim(histology_file, show_col_types = FALSE) %>%
+  dplyr::filter(external_sample_id != "1-1855-CC1")
 
 # define histology groups to cluster & plot
 groups <- c("DIPG or DMG", "MB")
@@ -93,7 +94,7 @@ for (group in groups){
   
   # Subset histologies file and pull miRNA sample IDS
   group_hist <- histology_df %>%
-    filter(experimental_strategy == "RNA-Seq",
+    filter(experimental_strategy == "miRNA-Seq",
            histology == group)
   
   group_ids <- group_hist %>%
@@ -208,7 +209,7 @@ for (group in groups){
   
   # define cluster number
   clusters <- ifelse(group == "DIPG or DMG",
-                     9, 6)
+                     8, 6)
   
   # Generate heatmap
   mirna_ht <- Heatmap(
