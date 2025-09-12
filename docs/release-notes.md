@@ -5,9 +5,9 @@
 - status: available
 
 Added files:
-- `mouse-gene-counts-rsem-expected_count.all.rds`; Mouse RNA-seq raw counts
-- `mouse-gene-expression-rsem-fpkm.all.rds`; Mouse RNA-seq FPKMs 
-- `mouse-gene-expression-rsem-tpm.all.rds`; Mouse RNA-seq TPMs 
+- `mouse-gene-counts-rsem-expected_count-collapsed.all.rds`; Mouse collapsed RNA-seq raw counts
+- `mouse-gene-expression-rsem-fpkm-collapsed.all.rds`; Mouse collapsed RNA-seq FPKMs 
+- `mouse-gene-expression-rsem-tpm-collapsed.all.rds`; Mouse collapsed RNA-seq TPMs 
 
 ```
 v5
@@ -22,9 +22,9 @@ v5
 ├── gene-counts-rsem-expected_count-collapsed.all.rds
 ├── gene-expression-rsem-fpkm-collapsed.all.rds
 ├── gene-expression-rsem-tpm-collapsed.all.rds
-├── mouse-gene-counts-rsem-expected_count.all.rds
-├── mouse-gene-expression-rsem-fpkm.all.rds
-├── mouse-gene-expression-rsem-tpm.all.rds
+├── mouse-gene-counts-rsem-expected_count-collapsed.all.rds
+├── mouse-gene-expression-rsem-fpkm-collapsed.all.rds
+├── mouse-gene-expression-rsem-tpm-collapsed.all.rds
 ├── miRNA_Target_anno.csv
 ├── miRNA-sample-metadata.txt
 └── release-notes.md
