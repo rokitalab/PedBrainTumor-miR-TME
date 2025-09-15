@@ -64,6 +64,27 @@ xcell_res <- readRDS(xcell_file) %>%
   left_join(hist %>% dplyr::select(external_sample_id,
                                    Bioassay_ID))
 
+macro_res <- xcell_res %>%
+#  dplyr::select(Bioassay_ID, cell_type, fraction) %>%
+  dplyr::filter(cell_type %in% c("Macrophage M1",
+                                 "Macrophage M2")) %>%
+  pivot_wider(id_cols = c(Bioassay_ID, sample_id, sample_type,
+                 histology, cancer_group, molecular_subtype,
+                 method, external_sample_id),
+              names_from = "cell_type",
+              values_from = "fraction") %>%
+  dplyr::mutate(fraction = `Macrophage M2`/`Macrophage M1`) %>%
+  dplyr::mutate(fraction = case_when(
+    is.nan(fraction) | is.infinite(fraction) ~ NA,
+    TRUE ~ fraction
+  )) %>%
+  dplyr::select(-`Macrophage M1`,
+                -`Macrophage M2`) %>%
+  dplyr::mutate(cell_type = "M2:M1 ratio")
+
+xcell_res <- xcell_res %>%
+  bind_rows(macro_res)
+
 # remove cell types with low proportions
 mean_cell_proportions <- xcell_res %>%
   group_by(cell_type) %>%
@@ -94,7 +115,7 @@ for (group in groups){
   group_samples <- hist %>% 
     dplyr::filter(histology == group,
                   !grepl("Adjacent", sample_type),
-                  external_sample_id != "1-1855-CC1") %>%
+                  !external_sample_id %in% c("4-1958-CC1", "1-1855-CC1")) %>%
     distinct(external_sample_id) %>%
     pull(external_sample_id)
   
@@ -110,8 +131,8 @@ for (group in groups){
                                           glue::glue("DESeq2_{group}_paired_sig.csv")))
   
   # identify common DE mirnas
-  common_de_mirnas <- intersect(mirna_de_healthyN$miRNA,
-                                mirna_de_adjN$miRNA)
+  common_de_mirnas <- unique(c(mirna_de_healthyN$miRNA,
+                                mirna_de_adjN$miRNA))
   
   # filter tpm matrix for DE mirnas and samples in group
   de_mirna_tpm <- mirna_tpm[common_de_mirnas, group_samples]
@@ -142,7 +163,7 @@ for (group in groups){
   de_mirna_df %>%
       dplyr::filter(miRNA == mirna,
                     !is.na(cell_type)) %>%
-      
+
       ggscatter(x = "log2_tpm",
               y= "fraction",
               color = "sample_type",
@@ -160,8 +181,8 @@ for (group in groups){
       theme_Publication() +
       labs(x = glue::glue("{mirna} log2-TPM"),
            y = "Cell fraction") +
-      theme(strip.text = element_text(size = 13)) 
-    
+      theme(strip.text = element_text(size = 13))
+
     # save to output
     ggsave(file.path(plot_dir,
                    glue::glue("{mirna}-tpm-vs-xcell-cell-proportions-{group}.pdf")),

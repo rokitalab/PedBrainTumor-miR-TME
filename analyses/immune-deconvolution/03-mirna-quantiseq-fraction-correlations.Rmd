@@ -15,9 +15,6 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(ggplot2)
   library(ggpubr)
-#  library(ggrepel)
- # library(patchwork)
- # library(matrixStats)
   library(ggsci)
 })
 
@@ -162,8 +159,8 @@ for (group in groups){
                                           glue::glue("DESeq2_{group}_paired_sig.csv")))
   
   # identify common DE mirnas
-  common_de_mirnas <- intersect(mirna_de_healthyN$miRNA,
-                                mirna_de_adjN$miRNA)
+  common_de_mirnas <- unique(c(mirna_de_healthyN$miRNA,
+                                mirna_de_adjN$miRNA))
   
   # filter tpm matrix for DE mirnas and samples in group
   de_mirna_tpm <- mirna_tpm[common_de_mirnas, group_samples]
@@ -195,26 +192,26 @@ for (group in groups){
       dplyr::filter(miRNA == mirna,
                     !is.na(cell_type),
                     cell_type != "uncharacterized cell") %>%
-      
-      ggscatter(x = "log2_tpm", 
-              y= "fraction", 
+
+      ggscatter(x = "log2_tpm",
+              y= "fraction",
               color = "sample_type",
-              add = "reg.line", 
-              conf.int = TRUE, 
-              cor.coef = TRUE, 
+              add = "reg.line",
+              conf.int = TRUE,
+              cor.coef = TRUE,
               cor.method = "pearson",
               add.params = list(color = "black",
                                 fill = NA),
               ticks = TRUE,
-              alpha = 0.6) + 
-      facet_wrap("cell_type", labeller = labeller(cell_type = label_wrap_gen(width = 18)), 
+              alpha = 0.6) +
+      facet_wrap("cell_type", labeller = labeller(cell_type = label_wrap_gen(width = 18)),
                  nrow  = 3,
                  scales = "free_y") +
-      theme_Publication() + 
+      theme_Publication() +
       labs(x = glue::glue("{mirna} log2-TPM"),
-           y = "Cell fraction") + 
+           y = "Cell fraction") +
       theme(strip.text = element_text(size = 13))  # Adjust the size here
-    
+
     # save to output
     ggsave(file.path(plot_dir,
                    glue::glue("{mirna}-tpm-vs-quantiseq-cell-proportions-{group}.pdf")),

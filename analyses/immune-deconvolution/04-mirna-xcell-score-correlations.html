@@ -1525,7 +1525,7 @@ histology_file &lt;- file.path(root_dir, &quot;analyses&quot;,
 
 hist &lt;- read_tsv(histology_file)</code></pre>
 <pre><code>## Rows: 102 Columns: 10
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (10): Bioassay_ID, experimental_strategy, sample_id, external_sample_id,...
 ## 
@@ -1533,7 +1533,7 @@ hist &lt;- read_tsv(histology_file)</code></pre>
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre class="r"><code>samples_of_interest &lt;- hist %&gt;%
   dplyr::filter(experimental_strategy == &quot;miRNA-Seq&quot;,
-                histology %in% c(&quot;DIPG or DMG&quot;, &quot;MB&quot;),
+                histology %in% c(&quot;DIPG or DMG&quot;, &quot;MB&quot;, &quot;EPN&quot;),
                 external_sample_id != &quot;1-1855-CC1&quot;,
                 !grepl(&quot;Adjacent&quot;, sample_type)) %&gt;%
   pull(external_sample_id)
@@ -1544,7 +1544,28 @@ mirna_tpm &lt;- mirna_tpm[,samples_of_interest]</code></pre>
   left_join(hist %&gt;% dplyr::select(external_sample_id,
                                    Bioassay_ID))</code></pre>
 <pre><code>## Joining with `by = join_by(Bioassay_ID)`</code></pre>
-<pre class="r"><code># remove cell types with low proportions
+<pre class="r"><code>macro_res &lt;- xcell_res %&gt;%
+#  dplyr::select(Bioassay_ID, cell_type, fraction) %&gt;%
+  dplyr::filter(cell_type %in% c(&quot;Macrophage M1&quot;,
+                                 &quot;Macrophage M2&quot;)) %&gt;%
+  pivot_wider(id_cols = c(Bioassay_ID, sample_id, sample_type,
+                 histology, cancer_group, molecular_subtype,
+                 method, external_sample_id),
+              names_from = &quot;cell_type&quot;,
+              values_from = &quot;fraction&quot;) %&gt;%
+  dplyr::mutate(fraction = `Macrophage M2`/`Macrophage M1`) %&gt;%
+  dplyr::mutate(fraction = case_when(
+    is.nan(fraction) | is.infinite(fraction) ~ NA,
+    TRUE ~ fraction
+  )) %&gt;%
+  dplyr::select(-`Macrophage M1`,
+                -`Macrophage M2`) %&gt;%
+  dplyr::mutate(cell_type = &quot;M2:M1 ratio&quot;)
+
+xcell_res &lt;- xcell_res %&gt;%
+  bind_rows(macro_res)
+
+# remove cell types with low proportions
 mean_cell_proportions &lt;- xcell_res %&gt;%
   group_by(cell_type) %&gt;%
   summarise(mean_proportion = mean(fraction, na.rm = TRUE)) %&gt;%
@@ -1571,7 +1592,7 @@ for (group in groups){
   group_samples &lt;- hist %&gt;% 
     dplyr::filter(histology == group,
                   !grepl(&quot;Adjacent&quot;, sample_type),
-                  external_sample_id != &quot;1-1855-CC1&quot;) %&gt;%
+                  !external_sample_id %in% c(&quot;4-1958-CC1&quot;, &quot;1-1855-CC1&quot;)) %&gt;%
     distinct(external_sample_id) %&gt;%
     pull(external_sample_id)
   
@@ -1587,8 +1608,8 @@ for (group in groups){
                                           glue::glue(&quot;DESeq2_{group}_paired_sig.csv&quot;)))
   
   # identify common DE mirnas
-  common_de_mirnas &lt;- intersect(mirna_de_healthyN$miRNA,
-                                mirna_de_adjN$miRNA)
+  common_de_mirnas &lt;- unique(c(mirna_de_healthyN$miRNA,
+                                mirna_de_adjN$miRNA))
   
   # filter tpm matrix for DE mirnas and samples in group
   de_mirna_tpm &lt;- mirna_tpm[common_de_mirnas, group_samples]
@@ -1619,7 +1640,7 @@ for (group in groups){
   de_mirna_df %&gt;%
       dplyr::filter(miRNA == mirna,
                     !is.na(cell_type)) %&gt;%
-      
+
       ggscatter(x = &quot;log2_tpm&quot;,
               y= &quot;fraction&quot;,
               color = &quot;sample_type&quot;,
@@ -1637,8 +1658,8 @@ for (group in groups){
       theme_Publication() +
       labs(x = glue::glue(&quot;{mirna} log2-TPM&quot;),
            y = &quot;Cell fraction&quot;) +
-      theme(strip.text = element_text(size = 13)) 
-    
+      theme(strip.text = element_text(size = 13))
+
     # save to output
     ggsave(file.path(plot_dir,
                    glue::glue(&quot;{mirna}-tpm-vs-xcell-cell-proportions-{group}.pdf&quot;)),
@@ -1673,7 +1694,7 @@ for (group in groups){
   
 }</code></pre>
 <pre><code>## Rows: 70 Columns: 6
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1681,7 +1702,7 @@ for (group in groups){
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 141 Columns: 6
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1691,7 +1712,7 @@ for (group in groups){
 ## Joining with `by = join_by(external_sample_id)`
 ## Joining with `by = join_by(miRNA)`
 ## Rows: 44 Columns: 6
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
@@ -1699,7 +1720,7 @@ for (group in groups){
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 33 Columns: 6
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): miRNA
 ## dbl (5): baseMean, log2FoldChange, lfcSE, pvalue, padj
