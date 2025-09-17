@@ -1,0 +1,313 @@
+---
+title: "Differential RNA Expression Analysis"
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+This script performs differential expression analysis of RNA-seq data using DESeq2.
+
+### Setup
+
+```{r load-packages, message=FALSE, warning=FALSE}
+# Load libraries
+library(DESeq2)
+library(tidyverse)
+library(rprojroot)
+library(readr)
+library(EnhancedVolcano)
+library(ashr)
+library(stringr)
+library(ggpubr)
+
+# Define directories
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "murine-rna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+# Source custom theme
+source(file.path(root_dir, "figures", "theme.R"))
+
+# File path for counts
+gene_cts_file <- file.path(data_dir, "mouse-gene-counts-rsem-expected_count-collapsed.all.rds")
+
+# File path for metadata
+metadata_file <- file.path(analysis_dir, "input", "Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv")
+```
+
+### Data Wrangling
+
+```{r get-metadata}
+metadata_df <- read_delim(metadata_file) %>%
+  filter(experimental_strategy == "RNA-Seq") %>%
+  select(external_sample_id, Day, Treatment, Bioassay_ID) %>%
+  distinct(external_sample_id, .keep_all = TRUE) %>%
+  rename(time = Day) %>%
+  rename(treatment = Treatment) %>%
+  mutate(
+    time = paste0("Day", time),
+    treatment = str_remove(treatment, "\\s*CAR\\b"),
+    treatment = str_squish(treatment),
+    treatment = if_else(treatment == "B7H3 STOP", "STOP", treatment)
+  )
+```
+
+```{r load-and-filter-counts}
+# load & filter genes with at least two non-zero samples
+gene_cts <- readRDS(gene_cts_file) %>%
+  filter(rowSums(across(everything(), ~ . != 0)) >= 5)
+
+# subset to samples in metadata
+valid_ids <- metadata_df$Bioassay_ID
+gene_cts <- round(gene_cts[, intersect(colnames(gene_cts), valid_ids), drop = FALSE])
+```
+
+```{r align-metadata-to-counts}
+metadata_df <- metadata_df %>%
+  arrange(match(Bioassay_ID, names(gene_cts)))
+```
+
+### Construct DESeqDataSet Object
+
+```{r message=FALSE, warning=FALSE}
+dds_all <- DESeqDataSetFromMatrix(countData = gene_cts,
+                                  colData = metadata_df,
+                                  design = ~ time + treatment)
+```
+
+### Generate PCA plot from all samples, and by timepoint
+
+```{r}
+# transform raw counts
+vsdata <- varianceStabilizingTransformation(dds_all)
+```
+
+```{r}
+# Build PCA data
+pca_data <- plotPCA(vsdata, intgroup = c("time","treatment"), returnData = TRUE)
+percentVar <- round(100 * attr(pca_data, "percentVar"))
+
+# add external_sample_id for labeling
+pca_data$Bioassay_ID <- rownames(pca_data)
+pca_data <- dplyr::left_join(
+  pca_data,
+  metadata_df[, c("Bioassay_ID","external_sample_id")],
+  by = "Bioassay_ID"
+)
+
+jx <- 0.05 * diff(range(pca_data$PC1))
+jy <- 0.05 * diff(range(pca_data$PC2))
+
+cols_treat <- c(B7H3 = "#E64B35FF", STOP = "#4DBBD5FF", Untreated = "#00A087FF")
+
+p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = treatment, shape = time)) +
+  geom_point(size = 3, alpha = 0.9,
+             position = position_jitter(width = jx, height = jy)) +
+  scale_shape_manual(values = c("Day14" = 16, "Day21" = 17)) +
+  scale_color_manual(values = cols_treat) +
+  labs(title = "All Samples",
+       color = "Treatment", shape = "Time Point",
+       x = paste0("PC1: ", percentVar[1], "% variance"),
+       y = paste0("PC2: ", percentVar[2], "% variance")) +
+  theme_Publication()
+
+ggsave(file.path(plot_dir, "rna-pca-plot-all.pdf"),
+       p_no_label, width = 5, height = 4)
+
+# Labeled version
+p_labeled <- p_no_label +
+  ggrepel::geom_text_repel(aes(label = external_sample_id),
+                           size = 3, max.overlaps = 20)
+print(p_labeled)
+```
+
+
+```{r}
+# Get unique time points
+time_points <- sort(unique(colData(dds_all)$time))
+
+p_list <- list()
+
+# Create PCA plots for each time point
+for (time in time_points) {
+  
+  # Subset data for the specific time point
+  vsdata_subset <- vsdata[,colData(vsdata)$time == time]
+  metadata_subset <- metadata_df %>% dplyr::filter(time == time)
+  
+  pca_data <- plotPCA(vsdata_subset, intgroup = "treatment", returnData = TRUE)
+  percentVar <- round(100 * attr(pca_data, "percentVar"))
+  pca_data$Bioassay_ID <- rownames(pca_data)
+  
+  pca_data <- pca_data %>%
+    dplyr::left_join(metadata_subset %>% dplyr::select(Bioassay_ID, external_sample_id),
+                     by = "Bioassay_ID")
+  
+  p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = treatment)) +
+    geom_point(size = 3, alpha = 0.9,
+               position = position_jitter(width = 0.2, height = 0.2)) +
+    scale_color_manual(values = cols_treat) +
+    labs(
+      title = time, color = "Treatment",
+      x = paste0("PC1: ", percentVar[1], "% variance"),
+      y = paste0("PC2: ", percentVar[2], "% variance")
+    ) +
+    theme_Publication()
+  
+  p_labeled <- p_no_label +
+  ggrepel::geom_text_repel(aes(label = external_sample_id),
+                           size = 3, max.overlaps = 20)
+  
+  print(p_labeled)
+  
+  p_list[[time]] <- p_no_label
+}
+```
+
+```{r}
+# merge PCA plots
+p_timepoint <- ggarrange(p_list[["Day14"]],
+               p_list[["Day21"]],
+               ncol = 1,
+               align = "h")
+
+# Save the plot
+ggsave(file.path(plot_dir, glue::glue("rna-pca-plot-by-timepoint.pdf")),
+       p_timepoint, width = 5, height = 6)
+```
+
+
+### Run differential expression analyses
+
+We will generate DESeqDataSet objects for each timepoint and perform the following comparisions:
+
+- B7H3 versus untreated
+- STOP versus untreated
+
+```{r}
+# create empty results list
+res <- list()
+
+
+for (time in time_points){
+  
+  dds <- DESeqDataSetFromMatrix(countData = gene_cts[, metadata_df$time == time],
+                                colData = metadata_df[metadata_df$time == time, ],
+                                design = ~ treatment)
+  
+  dds <- DESeq(dds)
+  
+  # pull B7H3 versus untreated contrast and generate data frame
+  res_B7H3_vs_Untreated <- results(dds, 
+                                     contrast = c("treatment", "B7H3", "Untreated"))
+  
+  res_B7H3_vs_Untreated <- data.frame(res_B7H3_vs_Untreated) %>%
+    rownames_to_column("gene_symbol")
+  
+  
+  # generate volcano plot
+  volc_plot <- EnhancedVolcano(res_B7H3_vs_Untreated,
+                           lab = res_B7H3_vs_Untreated$gene_symbol, 
+                           x = "log2FoldChange",
+                           y = "pvalue",
+                           title = glue::glue("B7H3 CAR-T versus Untreated, {time}"),
+                           subtitle = NULL,
+                           caption = NULL,
+                           pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj < 0.05], na.rm = TRUE),
+                           FCcutoff = 2,
+                           pointSize = 4,
+                           labSize = 4,
+                           typeConnectors = "closed",
+                           drawConnectors = TRUE,
+                           widthConnectors = 1,
+                           colConnectors = 'black',
+                           max.overlaps = 30)
+
+  ggsave(file.path(plot_dir,
+                glue::glue("murine-rna-deseq2-b7h3-versus-untreated-{time}.pdf")),
+         volc_plot, width = 8, height = 6)
+  
+  
+  # pull STOP versus untreated contrast and generate data frame
+  res_STOP_vs_untreated <- results(dds, 
+                                  contrast = c("treatment", "STOP", "Untreated"))
+  
+  res_STOP_vs_untreated <- data.frame(res_STOP_vs_untreated) %>%
+    rownames_to_column("gene_symbol")
+  
+  # join two contrast dfs by gene_symbol, adding suffixes to column names to indicate comparisons
+  res[[time]] <- res_B7H3_vs_Untreated %>%
+    left_join(res_STOP_vs_untreated,
+              suffix = c("_b7h3_vs_untr",
+                         "_stop_vs_untr"),
+              by = "gene_symbol") %>%
+    # define B7H3-upregulated and -downregulated genes as those DE in B7H3 versus untreated ONLY, and NOT DE in STOP versus untreated comparison 
+    dplyr::mutate(status = case_when(
+      padj_b7h3_vs_untr < 0.05 & log2FoldChange_b7h3_vs_untr > 0 & padj_stop_vs_untr > 0.05 ~ "B7H3 upregulated",
+      padj_b7h3_vs_untr < 0.05 & log2FoldChange_b7h3_vs_untr < 0 & padj_stop_vs_untr > 0.05 ~ "B7H3 downregulated",
+      TRUE ~ "Not DE"
+    ))
+}
+```
+
+Merge DE results by time point, and classify genes based on differential expression patterns over time
+
+```{r}
+# join timepoint dfs
+res_all <- res[["Day14"]] %>%
+  left_join(res[["Day21"]],
+            by = "gene_symbol",
+            suffix = c("_Day14", "_Day21")) %>%
+  # group genes by differential expression patterns
+  dplyr::mutate(expr_pattern = case_when(
+    status_Day14 == "B7H3 upregulated" & status_Day21 == "Not DE" ~ "B7H3 up, Day 14",
+    status_Day14 == "Not DE" & status_Day21 == "B7H3 upregulated" ~ "B7H3 up, Day 21",
+    status_Day14 == "B7H3 downregulated" & status_Day21 == "Not DE" ~ "B7H3 down, Day 14",
+    status_Day14 == "Not DE" & status_Day21 == "B7H3 downregulated" ~ "B7H3 down, Day 21",
+    status_Day14 == "B7H3 upregulated" & status_Day21 == "B7H3 upregulated" ~ "B7H3 up, multiple",
+    status_Day14 == "B7H3 downregulated" & status_Day21 == "B7H3 downregulated" ~ "B7H3 down, multiple",
+    status_Day14 != "Not DE" | status_Day21 != "Not DE" ~ "Other DE",
+    TRUE ~ "Not DE"
+  ))
+```
+
+Print DEGs at multiple time points
+
+```{r}
+res_all %>%
+  dplyr::filter(expr_pattern == "B7H3 up, multiple") %>%
+  dplyr::select(gene_symbol, status_Day14, status_Day21)
+```
+
+```{r}
+res_all %>%
+  dplyr::filter(expr_pattern == "B7H3 down, multiple") %>%
+  dplyr::select(gene_symbol, status_Day14, status_Day21)
+```
+
+Print DEGs with variable expression patterns across time points
+
+```{r}
+res_all %>%
+  dplyr::filter(expr_pattern == "Other DE") %>%
+  dplyr::select(gene_symbol, status_Day14, status_Day21)
+```
+
+Save output
+
+```{r}
+write_tsv(res_all,
+          file.path(results_dir,
+                    "rna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv"))
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
