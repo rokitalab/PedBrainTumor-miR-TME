@@ -92,6 +92,19 @@ for (group in groups){
                 values_from = pearson_r)
   
   
+  # T cell marker gene corelation results
+  Tcell_gene_scores <- read_tsv(file.path(root_dir, 
+                                         "analyses",
+                                         "immune-deconvolution",
+                                         "results",
+                                         glue::glue("{group}-de-mirna-tcell-marker-gene-correlations.tsv"))) %>%
+    dplyr::filter(Gene_symbol %in% c("CD3D", "CD3G", "CD4", "CD8A", "IFNG",
+                                   "GZMA", "GZMB", "PRF1")) %>% 
+    pivot_wider(id_cols = miRNA,
+                names_from = Gene_symbol,
+                values_from = pearson_r)
+  
+  
   # Subset histologies file and pull miRNA sample IDS
   group_hist <- histology_df %>%
     filter(experimental_strategy == "miRNA-Seq",
@@ -124,6 +137,7 @@ for (group in groups){
     # add immune cell fraction correlation coefficients
     left_join(xcell_scores) %>%
     left_join(quantiseq_scores) %>%
+    left_join(Tcell_gene_scores) %>%
     # add column indicating if miRNA is annotated or novel
     dplyr::mutate(Annotated = case_when(
       grepl("hsa", miRNA) ~ "Yes",
@@ -183,12 +197,12 @@ for (group in groups){
       mirna_anno$`NK cell (q)`,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
-    "Treg\n(q)" = anno_barplot(
-      mirna_anno$`T cell regulatory (Tregs) (q)`,     # numeric vector, one value per row
+    "CD8A\nTPM r" = anno_barplot(
+      mirna_anno$CD8A,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
-    "CD4+ Tcell\n(q)" = anno_barplot(
-      mirna_anno$`T cell CD4+ (non-regulatory) (q)`,     # numeric vector, one value per row
+    "CD4\nTPM r" = anno_barplot(
+      mirna_anno$CD4,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
     annotation_name_gp = gpar(fontsize = 10)
