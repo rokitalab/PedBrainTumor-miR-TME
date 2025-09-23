@@ -20,3 +20,7 @@ Rscript -e "rmarkdown::render('05-GSVA-GOBP.Rmd')"
 
 # Run miRNA-GSVA-corrleation analysis
 Rscript -e "rmarkdown::render('06-miRNA-GSVA-correlation.Rmd')"
+
+# Run miRNA-immnue-GSVA-corrleation analysis
+Rscript -e "rmarkdown::render('07-miRNA-immune-pathway-correlation.Rmd')"
+
