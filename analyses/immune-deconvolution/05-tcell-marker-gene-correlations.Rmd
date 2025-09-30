@@ -32,7 +32,7 @@ source(file.path(root_dir, "figures", "theme.R"))
 mirna_tpm_file <- file.path(results_dir, 
                             "mirna-tpm.rds")
 
-# File path for immune cell proportions
+# TPM data
 rna_tpm_file <- file.path(data_dir, 
                           "gene-expression-rsem-tpm-collapsed.all.rds")
 
@@ -43,6 +43,7 @@ histology_file <- file.path(root_dir, "analyses",
 ```
 
 ### Data Wrangling
+
 ```{r data-wrangle}
 mirna_tpm <- readRDS(mirna_tpm_file)
 
@@ -57,6 +58,7 @@ mirna_samples <- hist %>%
 
 mirna_tpm <- mirna_tpm[,mirna_samples]
 ```
+Filter for DMG and MB RNA samples, and filter TPM matrix for genes of interest
 
 ```{r}
 rna_samples <- hist %>%
@@ -72,6 +74,7 @@ tcell_tpm <- gene_tpm %>%
   dplyr::select(any_of(rna_samples)) %>%
   t() %>%
   as.data.frame() %>%
+  # select for braod T cell marker genes and cytotoxic T cell marker genes (CD8A, GZMs, PRF1, IFNG)
   dplyr::select(CD3D, CD3E, CD3G, 
                 CD4, CD8A, CD8B,
                 GZMA, GZMB,
@@ -83,6 +86,7 @@ tcell_tpm <- gene_tpm %>%
   left_join(hist %>% dplyr::select(Bioassay_ID,
                                    external_sample_id))
 ```
+Loop through histologies to calculate miRNA expression - T cell marker gene expression correlations
 
 ```{r}
 groups <- c("DIPG or DMG", "MB")
@@ -144,7 +148,7 @@ for (group in groups){
     dplyr::mutate(pearson_r = NA_integer_,
                   pearson_pvalue = NA_integer_)
   
-  # run correlation analysis on each miRNA-cell type pair
+  # run correlation analysis on each miRNA-marker gene pair
   for (i in 1:nrow(cor_list[[group]])){
     
     mirna_log2_tpm <- de_mirna_df$mirna_log2_tpm[de_mirna_df$miRNA == cor_list[[group]]$miRNA[i] & de_mirna_df$Gene_symbol == cor_list[[group]]$Gene_symbol[i]]
@@ -165,4 +169,9 @@ for (group in groups){
   
 }
 
+```
+
+Print session info
+```{r}
+sessionInfo()
 ```
