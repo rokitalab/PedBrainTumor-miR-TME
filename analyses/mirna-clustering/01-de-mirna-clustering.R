@@ -98,7 +98,7 @@ for (group in groups){
                                          "immune-deconvolution",
                                          "results",
                                          glue::glue("{group}-de-mirna-tcell-marker-gene-correlations.tsv"))) %>%
-    dplyr::filter(Gene_symbol %in% c("CD3D", "CD3G", "CD4", "CD8A", "IFNG",
+    dplyr::filter(Gene_symbol %in% c("CD4", "CD8A", "IFNG",
                                    "GZMA", "GZMB", "PRF1")) %>% 
     pivot_wider(id_cols = miRNA,
                 names_from = Gene_symbol,
@@ -173,36 +173,32 @@ for (group in groups){
   
   # Right annotation object for correlation annotations 
   ra_right <- rowAnnotation(
-    "Immune\nscore (x)" = anno_barplot(
+    "Immune\nscore r" = anno_barplot(
       mirna_anno$`immune score (x)`,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue"), # bar fill color
       width = unit(2, "cm")),
-    "TME\nscore (x)" = anno_barplot(
+    "TME\nscore r" = anno_barplot(
       mirna_anno$`microenvironment score (x)`,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
-    "Macrophage\nM1 (x)" = anno_barplot(
+    "Macrophage\nM1 r" = anno_barplot(
       mirna_anno$`Macrophage M1 (x)`,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
-    "Macrophage\nM2 (x)" = anno_barplot(
+    "Macrophage\nM2 r" = anno_barplot(
       mirna_anno$`Macrophage M2 (x)`,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
-    "B cell\n(q)" = anno_barplot(
+    "B cell\nr" = anno_barplot(
       mirna_anno$`B cell (q)`,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
-    "NK cell\n(q)" = anno_barplot(
+    "NK cell\nr" = anno_barplot(
       mirna_anno$`NK cell (q)`,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
     "CD8A\nTPM r" = anno_barplot(
       mirna_anno$CD8A,     # numeric vector, one value per row
-      gp = gpar(fill = "steelblue4"), # bar fill color
-      width = unit(2, "cm")),
-    "CD4\nTPM r" = anno_barplot(
-      mirna_anno$CD4,     # numeric vector, one value per row
       gp = gpar(fill = "steelblue4"), # bar fill color
       width = unit(2, "cm")),
     annotation_name_gp = gpar(fontsize = 10)
