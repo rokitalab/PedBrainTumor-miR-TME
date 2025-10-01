@@ -41,7 +41,7 @@ go_enr_files <- results_files[grepl("-shared-GO-BP_all.tsv", results_files)]
 
 ```{r keywords}
 # provided by Dalia
-keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense"
+keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense|cytokine|chemokine|interferon|glycolysis|lactate|antigen|MHC|HLA|checkpoint"
 ```
 
 ### Loop through GO enrichment files and plot significantly enriched terms related to immune and other processes
@@ -50,7 +50,8 @@ keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduc
 for (file in go_enr_files){
   
   go_enr_df <- read_tsv(file.path(results_dir, file)) %>%
-    dplyr::filter(grepl(keywords, Term)) %>%
+    dplyr::filter(grepl(keywords, Term),
+                  nchar(Term) < 75) %>%
     dplyr::mutate(gene_ratio = Significant/Annotated) %>%
     arrange(gene_ratio) %>%
     dplyr::mutate(Term = fct_relevel(Term, unique(Term)))
