@@ -103,7 +103,8 @@ RUN R -e 'BiocManager::install(c( \
   "txdbmaker", \
   "GenomicFeatures", \
   "Biostrings", \
-  "BSgenome.Hsapiens.UCSC.hg38" \
+  "BSgenome.Hsapiens.UCSC.hg38", \
+  "gtools" \
 ), ask = FALSE)'
 
 
