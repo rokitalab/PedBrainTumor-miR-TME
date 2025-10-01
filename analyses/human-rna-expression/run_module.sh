@@ -21,6 +21,9 @@ Rscript -e "rmarkdown::render('05-GSVA-GOBP.Rmd')"
 # Run miRNA-GSVA-corrleation analysis
 Rscript -e "rmarkdown::render('06-miRNA-GSVA-correlation.Rmd')"
 
+# Get immune-filtered GSVA score matrix
+Rscript --vanilla immune_keywords.R
+
 # Run miRNA-immnue-GSVA-corrleation analysis
 Rscript -e "rmarkdown::render('07-miRNA-immune-pathway-correlation.Rmd')"
 
