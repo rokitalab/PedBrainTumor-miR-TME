@@ -31,6 +31,8 @@ analysis_dir <- file.path(root_dir, "analyses", "human-mirna-go-enrichment")
 results_dir <- file.path(analysis_dir, "results")
 plot_dir <- file.path(analysis_dir, "plots")
 
+set.seed(2025)
+
 # Histologies and controls
 histologies <- c("DIPG or DMG", "EPN", "LGG", "MB")
 ```
@@ -67,7 +69,7 @@ go_enrichment <- function(mirna, df, hist){
         # Fisher test + table
         result <- runTest(GO_data, algorithm="classic", statistic="fisher")
         go_tab <- GenTable(GO_data, classicFisher = result,
-                           topNodes = 250,
+                           topNodes = 500,
                            numChar  = 100000) %>%
           mutate(fdr = p.adjust(as.numeric(classicFisher), method="BH")) %>%
           filter(fdr < 0.05)
@@ -154,13 +156,13 @@ for (hist in histologies) {
     message("   • ", ctr, ": ", length(de_lists[[ctr]]), " miRNAs")
   }
   
-  # Find miRNAs shared across all contrasts
-  shared <- Reduce(intersect, de_lists)
-  message("   → Shared DE miRNAs: ", length(shared))
-  if (length(shared) == 0) next
+  # Find miRNAs DE in at least one contrast
+  total_de <- unique(unlist(de_lists))
+  message("   → DE miRNAs: ", length(total_de))
+  if (length(total_de) == 0) next
   
   # run GO enrichment on all shared DE miRNA targets
-  future_lapply(shared, 
+  future_lapply(total_de, 
                 function(x) go_enrichment(x, df, hist))
   
 }
