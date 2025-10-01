@@ -80,7 +80,7 @@ dds_all <- DESeqDataSetFromMatrix(countData = gene_cts,
                                   design = ~ time + treatment)
 ```
 
-### Generate PCA plot from all samples, and by timepoint
+### Generate PCA plot from all samples
 
 ```{r}
 # transform raw counts
@@ -126,6 +126,7 @@ p_labeled <- p_no_label +
 print(p_labeled)
 ```
 
+### Generate PCA plot by timepoint
 
 ```{r}
 # Get unique time points
@@ -181,6 +182,59 @@ ggsave(file.path(plot_dir, glue::glue("rna-pca-plot-by-timepoint.pdf")),
        p_timepoint, width = 5, height = 6)
 ```
 
+### Generate PCA plots by treatment
+
+```{r}
+treatments <- unique(colData(dds_all)$treatment)
+
+p_list <- list()
+
+for (treatment in treatments) {
+  
+  vsdata_subset <- vsdata[,colData(vsdata)$treatment == treatment]
+  metadata_subset <- metadata_df %>% dplyr::filter(treatment == treatment)
+  
+  pca_data <- plotPCA(vsdata_subset, intgroup = "time", returnData = TRUE)
+  percentVar <- round(100 * attr(pca_data, "percentVar"))
+  pca_data$Bioassay_ID <- rownames(pca_data)
+  
+  pca_data <- pca_data %>%
+    dplyr::left_join(metadata_subset %>% dplyr::select(Bioassay_ID, external_sample_id),
+                     by = "Bioassay_ID")
+  
+  p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = time)) +
+    geom_point(size = 3, alpha = 0.9,
+               position = position_jitter(width = 0.2, height = 0.2)) +
+    scale_color_manual(values = cols_treat) +
+    labs(
+      title = treatment, color = "Time Point",
+      x = paste0("PC1: ", percentVar[1], "% variance"),
+      y = paste0("PC2: ", percentVar[2], "% variance")
+    ) +
+    theme_Publication()
+  
+  p_labeled <- p_no_label +
+  ggrepel::geom_text_repel(aes(label = external_sample_id),
+                           size = 3, max.overlaps = 20)
+  
+  print(p_labeled)
+  
+  p_list[[treatment]] <- p_no_label
+}
+```
+
+```{r}
+# merge PCA plots
+p_timepoint <- ggarrange(p_list[["B7H3"]],
+               p_list[["STOP"]],
+               p_list[["Untreated"]],
+               ncol = 1,
+               align = "h")
+
+# Save the plot
+ggsave(file.path(plot_dir, glue::glue("rna-pca-plot-by-treatment.pdf")),
+       p_timepoint, width = 5, height = 6)
+```
 
 ### Run differential expression analyses
 
@@ -193,6 +247,7 @@ We will generate DESeqDataSet objects for each timepoint and perform the followi
 # create empty results list
 res <- list()
 
+genes_of_interest <- c("Cd8a", "Cd8b1", "Gzma", "Gzmb", "Prf1", "Ifng")
 
 for (time in time_points){
   
@@ -209,7 +264,8 @@ for (time in time_points){
   res_B7H3_vs_Untreated <- data.frame(res_B7H3_vs_Untreated) %>%
     rownames_to_column("gene_symbol")
   
-  
+  label_genes <- intersect(genes_of_interest, res_B7H3_vs_Untreated$gene_symbol)
+
   # generate volcano plot
   volc_plot <- EnhancedVolcano(res_B7H3_vs_Untreated,
                            lab = res_B7H3_vs_Untreated$gene_symbol, 
@@ -222,11 +278,12 @@ for (time in time_points){
                            FCcutoff = 2,
                            pointSize = 4,
                            labSize = 4,
+                           selectLab   = label_genes,
                            typeConnectors = "closed",
                            drawConnectors = TRUE,
                            widthConnectors = 1,
                            colConnectors = 'black',
-                           max.overlaps = 30)
+                           max.overlaps = Inf)
 
   ggsave(file.path(plot_dir,
                 glue::glue("murine-rna-deseq2-b7h3-versus-untreated-{time}.pdf")),
