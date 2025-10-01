@@ -205,7 +205,7 @@ for (treatment in treatments) {
   p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = time)) +
     geom_point(size = 3, alpha = 0.9,
                position = position_jitter(width = 0.2, height = 0.2)) +
-    scale_color_manual(values = cols_treat) +
+    #scale_color_manual(values = cols_treat) +
     labs(
       title = treatment, color = "Time Point",
       x = paste0("PC1: ", percentVar[1], "% variance"),
@@ -233,7 +233,7 @@ p_timepoint <- ggarrange(p_list[["B7H3"]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue("rna-pca-plot-by-treatment.pdf")),
-       p_timepoint, width = 5, height = 6)
+       p_timepoint, width = 5, height = 10)
 ```
 
 ### Run differential expression analyses
