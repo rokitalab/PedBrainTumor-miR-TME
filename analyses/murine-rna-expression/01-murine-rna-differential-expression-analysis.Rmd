@@ -247,7 +247,7 @@ We will generate DESeqDataSet objects for each timepoint and perform the followi
 # create empty results list
 res <- list()
 
-genes_of_interest <- c("Cd8a", "Cd8b1", "Gzma", "Gzmb", "Prf1", "Ifng")
+t_cell_markers <- c("Cd8a", "Cd8b1", "Gzma", "Gzmb", "Prf1", "Ifng")
 
 for (time in time_points){
   
@@ -263,6 +263,16 @@ for (time in time_points){
   
   res_B7H3_vs_Untreated <- data.frame(res_B7H3_vs_Untreated) %>%
     rownames_to_column("gene_symbol")
+
+  # pick the N most significant genes
+  topN <- 20
+  top_hits <- res_B7H3_vs_Untreated %>%
+    filter(!is.na(padj)) %>%
+    arrange(padj, desc(abs(log2FoldChange))) %>%
+    slice_head(n = topN) %>%
+    pull(gene_symbol)
+  
+  genes_of_interest <- unique(c(t_cell_markers,top_hits))
   
   label_genes <- intersect(genes_of_interest, res_B7H3_vs_Untreated$gene_symbol)
 
@@ -283,7 +293,7 @@ for (time in time_points){
                            drawConnectors = TRUE,
                            widthConnectors = 1,
                            colConnectors = 'black',
-                           max.overlaps = Inf)
+                           max.overlaps = 100)
 
   ggsave(file.path(plot_dir,
                 glue::glue("murine-rna-deseq2-b7h3-versus-untreated-{time}.pdf")),
