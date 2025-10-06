@@ -266,9 +266,21 @@ for (time in time_points){
 
   # pick the N most significant genes
   topN <- 20
-  top_hits <- res_B7H3_vs_Untreated %>%
-    filter(!is.na(padj)) %>%
-    arrange(padj, desc(abs(log2FoldChange))) %>%
+  
+  filtered_df <- res_B7H3_vs_Untreated %>%
+    filter(!is.na(padj), padj < 0.05, abs(log2FoldChange) >= 2)
+  
+  if (nrow(filtered_df) == 0) {
+    message("No genes meet padj < 0.05 & |log2FC| >= 2; falling back.")
+    filtered_df <- res_B7H3_vs_Untreated %>%
+      filter(!is.na(padj)) %>%
+      arrange(padj, desc(abs(log2FoldChange)))
+  } else {
+    filtered_df <- filtered_df %>%
+      arrange(padj, desc(abs(log2FoldChange)))
+  }
+  
+  top_hits <- filtered_df %>%
     slice_head(n = topN) %>%
     pull(gene_symbol)
   
