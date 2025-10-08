@@ -40,3 +40,6 @@ R -e "rmarkdown::render('03-mirna-quantiseq-fraction-correlations.Rmd')"
 
 # Run quantiseq cell fraction versus miRNA tpm correlation analyses 
 R -e "rmarkdown::render('04-mirna-xcell-score-correlations.Rmd')"
+
+# Run T cell marker gene expression versus miRNA tpm correlation analyses 
+R -e "rmarkdown::render('05-tcell-marker-gene-correlations.Rmd')"

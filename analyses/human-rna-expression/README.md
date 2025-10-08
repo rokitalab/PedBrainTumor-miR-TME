@@ -12,6 +12,7 @@
 4. `04-GSEA-hallmark.Rmd`: Run GSEA on RNA-seq DE results across multiple histologies to identify enriched Hallmark pathways.
 5. `05-GSVA-GOBP.Rmd`: Perform Gene Set Variation Analysis (GSVA) on RSEM-derived TPM expression for multiple histologies, using GO Biological Process terms, and assess differential pathway activity.
 6. `06-miRNA-GSVA-correlation.Rmd`: Correlate DE miRNA expression with GSVA pathway scores in DIPG/DMG tumors; generate full and significant-pairs heatmaps with stable annotations.
+7. `07-miRNA-immune-pathway-correlation.Rmd`: Correlate DE miRNA expression with immune-related pathway GSVA scores in tumors; generate full and significant-pairs heatmaps with stable annotations.
 
 ## Analysis module directory structure
 
@@ -29,9 +30,14 @@
 ├── 05-GSVA-GOBP.html
 ├── 06-miRNA-GSVA-correlation.Rmd
 ├── 06-miRNA-GSVA-correlation.html
+├── 07-miRNA-immune-pathway-correlation.Rmd
+├── 07-miRNA-immune-pathway-correlation.html
 ├── README.md
+├── immune_keywords.R
 ├── input
 │   ├── DIPG or DMG_sig_DE_miRNA_list.csv
+│   ├── MB_sig_DE_miRNA_list.csv
+│   ├── immune_keywords.tsv
 │   └── mirna-tpm.rds
 ├── plots
 │   ├── DIPG or DMG-downregulated-genes-healthyNormal-go-term-enrichment-dotplot.pdf
@@ -44,6 +50,10 @@
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION_GSEA.pdf
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── DIPG or DMG_healthyNormal_HALLMARK_MITOTIC_SPINDLE_GSEA.pdf
+│   ├── DIPG or DMG_heatmap_all.pdf
+│   ├── DIPG or DMG_heatmap_sig_cluster.pdf
+│   ├── DIPG or DMG_immune_heatmap_sig_clusters.pdf
+│   ├── DIPG or DMG_miRNA_immune_GSVA_heatmap.pdf
 │   ├── DIPG or DMG_paired_GSVA_DE_heatmap.pdf
 │   ├── DIPG or DMG_paired_HALLMARK_E2F_TARGETS_GSEA.pdf
 │   ├── DIPG or DMG_paired_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
@@ -81,20 +91,19 @@
 │   ├── MB_healthyNormal_HALLMARK_MITOTIC_SPINDLE_GSEA.pdf
 │   ├── MB_healthyNormal_HALLMARK_MYC_TARGETS_V1_GSEA.pdf
 │   ├── MB_healthyNormal_HALLMARK_MYC_TARGETS_V2_GSEA.pdf
+│   ├── MB_heatmap_all.pdf
+│   ├── MB_heatmap_sig_cluster.pdf
 │   ├── MB_paired_GSVA_DE_heatmap.pdf
 │   ├── MB_paired_HALLMARK_DNA_REPAIR_GSEA.pdf
 │   ├── MB_paired_HALLMARK_E2F_TARGETS_GSEA.pdf
 │   ├── MB_paired_HALLMARK_G2M_CHECKPOINT_GSEA.pdf
 │   ├── MB_paired_HALLMARK_MTORC1_SIGNALING_GSEA.pdf
 │   ├── MB_paired_HALLMARK_MYC_TARGETS_V1_GSEA.pdf
-│   ├── heatmap_all.pdf
-│   ├── heatmap_sig_cluster.pdf
 │   ├── rna-pca-DIPG or DMG-vs-controls.pdf
 │   ├── rna-pca-EPN-vs-controls.pdf
 │   ├── rna-pca-LGG-vs-controls.pdf
 │   ├── rna-pca-MB-vs-controls.pdf
 │   ├── rna-pca.pdf
-│   ├── silhouette_curves_ht2.pdf
 │   ├── volcano_DIPG or DMG_paired.pdf
 │   ├── volcano_DIPG or DMG_vs_adjNormal.pdf
 │   ├── volcano_DIPG or DMG_vs_healthyNormal.pdf
@@ -132,8 +141,18 @@
 │   ├── DIPG or DMG-downregulated-genes-paired-enriched-go-terms.tsv
 │   ├── DIPG or DMG-upregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── DIPG or DMG-upregulated-genes-paired-enriched-go-terms.tsv
+│   ├── DIPG or DMG_cor_heatmap_miRNA_clusters.tsv
+│   ├── DIPG or DMG_cor_heatmap_pathway_clusters.tsv
+│   ├── DIPG or DMG_correlation_matrix_heatmap_order.tsv
 │   ├── DIPG or DMG_healthyNormal_GSEA_results.tsv
 │   ├── DIPG or DMG_healthyNormal_GSVA_DE_results.tsv
+│   ├── DIPG or DMG_immune_GSVA_corr_tidy.tsv
+│   ├── DIPG or DMG_immune_GSVA_corrmat_order.tsv
+│   ├── DIPG or DMG_immune_miRNA_clusters.tsv
+│   ├── DIPG or DMG_immune_pathway_clusters.tsv
+│   ├── DIPG or DMG_miRNA_GSVA_pathway_significnat_correlation.tsv
+│   ├── DIPG or DMG_miRNA_immune_GSVA_corr.tsv
+│   ├── DIPG or DMG_miRNA_immune_GSVA_significant_corr.tsv
 │   ├── DIPG or DMG_paired_GSEA_results.tsv
 │   ├── DIPG or DMG_paired_GSVA_DE_results.tsv
 │   ├── EPN-downregulated-genes-healthyNormal-enriched-go-terms.tsv
@@ -149,12 +168,16 @@
 │   ├── MB-downregulated-genes-paired-enriched-go-terms.tsv
 │   ├── MB-upregulated-genes-healthyNormal-enriched-go-terms.tsv
 │   ├── MB-upregulated-genes-paired-enriched-go-terms.tsv
+│   ├── MB_cor_heatmap_miRNA_clusters.tsv
+│   ├── MB_cor_heatmap_pathway_clusters.tsv
+│   ├── MB_correlation_matrix_heatmap_order.tsv
 │   ├── MB_healthyNormal_GSEA_results.tsv
 │   ├── MB_healthyNormal_GSVA_DE_results.tsv
+│   ├── MB_miRNA_GSVA_pathway_significnat_correlation.tsv
 │   ├── MB_paired_GSEA_results.tsv
 │   ├── MB_paired_GSVA_DE_results.tsv
-│   ├── correlation_matrix_heatmap_order.tsv
 │   ├── gobp-gsva-scores-with-target-genes.tsv
-│   └── gobp-gsva-scores.tsv
+│   ├── gobp-gsva-scores.tsv
+│   └── immune_filtered_gsva_scores.tsv
 └── run_module.sh
 ```

@@ -1,0 +1,177 @@
+---
+title: "Calculate miRNA expression-T cell marker gene expression correlations"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+author: Ryan Corbett
+date: "2025-07-09"
+---
+
+### Setup
+```{r setup, message=FALSE, warning=FALSE}
+# Load libraries
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(ggsci)
+})
+
+# Define directories
+root_dir     <- rprojroot::find_root(rprojroot::has_dir(".git"))
+data_dir     <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "immune-deconvolution")
+results_dir  <- file.path(analysis_dir, "results")
+plot_dir     <- file.path(analysis_dir, "plots")
+
+# Source custom theme
+source(file.path(root_dir, "figures", "theme.R"))
+
+# File path for counts
+mirna_tpm_file <- file.path(results_dir, 
+                            "mirna-tpm.rds")
+
+# TPM data
+rna_tpm_file <- file.path(data_dir, 
+                          "gene-expression-rsem-tpm-collapsed.all.rds")
+
+# File path for histology
+histology_file <- file.path(root_dir, "analyses", 
+                            "histology-preprocessing", 
+                            "results", "histologies.tsv")
+```
+
+### Data Wrangling
+
+```{r data-wrangle}
+mirna_tpm <- readRDS(mirna_tpm_file)
+
+hist <- read_tsv(histology_file)
+
+mirna_samples <- hist %>%
+  dplyr::filter(experimental_strategy == "miRNA-Seq",
+                histology %in% c("DIPG or DMG", "MB"),
+                external_sample_id != "1-1855-CC1",
+                !grepl("Adjacent", sample_type)) %>%
+  pull(external_sample_id)
+
+mirna_tpm <- mirna_tpm[,mirna_samples]
+```
+Filter for DMG and MB RNA samples, and filter TPM matrix for genes of interest
+
+```{r}
+rna_samples <- hist %>%
+  dplyr::filter(experimental_strategy == "RNA-Seq",
+                histology %in% c("DIPG or DMG", "MB"),
+                external_sample_id %in% mirna_samples,
+                !grepl("Adjacent", sample_type)) %>%
+  pull(Bioassay_ID)
+
+gene_tpm <- readRDS(rna_tpm_file)
+
+tcell_tpm <- gene_tpm %>%
+  dplyr::select(any_of(rna_samples)) %>%
+  t() %>%
+  as.data.frame() %>%
+  # select for braod T cell marker genes and cytotoxic T cell marker genes (CD8A, GZMs, PRF1, IFNG)
+  dplyr::select(CD3D, CD3E, CD3G, 
+                CD4, CD8A, CD8B,
+                GZMA, GZMB,
+                PRF1, IFNG) %>%
+  rownames_to_column("Bioassay_ID") %>%
+  pivot_longer(-Bioassay_ID,
+               names_to = "Gene_symbol",
+               values_to = "tpm") %>%
+  left_join(hist %>% dplyr::select(Bioassay_ID,
+                                   external_sample_id))
+```
+Loop through histologies to calculate miRNA expression - T cell marker gene expression correlations
+
+```{r}
+groups <- c("DIPG or DMG", "MB")
+
+cor_list <- list()
+
+for (group in groups){
+  
+  plot_dir <- file.path(analysis_dir, "plots",
+                           group)
+  
+  # filter for samples in hist
+  group_samples <- hist %>% 
+    dplyr::filter(histology == group,
+                  !grepl("Adjacent", sample_type),
+                  !external_sample_id %in% c("4-1958-CC1", "1-1855-CC1")) %>%
+    distinct(external_sample_id) %>%
+    pull(external_sample_id)
+  
+  # Load DE miRNA results (healthy N and adjacent N references)
+  mirna_de_healthyN <- read_csv(file.path(root_dir, "analyses",
+                                          "human-mirna-expression",
+                                          "results",
+                                          glue::glue("DESeq2_{group}_vs_healthyNormal_sig.csv")))
+  
+  mirna_de_adjN <- read_csv(file.path(root_dir, "analyses",
+                                          "human-mirna-expression",
+                                          "results",
+                                          glue::glue("DESeq2_{group}_paired_sig.csv")))
+  
+  # identify common DE mirnas
+  common_de_mirnas <- unique(c(mirna_de_healthyN$miRNA,
+                                mirna_de_adjN$miRNA))
+  
+  # filter tpm matrix for DE mirnas and samples in group
+  de_mirna_tpm <- mirna_tpm[common_de_mirnas, group_samples]
+  
+  # convert tpm matrix to data frame
+  de_mirna_df <- de_mirna_tpm %>%
+    t() %>%
+    as.data.frame() %>%
+    rownames_to_column("external_sample_id") %>%
+    pivot_longer(-external_sample_id,
+                 names_to = "miRNA",
+                 values_to = "mirna_tpm") %>%
+    dplyr::mutate(mirna_log2_tpm = log2(mirna_tpm + 0.1)) %>%
+    # append cell type enr scores
+    full_join(tcell_tpm) %>%
+    # calculate log2 tpm
+    dplyr::mutate(log2_tpm = log2(tpm+0.1)) %>%
+    dplyr::filter(!is.na(log2_tpm),
+                  !is.na(miRNA))
+
+   cor_list[[group]] <- tibble(miRNA = unique(de_mirna_df$miRNA)) %>%
+    left_join(de_mirna_df %>% dplyr::select(miRNA,
+                                            Gene_symbol)) %>%
+    dplyr::filter(!is.na(Gene_symbol)) %>%
+    distinct() %>%
+    dplyr::mutate(pearson_r = NA_integer_,
+                  pearson_pvalue = NA_integer_)
+  
+  # run correlation analysis on each miRNA-marker gene pair
+  for (i in 1:nrow(cor_list[[group]])){
+    
+    mirna_log2_tpm <- de_mirna_df$mirna_log2_tpm[de_mirna_df$miRNA == cor_list[[group]]$miRNA[i] & de_mirna_df$Gene_symbol == cor_list[[group]]$Gene_symbol[i]]
+    gene_log2_tpm <- de_mirna_df$log2_tpm[de_mirna_df$miRNA == cor_list[[group]]$miRNA[i] & de_mirna_df$Gene_symbol == cor_list[[group]]$Gene_symbol[i]]
+    
+    cor_test <- cor.test(mirna_log2_tpm,
+                         gene_log2_tpm,
+                         method = "pearson")
+    
+    cor_list[[group]]$pearson_r[i] <- cor_test$estimate
+    cor_list[[group]]$pearson_pvalue[i] <- cor_test$p.value
+    
+  }
+   
+     # write to output
+  write_tsv(cor_list[[group]],
+        file.path(results_dir, glue::glue("{group}-de-mirna-tcell-marker-gene-correlations.tsv")))
+  
+}
+
+```
+
+Print session info
+```{r}
+sessionInfo()
+```
