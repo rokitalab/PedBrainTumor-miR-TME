@@ -137,6 +137,6 @@ write_tsv(merged_filtered_go_df,
           file.path(results_dir,
                     "DIPG-or-DMG-cluster6-mirna-target-go-enr-immune-terms-full.tsv"))
 
-write_tsv(merged_filtered_go_df,
+write_tsv(plot_df,
           file.path(results_dir,
                     "DIPG-or-DMG-cluster6-mirna-target-go-enr-immune-terms-reduced.tsv"))
