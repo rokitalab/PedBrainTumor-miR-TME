@@ -21,6 +21,7 @@
 │   ├── murine-rna-deseq2-b7h3-versus-untreated-Day14.pdf
 │   ├── murine-rna-deseq2-b7h3-versus-untreated-Day21.pdf
 │   ├── rna-pca-plot-all.pdf
+│   ├── rna-pca-plot-by-treatment.pdf
 │   └── rna-pca-plot-by-timepoint.pdf
 ├── results
 │   └── rna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv
