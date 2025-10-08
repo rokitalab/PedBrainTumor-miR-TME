@@ -104,7 +104,7 @@ expr_cols <- c(
 
 # Time
 time_cols <- c(
-  "Day14" = "#80B1D3",  # muted blue
+  "Day14" = "#A67C52",  # warm taupe
   "Day21" = "#FDB462"   # muted orange
 )
 
@@ -155,6 +155,10 @@ mirna_ht <- Heatmap(
   name = "TPM z-score",
   col = col_fun,
   na_col = "gray",
+  clustering_distance_rows = "spearman",
+  clustering_distance_columns = "spearman",
+  clustering_method_rows = "ward.D2",
+  clustering_method_columns = "ward.D2",
   cluster_rows = TRUE,
   cluster_columns = TRUE,
   show_row_names = FALSE,
@@ -228,6 +232,10 @@ for (day in c("Day14", "Day21")) {
     name = "TPM z-score",
     col = col_fun,
     na_col = "gray",
+    clustering_distance_rows = "spearman",
+    clustering_distance_columns = "spearman",
+    clustering_method_rows = "ward.D2",
+    clustering_method_columns = "ward.D2",
     cluster_rows = TRUE,
     cluster_columns = TRUE,
     show_row_names = FALSE,
