@@ -87,7 +87,7 @@ plot_keywords <- "MHC|antigen|myeloid|T cell selection|T cell activation|cytotox
 # define plotting df
 plot_df <- merged_filtered_go_df %>%
   dplyr::filter(grepl(plot_keywords, Term),
-                # remove terms indicating positive/negatuve regulation to reduce N
+                # remove terms indicating positive/negative regulation to reduce N
                 !grepl("CD4|negative|leukocyte|positive regulation", Term)) %>%
   # Define broad classes for Terms to group for plotting
   dplyr::mutate(class = case_when(
