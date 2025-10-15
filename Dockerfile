@@ -1,4 +1,4 @@
-FROM rocker/tidyverse:4.4.0
+FROM rocker/tidyverse:4.5.0
 LABEL maintainer="Ryan Corbett (rcorbett@childrensnational.org)"
 WORKDIR /rocker-build/
 
@@ -42,7 +42,7 @@ RUN R -e "options(repos = BiocManager::repositories())"
 
 # Install BiocManager and the desired version of Bioconductor
 RUN R -e "install.packages('BiocManager', dependencies=TRUE)"
-RUN R -e "BiocManager::install(version = '3.19', ask = FALSE)"
+RUN R -e "BiocManager::install(version = '3.21', ask = FALSE)"
 
 # Install core Bioconductor infrastructure
 RUN R -e 'BiocManager::install(c( \
@@ -104,9 +104,12 @@ RUN R -e 'BiocManager::install(c( \
   "GenomicFeatures", \
   "Biostrings", \
   "BSgenome.Hsapiens.UCSC.hg38", \
-  "gtools" \
+  "gtools", \
+  "BSgenome.Mmusculus.UCSC.mm39" \
 ), ask = FALSE)'
 
+# Install xCell2 (Bioconductor package for cell type enrichment)
+RUN R -e 'options(repos = BiocManager::repositories()); BiocManager::install("xCell2", ask = FALSE, update = TRUE)'
 
 ## install GitHub packages
 RUN R -e "remotes::install_github('clauswilke/colorblindr', ref = '1ac3d4d62dad047b68bb66c06cee927a4517d678', dependencies = TRUE)"

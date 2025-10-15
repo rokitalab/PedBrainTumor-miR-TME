@@ -11,13 +11,13 @@ git clone git@github.com:childrens-bti/haydar-mirna.git
 
 2. Pull the docker container:
 ```
-docker pull pgc-images.sbgenomics.com/rokita-lab/haydar-mirna:v1.0.2
+docker pull pgc-images.sbgenomics.com/rokita-lab/haydar-mirna:v1.0.3
 ```
 NOTE: if running on a Mac with Apple Silicon chip (M1-M4), please add `--platform linux/amd64`; otherwise add `--platform linux/arm64`
 
 3. Start the docker container, from the `haydar-mirna` folder, run:
 ```
-docker run --platform linux/amd64 --name <CONTAINER_NAME> -d -e PASSWORD=ANYTHING -p 8787:8787 -v $PWD:/home/rstudio/haydar-mirna pgc-images.sbgenomics.com/rokita-lab/haydar-mirna:v1.0.2
+docker run --platform linux/amd64 --name <CONTAINER_NAME> -d -e PASSWORD=ANYTHING -p 8787:8787 -v $PWD:/home/rstudio/haydar-mirna pgc-images.sbgenomics.com/rokita-lab/haydar-mirna:v1.0.3
 ```
 NOTE: if running on a Mac with Apple Silicon chip (M1-M4), please add `platform linux/amd64`
 
