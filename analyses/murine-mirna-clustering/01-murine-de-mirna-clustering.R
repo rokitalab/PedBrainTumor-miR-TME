@@ -164,6 +164,8 @@ mirna_ht <- Heatmap(
   clustering_method_columns = "ward.D2",
   cluster_rows = TRUE,
   cluster_columns = TRUE,
+  row_split = 5,
+  column_split = 4,
   show_row_names = FALSE,
   show_column_names = FALSE,
   top_annotation = ha_all,
@@ -172,7 +174,7 @@ mirna_ht <- Heatmap(
   heatmap_legend_param = list(legend_gp = gpar(fontsize = 10))
 )
  
-pdf(file.path(plot_dir, glue::glue("de-mirna-heatmap.pdf")), width = 15, height = 12)
+pdf(file.path(plot_dir, glue::glue("de-mirna-heatmap.pdf")), width = 8, height = 12)
 mirna_ht <- draw(mirna_ht)
 dev.off()
  
