@@ -50,9 +50,11 @@ rsconnect/
 
 # Ignore large 3' UTR FASTA file generated for novel miRNA target prediction
 analyses/human-novel-mirna-target-prediction/results/gencode.v39.3utr.fa
+analyses/murine-novel-mirna-target-prediction/results/Mus_musculus.GRCm39.3utr.fa
 
 # Ignore miranda ouput
 analyses/human-novel-mirna-target-prediction/result/miranda_output.txt
+analyses/murine-novel-mirna-target-prediction/results/mouse_miranda_output.txt
 
 # Ignore large files
 analyses/human-rna-expression/result/MB_miRNA_pathway_correlations_tidy.tsv

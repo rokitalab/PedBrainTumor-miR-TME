@@ -1,0 +1,144 @@
+---
+title: "Mouse 3′ UTR Extraction and miRanda Target Prediction"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+### Load packages
+
+```{r load-packages}
+suppressPackageStartupMessages({
+  library(GenomicFeatures)
+  library(Biostrings)
+  library(rtracklayer)
+  library(BSgenome.Mmusculus.UCSC.mm39)
+  library(dplyr)
+  library(rprojroot)
+  library(GenomeInfoDb)
+  library(stringr)
+  library(readr)
+  library(rtracklayer)
+})
+```
+
+### Set directory paths
+
+```{r dir-paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "murine-novel-mirna-target-prediction")
+input_dir <- file.path(analysis_dir, "input")
+results_dir <- file.path(analysis_dir, "results")
+```
+
+### Set GTF file path 
+
+```{r file-paths}
+gtf_file <- file.path(data_dir, "Mus_musculus.GRCm39.115.gtf.gz") # add data download script
+```
+
+### Create TxDb and extract 3′ UTRs
+
+```{r create-txdb}
+txdb <- makeTxDbFromGFF(gtf_file, format = "gtf")
+three_utrs <- threeUTRsByTranscript(txdb, use.names = TRUE)
+```
+
+### Load mouse genome and extract sequences
+
+```{r extract-sequences}
+genome <- BSgenome.Mmusculus.UCSC.mm39
+
+seqlevelsStyle(txdb) <- seqlevelsStyle(genome)
+seqlevelsStyle(three_utrs) <- seqlevelsStyle(genome)
+
+valid_chroms <- intersect(seqlevels(three_utrs), seqnames(genome))
+three_utrs_filtered <- keepSeqlevels(three_utrs, valid_chroms, pruning.mode = "coarse")
+utr_seqs <- extractTranscriptSeqs(genome, three_utrs_filtered)
+```
+
+### Save 3′ UTR sequences to FASTA
+
+```{r save-fasta, message=TRUE}
+utr_fasta_path <- file.path(results_dir, "Mus_musculus.GRCm39.3utr.fa")
+writeXStringSet(utr_seqs, filepath = utr_fasta_path)
+message("✅ Saved 3′ UTR FASTA: ", utr_fasta_path)
+```
+
+### Prepare DE miRNAs and run miRanda
+
+```{r run-miranda}
+# Input files
+de_mirna_csv <- file.path(input_dir, "mouse_sig_DE_miRNA_list.csv") # update after PR #129 is merged
+all_mirna_fa <- file.path(input_dir, "30-963755216-all_miRNA.fa") # need new data release
+de_mirna_fa  <- file.path(results_dir, "mouse_DE_miRNA.fa")
+
+# Extract DE miRNA IDs
+de_ids <- read.csv(de_mirna_csv, header = TRUE)[,1] |> unique()
+all_fa <- readRNAStringSet(all_mirna_fa)
+de_fa <- all_fa[names(all_fa) %in% de_ids]
+writeXStringSet(de_fa, de_mirna_fa)
+
+# Run miRanda
+miranda_out <- file.path(results_dir, "mouse_miranda_output.txt")
+cmd <- sprintf("miranda %s %s -sc 140 -en -20 -out %s",
+               de_mirna_fa, utr_fasta_path, miranda_out) # check runtime in EC2
+message("🚀 Running miRanda...")
+system(cmd)
+message("✅ miRanda completed. Results: ", miranda_out)
+```
+
+### Parse and Annotate miRanda Results
+
+```{r parse-annotate-miranda-results}
+annotated_csv <- file.path(results_dir, "mouse_miranda_output_parsed_anno.csv")
+
+# Parse miRanda raw output
+lines <- readLines(miranda_out)
+pred_lines <- lines[str_detect(lines, "^>>")]
+fields <- str_split_fixed(str_sub(pred_lines, 3), "\t", n = 10)
+
+parsed_df <- tibble(
+  Seq1        = fields[,1],  # miRNA
+  Seq2    = fields[,2],  # target
+  Max_Score   = as.numeric(fields[,5]),
+  Max_Energy  = as.numeric(fields[,6]),
+  Len1        = as.integer(fields[,8]),
+  Len2        = as.integer(fields[,9]),
+  Positions   = str_trim(fields[,10])
+)
+
+# Read GTF and build transcript–gene mapping
+gtf <- import(gtf_file)
+transcript_anno <- gtf[gtf$type == "transcript"]
+
+transcript_df <- as.data.frame(mcols(transcript_anno)) %>%
+  dplyr::select(transcript_id, gene_id, gene_name) %>%
+  dplyr::mutate(
+    transcript_id_clean = sub("\\.\\d+$", "", transcript_id),
+    gene_id_clean = sub("\\.\\d+$", "", gene_id)
+  ) %>%
+  dplyr::distinct(transcript_id_clean, gene_id_clean, gene_name)
+
+# Join annotations and export
+miranda_annotated <- parsed_df %>%
+  left_join(transcript_df, by = c("Seq2" = "transcript_id_clean")) %>%
+  dplyr::rename(GeneID = gene_id_clean, GeneSymbol = gene_name)
+
+write_csv(miranda_annotated, annotated_csv)
+
+message("✅ miRanda results parsed and annotated: ", annotated_csv)
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+
+
+
