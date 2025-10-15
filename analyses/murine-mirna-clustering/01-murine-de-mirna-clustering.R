@@ -76,13 +76,16 @@ DE_miRNA_list <- read_tsv(file.path(root_dir, "analyses", "murine-mirna-differen
                                     "mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv"),
                           show_col_types = FALSE)
 
-sig_DE_miRNA_list<- DE_miRNA_list %>%
+sig_DE_miRNA_list <- DE_miRNA_list %>%
   mutate(expr_pattern = str_replace_all(expr_pattern, 
                                         c("Day 14" = "Day14",
                                           "Day 21" = "Day21",
                                           "Day 28" = "Day28"))) %>%
   filter(expr_pattern %in% c("B7H3 down, Day14","B7H3 down, Day21", "B7H3 down, multiple",
-                             "B7H3 up, Day14", "B7H3 up, Day21", "B7H3 up, multiple")) 
+                             "B7H3 up, Day14", "B7H3 up, Day21", "B7H3 up, multiple")) %>%
+  filter(mirna_id != "NovelmiRNA-1146")
+
+write_csv(sig_DE_miRNA_list, file.path(results_dir, "mouse_sig_DE_miRNA_list.csv"))
 
 de_mirnas <- sig_DE_miRNA_list$mirna_id
 miRNA_expr_sub <- miRNA_zscores[rownames(miRNA_zscores) %in% de_mirnas, , drop=FALSE] 
