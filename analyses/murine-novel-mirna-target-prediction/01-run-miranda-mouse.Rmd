@@ -31,14 +31,13 @@ suppressPackageStartupMessages({
 root_dir <- find_root(has_dir(".git"))
 data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "murine-novel-mirna-target-prediction")
-input_dir <- file.path(analysis_dir, "input")
 results_dir <- file.path(analysis_dir, "results")
 ```
 
 ### Set GTF file path 
 
 ```{r file-paths}
-gtf_file <- file.path(data_dir, "Mus_musculus.GRCm39.115.gtf.gz") # add data download script
+gtf_file <- file.path(data_dir, "Mus_musculus.GRCm39.115.gtf.gz")
 ```
 
 ### Create TxDb and extract 3′ UTRs
@@ -73,8 +72,9 @@ message("✅ Saved 3′ UTR FASTA: ", utr_fasta_path)
 
 ```{r run-miranda}
 # Input files
-de_mirna_csv <- file.path(input_dir, "mouse_sig_DE_miRNA_list.csv") # update after PR #129 is merged
-all_mirna_fa <- file.path(input_dir, "30-963755216-all_miRNA.fa") # need new data release
+de_mirna_csv <- file.path(root_dir, "analyses", "murine-mirna-clustering", 
+                          "results", "mouse_sig_DE_miRNA_list.csv")
+all_mirna_fa <- file.path(data_dir, "30-963755216-all_miRNA.fa")
 de_mirna_fa  <- file.path(results_dir, "mouse_DE_miRNA.fa")
 
 # Extract DE miRNA IDs
