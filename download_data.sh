@@ -4,7 +4,7 @@ set -o pipefail
 
 # Define URL and version
 URL=${URL:-https://bti-openaccess-us-east-1-bti-bfx.s3.us-east-1.amazonaws.com/haydar-miRNA}
-RELEASE=${RELEASE:-v5}
+RELEASE=${RELEASE:-v6}
 
 # Remove old symlinks in data
 find data -type l -delete
@@ -32,6 +32,13 @@ if [ ! -e ${GENCODE39##*/} ]
 then
   echo "Downloading ${GENCODE39##*/}"
   curl -k -O $GENCODE39
+fi
+
+ENSEMBL115="https://ftp.ensembl.org/pub/release-115/gtf/mus_musculus/Mus_musculus.GRCm39.115.gtf.gz"
+if [ ! -e ${ENSEMBL115##*/} ]
+then
+  echo "Downloading ${ENSEMBL115##*/}"
+  curl -k -O $ENSEMBL115
 fi
 
 # Check the md5s for everything we downloaded except CHANGELOG.md
