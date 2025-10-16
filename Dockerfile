@@ -104,7 +104,8 @@ RUN R -e 'BiocManager::install(c( \
   "GenomicFeatures", \
   "Biostrings", \
   "BSgenome.Hsapiens.UCSC.hg38", \
-  "gtools" \
+  "gtools", \
+  "BSgenome.Mmusculus.UCSC.mm39" \
 ), ask = FALSE)'
 
 # Install xCell2 (Bioconductor package for cell type enrichment)
