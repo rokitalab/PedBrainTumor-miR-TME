@@ -1,6 +1,35 @@
 # release notes
 
-## current release (v5)
+## archived release (v6)
+- Data release date: 2025-10-16
+- status: available
+
+Added files:
+- `30-963755216-all_miRNA.fa`; contains mature miRNA sequences from the mouse miRNA-seq dataset
+
+```
+v6
+├── 30-1075661268-all_novel_miRNA.xls
+├── 30-1075661268-miRNA_Target_anno.xls
+├── 30-1075661268-miRNA_expression.xls
+├── 30-931106737-miRNA-all.fpkm.csv
+├── 30-931106737-miRNA_expression.csv
+├── 30-963755216-all_miRNA.fa
+├── 30-963755216-miRNA-all.fpkm.csv
+├── 30-963755216-miRNA_expression.csv
+├── all_novel_miRNA.xls
+├── gene-counts-rsem-expected_count-collapsed.all.rds
+├── gene-expression-rsem-fpkm-collapsed.all.rds
+├── gene-expression-rsem-tpm-collapsed.all.rds
+├── miRNA-sample-metadata.txt
+├── miRNA_Target_anno.csv
+├── mouse-gene-counts-rsem-expected_count-collapsed.all.rds
+├── mouse-gene-expression-rsem-fpkm-collapsed.all.rds
+├── mouse-gene-expression-rsem-tpm-collapsed.all.rds
+└── release-notes.md
+```
+
+## archived release (v5)
 - Data release date: 2025-09-11
 - status: available
 
