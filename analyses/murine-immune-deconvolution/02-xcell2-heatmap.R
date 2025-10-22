@@ -108,24 +108,26 @@ for (ref in unique_refs) {
   # Ensure column order matches matrix columns
   meta_ref <- meta_ref[colnames(mat), , drop = FALSE]
   
+  # Get column order based on treatment and time
+  col_order_indices <- order(meta_ref$treatment, meta_ref$time)
+  
   # Define annotations
   ha_col <- HeatmapAnnotation(
-    Time = meta_ref$time,
     Treatment = meta_ref$treatment,
+    Time = meta_ref$time,
     col = list(
-      Time = time_cols,
-      Treatment = treatment_cols
+      Treatment = treatment_cols,
+      Time = time_cols
     ),
     annotation_name_side = "left",
     annotation_legend_param = list(
-      Time = list(title = "Time", direction = "horizontal"),
-      Treatment = list(title = "Treatment", direction = "horizontal")
+      Treatment = list(title = "Treatment", direction = "horizontal"),
+      Time = list(title = "Time", direction = "horizontal")
     )
   )
   
   # Define clustering
   row_hclust <- hclust(dist(mat, method = "euclidean"), method = "ward.D2")
-  col_hclust <- hclust(dist(t(mat), method = "euclidean"), method = "ward.D2")
   
   # Create heatmap
   ht <- Heatmap(
@@ -133,7 +135,8 @@ for (ref in unique_refs) {
     name = "Z-score",
     col = col_fun,
     cluster_rows = row_hclust,
-    cluster_columns = col_hclust,
+    cluster_columns = FALSE,
+    column_order = col_order_indices,
     top_annotation = ha_col,
     show_row_names = TRUE,
     show_column_names = TRUE,
@@ -148,7 +151,7 @@ for (ref in unique_refs) {
   
   # Save to PDF
   pdf_file <- file.path(plot_dir, paste0("xCell2_scaled_heatmap_", ref, ".pdf"))
-  pdf(pdf_file, width = 11, height = 8)
+  pdf(pdf_file, width = 10, height = 8)
   draw(ht, merge_legend = TRUE, heatmap_legend_side = "right", annotation_legend_side = "bottom")
   dev.off()
   
