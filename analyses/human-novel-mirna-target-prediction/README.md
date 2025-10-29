@@ -6,11 +6,7 @@
 
 ## Folder contents
 
-1. `00-extract-3utr-gencode-v39.Rmd`; Extracts 3' UTR sequences from GENCODE v39 and outputs a FASTA file.
-2. `01_convert_all_novel_miRNA_to_fasta.Rmd`; Converts a plain-text table of novel miRNA sequences into FASTA format.
-3. `02-run-miranda.sh`; Runs miRanda using novel DE miRNAs and 3′ UTR sequences extracted from GENCODE v39.
-4. `03-parse-miranda-output.py`; Parses the raw miRanda output file to extract predicted miRNA-target interactions and saves them in a clean CSV format.
-5. `04-annotate-parsed-miranda-output.Rmd`; Annotates the parsed miRanda output file with Ensembl Gene IDs and gene symbols using a GTF annotation file.
+1. `01-run-miranda-human.Rmd`; Extracts human 3' UTR sequences from GENCODE v39, runs miRanda for differentially expressed miRNAs, parses and annotates predicted targets with gene IDs and symbols.
 
 ## Input files
 
@@ -18,17 +14,11 @@
 
 ```
 .
-├── 00-extract-3utr-gencode-v39.Rmd
-├── 00-extract-3utr-gencode-v39.html
-├── 01-convert-all-novel-miRNA-to-fasta.Rmd
-├── 01-convert-all-novel-miRNA-to-fasta.html 
-├── 02-run-miranda.sh
-├── 03-parse-miranda-output.py
-├── 04-annotate-parsed-miranda-output.Rmd
-├── 04-annotate-parsed-miranda-output.html
+├── 01-run-miranda-human.Rmd
+├── 01-run-miranda-human.html
 ├── README.md
 ├── results
-│   ├── comined_all_novel_mirna.fa
-│   └── comined_all_novel_mirna.tsv
+│   ├── novel_de_mirnas.fa
+│   └── human_miranda_output_parsed_anno.csv
 └── run_module.sh
 ```
