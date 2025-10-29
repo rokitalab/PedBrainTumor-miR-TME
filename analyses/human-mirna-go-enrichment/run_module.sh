@@ -14,3 +14,6 @@ Rscript -e "rmarkdown::render('03-plot-enriched-terms.Rmd')"
 
 # Plot GO enrichment in DIPG/DMG cluster 6 targets
 Rscript --vanilla 04-cluster6-go-enrichment.R
+
+# Plot GO enrichment in MB cluster 1 targets
+Rscript --vanilla 05-mb-cluster1-go-enrichment.R
