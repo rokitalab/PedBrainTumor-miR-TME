@@ -1,0 +1,164 @@
+---
+title: "Human 3′ UTR Extraction and miRanda Target Prediction"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+### Load packages
+
+```{r load-packages}
+suppressPackageStartupMessages({
+  library(GenomicFeatures)
+  library(Biostrings)
+  library(rtracklayer)
+  library(BSgenome.Hsapiens.UCSC.hg38)
+  library(dplyr)
+  library(rprojroot)
+  library(GenomeInfoDb)
+  library(stringr)
+  library(readr)
+  library(rtracklayer)
+})
+```
+
+### Set directory paths
+
+```{r dir-paths}
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-novel-mirna-target-prediction")
+results_dir <- file.path(analysis_dir, "results")
+```
+
+### Set GTF file path 
+
+```{r file-paths}
+gtf_file <- file.path(data_dir, "gencode.v39.primary_assembly.annotation.gtf.gz")
+```
+
+### Create TxDb and extract 3′ UTRs
+
+```{r create-txdb}
+txdb <- makeTxDbFromGFF(gtf_file, format = "gtf")
+three_utrs <- threeUTRsByTranscript(txdb, use.names = TRUE)
+```
+
+### Load the genome reference and extract sequences
+
+```{r extract-sequences}
+genome <- BSgenome.Hsapiens.UCSC.hg38
+valid_chroms <- intersect(seqlevels(three_utrs), seqnames(genome))
+
+three_utrs_filtered <- keepSeqlevels(three_utrs, valid_chroms, pruning.mode = "coarse")
+utr_seqs <- extractTranscriptSeqs(genome, three_utrs_filtered)
+```
+
+### Save 3′ UTR sequences to FASTA
+
+```{r save-fasta, message=TRUE}
+utr_fasta_path <- file.path(results_dir, "gencode.v39.3utr.fa")
+writeXStringSet(utr_seqs, filepath = utr_fasta_path)
+message("✅ Saved 3′ UTR FASTA: ", utr_fasta_path)
+```
+
+### Generate FASTA of DE Novel miRNAs
+
+```{r get-novel-de-mirnas}
+# Get unique novel DE miRNAs across DIPG/DMG, MB, EPN, and LGG
+tumor_files <- c(
+  "DIPG or DMG_sig_DE_miRNA_list.csv",
+  "EPN_sig_DE_miRNA_list.csv",
+  "MB_sig_DE_miRNA_list.csv",
+  "DESeq2_LGG_vs_healthyNormal_sig.csv"
+)
+
+novel_de_mirnas_all <- tumor_files %>%
+  file.path(root_dir, "analyses", "human-mirna-expression", "results", .) %>%
+  lapply(read_csv, show_col_types = FALSE) %>%
+  lapply(\(df) df %>% filter(grepl("Novel", miRNA)) %>% pull(miRNA)) %>%
+  unlist() %>%
+  unique()
+```
+
+```{r write-novel-de-mirnas-fasta}
+# Read and combine novel miRNA annotation tables from both batches
+batch1 <- read_tsv(file.path(root_dir, "analyses", "human-mirna-expression", "results", "30-931106737-all_novel_miRNA_merged_id.tsv"), col_types = cols())
+batch2 <- read_tsv(file.path(root_dir, "analyses", "human-mirna-expression", "results", "30-1075661268-all_novel_miRNA_merged_id.tsv"), col_types = cols())
+
+mirna_df <- bind_rows(batch1, batch2) %>%
+distinct(merged_id, .keep_all = TRUE)
+
+# Filter for DE novel miRNAs only
+mirna_filtered <- mirna_df %>%
+filter(merged_id %in% novel_de_mirnas_all)
+
+# Convert mature miRNA sequences to FASTA
+mature_mirna <- RNAStringSet(mirna_filtered$mature_seq)
+names(mature_mirna) <- mirna_filtered$merged_id
+
+# Save FASTA file
+output_fasta <- file.path(results_dir, "novel_de_mirnas.fa")
+writeXStringSet(mature_mirna, filepath = output_fasta)
+
+cat("✅ Saved FASTA with", length(mature_mirna), "novel DE miRNAs to:", output_fasta, "\n")
+```
+
+### Run miRanda
+
+```{r}
+# Run miRanda
+de_mirna_fa <- file.path(results_dir, "novel_de_mirnas.fa")
+miranda_out <- file.path(results_dir, "human_miranda_output.txt")
+cmd <- sprintf("miranda %s %s -sc 140 -en -20 -out %s",
+               de_mirna_fa, utr_fasta_path, miranda_out)
+message("🚀 Running miRanda...")
+system(cmd)
+message("✅ miRanda completed. Results: ", miranda_out)
+```
+
+### Parse and Annotate miRanda Results
+
+```{r parse-annotate-miranda-results}
+annotated_csv <- file.path(results_dir, "human_miranda_output_parsed_anno.csv")
+
+# Parse miRanda raw output
+lines <- readLines(miranda_out)
+pred_lines <- lines[str_detect(lines, "^>>")]
+fields <- str_split_fixed(str_sub(pred_lines, 3), "\t", n = 10)
+
+parsed_df <- tibble(
+  Seq1        = fields[,1],  # miRNA
+  Seq2    = fields[,2],  # target
+  Max_Score   = as.numeric(fields[,5]),
+  Max_Energy  = as.numeric(fields[,6]),
+  Len1        = as.integer(fields[,8]),
+  Len2        = as.integer(fields[,9]),
+  Positions   = str_trim(fields[,10])
+)
+
+# Read GTF and build transcript–gene mapping
+gtf <- import(gtf_file)
+transcript_anno <- gtf[gtf$type == "transcript"]
+
+transcript_df <- as.data.frame(mcols(transcript_anno)) %>%
+  dplyr::select(transcript_id, gene_id, gene_name)
+
+# Join annotations and export
+miranda_annotated <- parsed_df %>%
+  left_join(transcript_df, by = c("Seq2" = "transcript_id")) %>%
+  dplyr::rename(GeneID = gene_id, GeneSymbol = gene_name)
+
+write_csv(miranda_annotated, annotated_csv)
+
+message("✅ miRanda results parsed and annotated: ", annotated_csv)
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
