@@ -15,7 +15,10 @@
 ```
 .
 ├── 01-run-miranda-human.Rmd
+├── 01-run-miranda-human.html
 ├── README.md
 ├── results
+│   ├── novel_de_mirnas.fa
+│   └── human_miranda_output_parsed_anno.csv
 └── run_module.sh
 ```
