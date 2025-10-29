@@ -10,6 +10,7 @@
 
 
 <meta name="author" content="Ryan Corbett" />
+<meta name="author" content="Updated by Bicna Song" />
 
 <meta name="date" content="2025-01-01" />
 
@@ -423,6 +424,7 @@ font-size: 0.95em;
 <h1 class="title toc-ignore">GO enrichment analysis of DE miRNA
 targets</h1>
 <h4 class="author">Ryan Corbett</h4>
+<h4 class="author">Updated by Bicna Song</h4>
 <h4 class="date">2025</h4>
 
 </div>
@@ -432,13 +434,13 @@ targets</h1>
 miRNA predicted targets</p>
 <p>Load packages</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ─────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.2     
-## ── Conflicts ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✔ ggplot2   3.5.2     ✔ tibble    3.3.0
+## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+## ✔ purrr     1.0.4     
+## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
@@ -447,16 +449,29 @@ library(org.Mm.eg.db)</code></pre>
 <pre><code>## Loading required package: AnnotationDbi
 ## Loading required package: stats4
 ## Loading required package: BiocGenerics
+## Loading required package: generics
+## 
+## Attaching package: &#39;generics&#39;
+## 
+## The following object is masked from &#39;package:lubridate&#39;:
+## 
+##     as.difftime
+## 
+## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     explain
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.difftime, as.factor, as.ordered, intersect, is.element, setdiff,
+##     setequal, union
+## 
 ## 
 ## Attaching package: &#39;BiocGenerics&#39;
 ## 
-## The following objects are masked from &#39;package:lubridate&#39;:
+## The following object is masked from &#39;package:dplyr&#39;:
 ## 
-##     intersect, setdiff, union
-## 
-## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     combine, intersect, setdiff, union
+##     combine
 ## 
 ## The following objects are masked from &#39;package:stats&#39;:
 ## 
@@ -466,10 +481,10 @@ library(org.Mm.eg.db)</code></pre>
 ## 
 ##     anyDuplicated, aperm, append, as.data.frame, basename, cbind,
 ##     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
-##     get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
-##     match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-##     Position, rank, rbind, Reduce, rownames, sapply, setdiff, table,
-##     tapply, union, unique, unsplit, which.max, which.min
+##     get, grep, grepl, is.unsorted, lapply, Map, mapply, match, mget,
+##     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+##     rbind, Reduce, rownames, sapply, saveRDS, table, tapply, unique,
+##     unsplit, which.max, which.min
 ## 
 ## Loading required package: Biobase
 ## Welcome to Bioconductor
@@ -537,13 +552,6 @@ library(org.Mm.eg.db)</code></pre>
 ## 
 ## Loading required package: SparseM
 ## 
-## Attaching package: &#39;SparseM&#39;
-## 
-## The following object is masked from &#39;package:base&#39;:
-## 
-##     backsolve
-## 
-## 
 ## groupGOTerms:    GOBPTerm, GOMFTerm, GOCCTerm environments built.
 ## 
 ## Attaching package: &#39;topGO&#39;
@@ -551,127 +559,69 @@ library(org.Mm.eg.db)</code></pre>
 ## The following object is masked from &#39;package:IRanges&#39;:
 ## 
 ##     members</code></pre>
-<pre class="r"><code>library(AnnotationDbi)</code></pre>
+<pre class="r"><code>library(AnnotationDbi)
+library(future.apply)</code></pre>
+<pre><code>## Loading required package: future</code></pre>
 <p>Set directory paths</p>
 <pre class="r"><code>root_dir &lt;- rprojroot::find_root(rprojroot::has_dir(&quot;.git&quot;))
 
 data_dir &lt;- file.path(root_dir, &quot;data&quot;)
 analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;murine-mirna-differential-expression&quot;)
 results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)
-plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)</code></pre>
-<p>Set file paths</p>
-<pre class="r"><code>de_mirna_file &lt;- file.path(results_dir,
-                           &quot;mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv&quot;)
+plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)
 
-mirTarBase_SE_R_file &lt;- file.path(root_dir, &quot;analyses&quot;,
-                                  &quot;human-mirna-rna-interactions&quot;, &quot;input&quot;, &quot;miRTarBase_SE_R.csv&quot;)
-mirTarBase_SE_W_file &lt;- file.path(root_dir, &quot;analyses&quot;,
-                                  &quot;human-mirna-rna-interactions&quot;, &quot;input&quot;, &quot;miRTarBase_SE_W.csv&quot;)
-mirTarBase_SE_WR_file &lt;- file.path(root_dir, &quot;analyses&quot;,
-                                  &quot;human-mirna-rna-interactions&quot;, &quot;input&quot;, &quot;miRTarBase_SE_WR.csv&quot;)
-mirTarBase_WE_Clip_file &lt;- file.path(root_dir, &quot;analyses&quot;,
-                                  &quot;human-mirna-rna-interactions&quot;, &quot;input&quot;, &quot;miRTarBase_WE_Clip.tsv.gz&quot;)
-mirTarBase_WE_Other_file &lt;- file.path(root_dir, &quot;analyses&quot;,
-                                  &quot;human-mirna-rna-interactions&quot;, &quot;input&quot;, &quot;miRTarBase_WE_Other.csv&quot;)</code></pre>
-<p>Load data and filter miRTarBase data frame for mouse miRNAs</p>
-<pre class="r"><code>de_mirna_df &lt;- read_tsv(de_mirna_file)</code></pre>
-<pre><code>## Rows: 574 Columns: 41
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;\t&quot;
+set.seed(2025)</code></pre>
+<p>Set file paths</p>
+<pre class="r"><code>de_mirna_file &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;murine-mirna-clustering&quot;, &quot;results&quot;, &quot;mouse_sig_DE_miRNA_list.csv&quot;)
+
+miranda_output_file &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;murine-novel-mirna-target-prediction&quot;, &quot;results&quot;, &quot;mouse_miranda_output_parsed_anno.csv&quot;)</code></pre>
+<p>Load DE miRNAs and miRanda output</p>
+<pre class="r"><code>de_mirna_df &lt;- read_csv(de_mirna_file)</code></pre>
+<pre><code>## Rows: 86 Columns: 41
+## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
 ## chr  (5): mirna_id, status_Day14, status_Day21, status_Day28, expr_pattern
 ## dbl (36): baseMean_b7h3_vs_untr_Day14, log2FoldChange_b7h3_vs_untr_Day14, lf...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>mirTarBase_df &lt;- read_csv(mirTarBase_SE_R_file) %&gt;%
-  bind_rows(read_csv(mirTarBase_SE_W_file)) %&gt;%
-  bind_rows(read_csv(mirTarBase_SE_WR_file)) %&gt;%
-  bind_rows(read_csv(mirTarBase_WE_Other_file)) %&gt;%
-  bind_rows(read_tsv(mirTarBase_WE_Clip_file)) %&gt;%
-  dplyr::filter(grepl(&quot;mmu&quot;, miRNA))</code></pre>
-<pre><code>## Rows: 24530 Columns: 9
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+<pre class="r"><code>top_de_mirnas &lt;- de_mirna_df$mirna_id
+
+miranda_output_df &lt;- read_csv(miranda_output_file) %&gt;%
+  filter(Max_Score &gt;= 145, Max_Energy &lt;= -20)</code></pre>
+<pre><code>## Rows: 212420 Columns: 9
+## ── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
-## chr (7): miRTarBase ID, miRNA, Species (miRNA), Target Gene, Species (Target...
-## dbl (2): Target Gene (Entrez ID), References (PMID)
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 18292 Columns: 9
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (7): miRTarBase ID, miRNA, Species (miRNA), Target Gene, Species (Target...
-## dbl (2): Target Gene (Entrez ID), References (PMID)
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 27595 Columns: 9
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (7): miRTarBase ID, miRNA, Species (miRNA), Target Gene, Species (Target...
-## dbl (2): Target Gene (Entrez ID), References (PMID)
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 30455 Columns: 9
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (7): miRTarBase ID, miRNA, Species (miRNA), Target Gene, Species (Target...
-## dbl (2): Target Gene (Entrez ID), References (PMID)
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 4613908 Columns: 9
-## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-## Delimiter: &quot;\t&quot;
-## chr (7): miRTarBase ID, miRNA, Species (miRNA), Target Gene, Species (Target...
-## dbl (2): Target Gene (Entrez ID), References (PMID)
+## chr (5): Seq1, Seq2, Positions, GeneID, GeneSymbol
+## dbl (4): Max_Score, Max_Energy, Len1, Len2
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<p>write mouse miRNA target prediction data frame to output</p>
-<pre class="r"><code>write_tsv(mirTarBase_df,
-          file.path(results_dir,
-                    &quot;mouse-mirna-target-predictions-miRTarBase.tsv.gz&quot;))</code></pre>
-<p>Extract known DE miRNAs (at any time point)</p>
-<pre class="r"><code>multiple_de_mirnas &lt;- de_mirna_df %&gt;%
-  dplyr::filter(grepl(&quot;mmu&quot;, mirna_id),
-                grepl(&quot;multiple&quot;, expr_pattern)) %&gt;%
-  pull(mirna_id)
+<pre class="r"><code>mirna_target_counts &lt;- miranda_output_df %&gt;%
+  filter(!is.na(GeneSymbol)) %&gt;%
+  distinct(Seq1, GeneSymbol) %&gt;%
+  count(Seq1, name = &quot;Num_Target_Genes&quot;) %&gt;%
+  arrange(desc(Num_Target_Genes))
 
-d14_top_de_mirnas &lt;- de_mirna_df %&gt;%
-  dplyr::filter(grepl(&quot;mmu&quot;, mirna_id),
-                status_Day14 != &quot;Not DE&quot;) %&gt;%
-  arrange(pvalue_b7h3_vs_untr_Day14) %&gt;%
-  head(10) %&gt;%
-  pull(mirna_id)
-
-d21_top_de_mirnas &lt;- de_mirna_df %&gt;%
-  dplyr::filter(grepl(&quot;mmu&quot;, mirna_id),
-                status_Day21 != &quot;Not DE&quot;) %&gt;%
-  arrange(pvalue_b7h3_vs_untr_Day21) %&gt;%
-  head(10) %&gt;%
-  pull(mirna_id)
-
-
-d28_top_de_mirnas &lt;- de_mirna_df %&gt;%
-  dplyr::filter(grepl(&quot;mmu&quot;, mirna_id),
-                status_Day28 != &quot;Not DE&quot;) %&gt;%
-  arrange(pvalue_b7h3_vs_untr_Day28) %&gt;%
-  head(10) %&gt;%
-  pull(mirna_id)
-
-# add miR-155-5p (DE at 21d and a known regulator of immune response)
-top_de_mirnas &lt;- unique(c(multiple_de_mirnas,
-                          d14_top_de_mirnas,
-                          d21_top_de_mirnas,
-                          d28_top_de_mirnas,
-                          &quot;mmu-miR-155-5p&quot;))</code></pre>
+# View the top results
+head(mirna_target_counts, 10)</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    Seq1            Num_Target_Genes
+##    &lt;chr&gt;                      &lt;int&gt;
+##  1 mmu-miR-760-3p              4392
+##  2 mmu-miR-671-3p              4015
+##  3 mmu-miR-361-3p              3733
+##  4 mmu-miR-185-5p              2838
+##  5 mmu-miR-6958-3p             2700
+##  6 mmu-miR-330-5p              2446
+##  7 mmu-let-7b-3p               2308
+##  8 NovelmiRNA-1309             2090
+##  9 mmu-miR-770-3p              1981
+## 10 mmu-miR-7689-3p             1965</code></pre>
 <p>Loop through DE miRNA, extract targets, and perform GO enrichment
 analyses</p>
 <pre class="r"><code># create empty lists
-known_mirna_target_list &lt;- list()
-known_mirna_target_go_list &lt;- list()
+de_mirna_target_go_list &lt;- list()
 
 # get list of all genes to use as background for enrichment
 all_entrez_ids &lt;- keys(org.Mm.eg.db, keytype = &quot;ENTREZID&quot;)
@@ -680,307 +630,338 @@ all_entrez_ids &lt;- keys(org.Mm.eg.db, keytype = &quot;ENTREZID&quot;)
 all_genes &lt;- select(org.Mm.eg.db, keys = all_entrez_ids, 
                     columns = &quot;SYMBOL&quot;, keytype = &quot;ENTREZID&quot;)</code></pre>
 <pre><code>## &#39;select()&#39; returned 1:1 mapping between keys and columns</code></pre>
-<pre class="r"><code>for (known_mirna in top_de_mirnas){
-  
-  # pull target genes from miRTarBase df
-  known_mirna_target_list[[known_mirna]] &lt;- mirTarBase_df %&gt;%
-    dplyr::filter(miRNA == known_mirna) %&gt;%
-    distinct(`Target Gene`) %&gt;%
-    pull(`Target Gene`)
-  
-  if (length(known_mirna_target_list[[known_mirna]] &gt;= 20)){
+<pre class="r"><code># Enable parallel processing
+plan(multicore, workers = parallel::detectCores() - 1)
 
-    # define all genes as target (1) or not target (0) for enrichment
-    target_gene_df &lt;- all_genes %&gt;%
-    dplyr::mutate(target_gene = case_when(
-      SYMBOL %in% known_mirna_target_list[[known_mirna]] ~ 1,
-      TRUE ~ 0
-    ))
+# Define function to perform GO enrichment for a single miRNA
+run_go_for_mirna &lt;- function(de_mirna) {
+  targets &lt;- miranda_output_df %&gt;%
+    filter(Seq1 == de_mirna) %&gt;%
+    distinct(GeneSymbol) %&gt;%
+    pull(GeneSymbol)
   
-    target_genes &lt;- target_gene_df$target_gene
-    names(target_genes) &lt;- target_gene_df$SYMBOL
+  if (length(targets) &lt; 20) return(NULL)
   
-    # Create topGO object, using biological process (BP) ontology terms
-    GO_data &lt;- new(&quot;topGOdata&quot;, ontology = &quot;BP&quot;, allGenes = target_genes, 
-                                                     geneSel = function(x) x == 1, 
-                                                     annot = annFUN.org, mapping = &quot;org.Mm.eg.db&quot;, ID = &quot;symbol&quot;)
+  target_gene_df &lt;- all_genes %&gt;%
+    mutate(target_gene = if_else(SYMBOL %in% targets, 1, 0))
+  
+  target_genes &lt;- target_gene_df$target_gene
+  names(target_genes) &lt;- target_gene_df$SYMBOL
+  
+  suppressMessages({
+    GO_data &lt;- new(&quot;topGOdata&quot;, ontology = &quot;BP&quot;, allGenes = target_genes,
+                   geneSel = function(x) x == 1,
+                   annot = annFUN.org, mapping = &quot;org.Mm.eg.db&quot;, ID = &quot;symbol&quot;)
     
-    # Run Fisher test
     result &lt;- runTest(GO_data, algorithm = &quot;classic&quot;, statistic = &quot;fisher&quot;)
-    
-    # write results to go analysis list
-   known_mirna_target_go_list[[known_mirna]] &lt;- GenTable(GO_data, classicFisher = result, topNodes = length(usedGO(GO_data)),
-                                                         numChar = 100000)
-   
-   # filter for signficant results
-   known_mirna_target_go_list[[known_mirna]] &lt;- known_mirna_target_go_list[[known_mirna]] %&gt;%
-     dplyr::mutate(fdr = p.adjust(classicFisher, method = &quot;BH&quot;)) %&gt;%
-     dplyr::filter(fdr &lt; 0.05)
-   
-   # Add list of genes associated with each sig GO term to df
-
-    genes_per_term &lt;- genesInTerm(GO_data)
-    
-    genes_per_term_df &lt;- enframe(genes_per_term, name = &quot;GO.ID&quot;, value = &quot;Genes&quot;) %&gt;%
-      mutate(Genes = sapply(Genes, function(x) paste(x, collapse = &quot;, &quot;)))
-    
-    known_mirna_target_go_list[[known_mirna]] &lt;- known_mirna_target_go_list[[known_mirna]] %&gt;%
-      left_join(genes_per_term_df)
-   
-   if (nrow(known_mirna_target_go_list[[known_mirna]]) &gt; 0){
-   
-     write_tsv(known_mirna_target_go_list[[known_mirna]],
-               file.path(results_dir,
-                         glue::glue(&quot;{known_mirna}-target-go-enrichment.tsv&quot;)))
-     
-   }
-   
-  }
+    go_table &lt;- GenTable(GO_data, classicFisher = result,
+                         topNodes = length(usedGO(GO_data)), numChar = 100000)
+  })
   
-}</code></pre>
-<pre><code>## 
-## Building most specific GOs .....</code></pre>
-<pre><code>##  ( 12519 GO terms found. )</code></pre>
-<pre><code>## 
-## Build GO DAG topology ..........</code></pre>
-<pre><code>##  ( 15616 GO terms and 35196 relations. )</code></pre>
-<pre><code>## 
-## Annotating nodes ...............</code></pre>
-<pre><code>##  ( 28905 genes annotated to the GO terms. )</code></pre>
-<pre><code>## 
-##           -- Classic Algorithm -- 
-## 
-##       the algorithm is scoring 638 nontrivial nodes
-##       parameters: 
-##           test statistic: fisher</code></pre>
-<pre><code>## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2155 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2673 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 1039 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 1110 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 1026 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2161 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2188 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 3015 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 114 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 89 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 995 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 1858 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2407 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2206 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2131 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 5156 nontrivial nodes parameters: test statistic: fisher</code></pre>
-<pre><code>## Warning: There was 1 warning in `dplyr::mutate()`.
+  go_table &lt;- go_table %&gt;%
+    mutate(fdr = p.adjust(classicFisher, method = &quot;BH&quot;)) %&gt;%
+    filter(fdr &lt; 0.05)
+  
+  if (nrow(go_table) == 0) return(NULL)
+  
+  # Add gene lists per term
+  genes_per_term_df &lt;- enframe(genesInTerm(GO_data), name = &quot;GO.ID&quot;, value = &quot;Genes&quot;) %&gt;%
+    mutate(Genes = sapply(Genes, paste, collapse = &quot;, &quot;))
+  
+  go_table &lt;- left_join(go_table, genes_per_term_df, by = &quot;GO.ID&quot;)
+  
+  write_tsv(go_table, file.path(results_dir, glue::glue(&quot;{de_mirna}-target-go-enrichment.tsv&quot;)))
+  
+  return(go_table)
+}
+
+# Run GO enrichment in parallel
+de_mirna_target_go_list &lt;- future_lapply(top_de_mirnas, run_go_for_mirna)</code></pre>
+<pre><code>## Warning: There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
+## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
+## Caused by warning in `p.adjust()`:
+## ! NAs introduced by coercion
+## There was 1 warning in `mutate()`.
 ## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
 ## Caused by warning in `p.adjust()`:
 ## ! NAs introduced by coercion</code></pre>
-<pre><code>## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 2136 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 1370 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 8029 nontrivial nodes parameters: test statistic: fisher</code></pre>
-<pre><code>## Warning: There was 1 warning in `dplyr::mutate()`.
-## ℹ In argument: `fdr = p.adjust(classicFisher, method = &quot;BH&quot;)`.
-## Caused by warning in `p.adjust()`:
-## ! NAs introduced by coercion</code></pre>
-<pre><code>## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 4069 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`
-## Building most specific GOs .....
-## ( 12519 GO terms found. )
-## Build GO DAG topology ..........
-## ( 15616 GO terms and 35196 relations. )
-## Annotating nodes ...............
-## ( 28905 genes annotated to the GO terms. )
-## -- Classic Algorithm --
-## 
-## the algorithm is scoring 3057 nontrivial nodes parameters: test statistic: fisher
-## Joining with `by = join_by(GO.ID)`</code></pre>
 <p>Print session info</p>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 4.4.0 (2024-04-24)
+<pre><code>## R version 4.5.0 (2025-04-11)
 ## Platform: x86_64-pc-linux-gnu
-## Running under: Ubuntu 22.04.4 LTS
+## Running under: Ubuntu 24.04.2 LTS
 ## 
 ## Matrix products: default
 ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so;  LAPACK version 3.10.0
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -998,35 +979,36 @@ all_genes &lt;- select(org.Mm.eg.db, keys = all_entrez_ids,
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] topGO_2.56.0         SparseM_1.83         GO.db_3.19.1        
-##  [4] graph_1.82.0         org.Mm.eg.db_3.19.1  AnnotationDbi_1.66.0
-##  [7] IRanges_2.38.1       S4Vectors_0.42.1     Biobase_2.64.0      
-## [10] BiocGenerics_0.50.0  lubridate_1.9.3      forcats_1.0.0       
-## [13] stringr_1.5.1        dplyr_1.1.4          purrr_1.0.2         
-## [16] readr_2.1.5          tidyr_1.3.1          tibble_3.2.1        
-## [19] ggplot2_3.5.1        tidyverse_2.0.0     
+##  [1] future.apply_1.20.0  future_1.58.0        topGO_2.60.1        
+##  [4] SparseM_1.84-2       GO.db_3.21.0         graph_1.86.0        
+##  [7] org.Mm.eg.db_3.21.0  AnnotationDbi_1.70.0 IRanges_2.42.0      
+## [10] S4Vectors_0.46.0     Biobase_2.68.0       BiocGenerics_0.54.1 
+## [13] generics_0.1.4       lubridate_1.9.4      forcats_1.0.0       
+## [16] stringr_1.5.1        dplyr_1.1.4          purrr_1.0.4         
+## [19] readr_2.1.5          tidyr_1.3.1          tibble_3.3.0        
+## [22] ggplot2_3.5.2        tidyverse_2.0.0     
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] KEGGREST_1.44.1         gtable_0.3.5            xfun_0.44              
-##  [4] bslib_0.7.0             lattice_0.22-6          tzdb_0.4.0             
-##  [7] vctrs_0.6.5             tools_4.4.0             generics_0.1.3         
-## [10] parallel_4.4.0          fansi_1.0.6             RSQLite_2.3.7          
-## [13] blob_1.2.4              pkgconfig_2.0.3         lifecycle_1.0.4        
-## [16] GenomeInfoDbData_1.2.12 compiler_4.4.0          Biostrings_2.72.1      
-## [19] munsell_0.5.1           GenomeInfoDb_1.40.1     htmltools_0.5.8.1      
-## [22] sass_0.4.9              yaml_2.3.8              pillar_1.9.0           
-## [25] crayon_1.5.2            jquerylib_0.1.4         cachem_1.1.0           
-## [28] tidyselect_1.2.1        digest_0.6.35           stringi_1.8.4          
-## [31] rprojroot_2.0.4         fastmap_1.2.0           grid_4.4.0             
-## [34] colorspace_2.1-0        cli_3.6.2               magrittr_2.0.3         
-## [37] utf8_1.2.4              withr_3.0.0             scales_1.3.0           
-## [40] UCSC.utils_1.0.0        bit64_4.0.5             timechange_0.3.0       
-## [43] rmarkdown_2.27          XVector_0.44.0          httr_1.4.7             
-## [46] matrixStats_1.3.0       bit_4.0.5               png_0.1-8              
-## [49] hms_1.1.3               memoise_2.0.1           evaluate_0.24.0        
-## [52] knitr_1.47              rlang_1.1.4             glue_1.7.0             
-## [55] DBI_1.2.3               vroom_1.6.5             jsonlite_1.8.8         
-## [58] R6_2.5.1                zlibbioc_1.50.0</code></pre>
+##  [1] KEGGREST_1.48.1         gtable_0.3.6            xfun_0.52              
+##  [4] bslib_0.9.0             lattice_0.22-7          tzdb_0.5.0             
+##  [7] vctrs_0.6.5             tools_4.5.0             parallel_4.5.0         
+## [10] RSQLite_2.4.1           blob_1.2.4              pkgconfig_2.0.3        
+## [13] RColorBrewer_1.1-3      lifecycle_1.0.4         GenomeInfoDbData_1.2.14
+## [16] compiler_4.5.0          farver_2.1.2            Biostrings_2.76.0      
+## [19] codetools_0.2-20        GenomeInfoDb_1.44.3     htmltools_0.5.8.1      
+## [22] sass_0.4.10             yaml_2.3.10             pillar_1.10.2          
+## [25] crayon_1.5.3            jquerylib_0.1.4         cachem_1.1.0           
+## [28] parallelly_1.45.0       tidyselect_1.2.1        digest_0.6.37          
+## [31] stringi_1.8.7           listenv_0.9.1           rprojroot_2.0.4        
+## [34] fastmap_1.2.0           grid_4.5.0              cli_3.6.5              
+## [37] magrittr_2.0.3          utf8_1.2.6              withr_3.0.2            
+## [40] scales_1.4.0            UCSC.utils_1.4.0        bit64_4.6.0-1          
+## [43] timechange_0.3.0        rmarkdown_2.29          XVector_0.48.0         
+## [46] httr_1.4.7              globals_0.18.0          matrixStats_1.5.0      
+## [49] bit_4.6.0               png_0.1-8               hms_1.1.3              
+## [52] memoise_2.0.1           evaluate_1.0.3          knitr_1.50             
+## [55] rlang_1.1.6             glue_1.8.0              DBI_1.2.3              
+## [58] vroom_1.6.5             jsonlite_2.0.0          R6_2.6.1</code></pre>
 
 
 
