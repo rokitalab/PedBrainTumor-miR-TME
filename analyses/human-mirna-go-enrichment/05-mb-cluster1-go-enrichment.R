@@ -82,7 +82,7 @@ for (file in mb_clust1_go_files){
 }
 
 # define key words used to further filter results for plotting
-plot_keywords <- "MHC|antigen|myeloid|T cell selection|T cell activation|cytotoxicity|T cell proliferation|natural killer|interferon-alpha|interferon-beta|macrophage|interleukin-12 production"
+plot_keywords <- "MHC|myeloid|T cell selection|T cell activation|cytotoxicity|T cell proliferation|natural killer|interferon-alpha|interferon-beta|macrophage|interleukin-12 production|interferon|interleukin"
 
 # define plotting df
 plot_df <- merged_filtered_go_df %>%
@@ -122,8 +122,7 @@ plot_df %>%
   theme_Publication() +
   theme(
     strip.placement = "outside",                     # move strips outside panel
-    strip.text.y.left = element_text(angle = 90, 
-                                     size = 9),    # rotate facet labels
+    strip.text.y.left = element_text(angle = 90),    # rotate facet labels
     axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
   )
 
