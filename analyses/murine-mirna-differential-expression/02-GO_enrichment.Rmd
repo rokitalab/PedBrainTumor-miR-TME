@@ -4,7 +4,9 @@ output:
   html_document:
   toc: TRUE
 toc_float: TRUE
-author: Ryan Corbett
+author: 
+  - "Ryan Corbett"
+  - "Updated by Bicna Song"
 date: "2025"
 ---
 
@@ -12,108 +14,62 @@ This script performs gene ontology (GO) enrichment analysis on DE miRNA predicte
 
 Load packages
 
-```{r load packages}
+```{r load-packages}
 library(tidyverse)
 library(ggplot2)
 library(org.Mm.eg.db)
 library(topGO)
 library(AnnotationDbi)
+library(future.apply)
 ```
 
 Set directory paths
 
-```{r dir paths}
+```{r dir-paths}
 root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
 
 data_dir <- file.path(root_dir, "data")
 analysis_dir <- file.path(root_dir, "analyses", "murine-mirna-differential-expression")
 results_dir <- file.path(analysis_dir, "results")
 plot_dir <- file.path(analysis_dir, "plots")
+
+set.seed(2025)
 ```
 
 Set file paths
 
-```{r file paths}
-de_mirna_file <- file.path(results_dir,
-                           "mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv")
+```{r file-paths}
+de_mirna_file <- file.path(root_dir, "analyses", "murine-mirna-clustering", "results", "mouse_sig_DE_miRNA_list.csv")
 
-mirTarBase_SE_R_file <- file.path(root_dir, "analyses",
-                                  "human-mirna-rna-interactions", "input", "miRTarBase_SE_R.csv")
-mirTarBase_SE_W_file <- file.path(root_dir, "analyses",
-                                  "human-mirna-rna-interactions", "input", "miRTarBase_SE_W.csv")
-mirTarBase_SE_WR_file <- file.path(root_dir, "analyses",
-                                  "human-mirna-rna-interactions", "input", "miRTarBase_SE_WR.csv")
-mirTarBase_WE_Clip_file <- file.path(root_dir, "analyses",
-                                  "human-mirna-rna-interactions", "input", "miRTarBase_WE_Clip.tsv.gz")
-mirTarBase_WE_Other_file <- file.path(root_dir, "analyses",
-                                  "human-mirna-rna-interactions", "input", "miRTarBase_WE_Other.csv")
+miranda_output_file <- file.path(root_dir, "analyses", "murine-novel-mirna-target-prediction", "results", "mouse_miranda_output_parsed_anno.csv")
 ```
 
-Load data and filter miRTarBase data frame for mouse miRNAs
+Load DE miRNAs and miRanda output
 
-```{r wrangle data}
-de_mirna_df <- read_tsv(de_mirna_file)
+```{r wrangle-data}
+de_mirna_df <- read_csv(de_mirna_file)
+top_de_mirnas <- de_mirna_df$mirna_id
 
-mirTarBase_df <- read_csv(mirTarBase_SE_R_file) %>%
-  bind_rows(read_csv(mirTarBase_SE_W_file)) %>%
-  bind_rows(read_csv(mirTarBase_SE_WR_file)) %>%
-  bind_rows(read_csv(mirTarBase_WE_Other_file)) %>%
-  bind_rows(read_tsv(mirTarBase_WE_Clip_file)) %>%
-  dplyr::filter(grepl("mmu", miRNA))
+miranda_output_df <- read_csv(miranda_output_file) %>%
+  filter(Max_Score >= 145, Max_Energy <= -20)
 ```
 
-write mouse miRNA target prediction data frame to output
+```{r mirna-target-counts}
+mirna_target_counts <- miranda_output_df %>%
+  filter(!is.na(GeneSymbol)) %>%
+  distinct(Seq1, GeneSymbol) %>%
+  count(Seq1, name = "Num_Target_Genes") %>%
+  arrange(desc(Num_Target_Genes))
 
-```{r write mirTarBase}
-write_tsv(mirTarBase_df,
-          file.path(results_dir,
-                    "mouse-mirna-target-predictions-miRTarBase.tsv.gz"))
-```
-
-Extract known DE miRNAs (at any time point) 
-
-```{r get DE miRNAs}
-multiple_de_mirnas <- de_mirna_df %>%
-  dplyr::filter(grepl("mmu", mirna_id),
-                grepl("multiple", expr_pattern)) %>%
-  pull(mirna_id)
-
-d14_top_de_mirnas <- de_mirna_df %>%
-  dplyr::filter(grepl("mmu", mirna_id),
-                status_Day14 != "Not DE") %>%
-  arrange(pvalue_b7h3_vs_untr_Day14) %>%
-  head(10) %>%
-  pull(mirna_id)
-
-d21_top_de_mirnas <- de_mirna_df %>%
-  dplyr::filter(grepl("mmu", mirna_id),
-                status_Day21 != "Not DE") %>%
-  arrange(pvalue_b7h3_vs_untr_Day21) %>%
-  head(10) %>%
-  pull(mirna_id)
-
-
-d28_top_de_mirnas <- de_mirna_df %>%
-  dplyr::filter(grepl("mmu", mirna_id),
-                status_Day28 != "Not DE") %>%
-  arrange(pvalue_b7h3_vs_untr_Day28) %>%
-  head(10) %>%
-  pull(mirna_id)
-
-# add miR-155-5p (DE at 21d and a known regulator of immune response)
-top_de_mirnas <- unique(c(multiple_de_mirnas,
-                          d14_top_de_mirnas,
-                          d21_top_de_mirnas,
-                          d28_top_de_mirnas,
-                          "mmu-miR-155-5p"))
+# View the top results
+head(mirna_target_counts, 10)
 ```
 
 Loop through DE miRNA, extract targets, and perform GO enrichment analyses
 
-```{r known target GO}
+```{r get-all-genes}
 # create empty lists
-known_mirna_target_list <- list()
-known_mirna_target_go_list <- list()
+de_mirna_target_go_list <- list()
 
 # get list of all genes to use as background for enrichment
 all_entrez_ids <- keys(org.Mm.eg.db, keytype = "ENTREZID")
@@ -121,69 +77,62 @@ all_entrez_ids <- keys(org.Mm.eg.db, keytype = "ENTREZID")
 # Map Entrez IDs to Gene Symbols
 all_genes <- select(org.Mm.eg.db, keys = all_entrez_ids, 
                     columns = "SYMBOL", keytype = "ENTREZID")
+```
 
-for (known_mirna in top_de_mirnas){
-  
-  # pull target genes from miRTarBase df
-  known_mirna_target_list[[known_mirna]] <- mirTarBase_df %>%
-    dplyr::filter(miRNA == known_mirna) %>%
-    distinct(`Target Gene`) %>%
-    pull(`Target Gene`)
-  
-  if (length(known_mirna_target_list[[known_mirna]] >= 20)){
+```{r run-go}
+# Enable parallel processing
+plan(multicore, workers = parallel::detectCores() - 1)
 
-    # define all genes as target (1) or not target (0) for enrichment
-    target_gene_df <- all_genes %>%
-    dplyr::mutate(target_gene = case_when(
-      SYMBOL %in% known_mirna_target_list[[known_mirna]] ~ 1,
-      TRUE ~ 0
-    ))
+# Define function to perform GO enrichment for a single miRNA
+run_go_for_mirna <- function(de_mirna) {
+  targets <- miranda_output_df %>%
+    filter(Seq1 == de_mirna) %>%
+    distinct(GeneSymbol) %>%
+    pull(GeneSymbol)
   
-    target_genes <- target_gene_df$target_gene
-    names(target_genes) <- target_gene_df$SYMBOL
+  if (length(targets) < 20) return(NULL)
   
-    # Create topGO object, using biological process (BP) ontology terms
-    GO_data <- new("topGOdata", ontology = "BP", allGenes = target_genes, 
-                                                     geneSel = function(x) x == 1, 
-                                                     annot = annFUN.org, mapping = "org.Mm.eg.db", ID = "symbol")
+  target_gene_df <- all_genes %>%
+    mutate(target_gene = if_else(SYMBOL %in% targets, 1, 0))
+  
+  target_genes <- target_gene_df$target_gene
+  names(target_genes) <- target_gene_df$SYMBOL
+  
+  suppressMessages({
+    GO_data <- new("topGOdata", ontology = "BP", allGenes = target_genes,
+                   geneSel = function(x) x == 1,
+                   annot = annFUN.org, mapping = "org.Mm.eg.db", ID = "symbol")
     
-    # Run Fisher test
     result <- runTest(GO_data, algorithm = "classic", statistic = "fisher")
-    
-    # write results to go analysis list
-   known_mirna_target_go_list[[known_mirna]] <- GenTable(GO_data, classicFisher = result, topNodes = length(usedGO(GO_data)),
-                                                         numChar = 100000)
-   
-   # filter for signficant results
-   known_mirna_target_go_list[[known_mirna]] <- known_mirna_target_go_list[[known_mirna]] %>%
-     dplyr::mutate(fdr = p.adjust(classicFisher, method = "BH")) %>%
-     dplyr::filter(fdr < 0.05)
-   
-   # Add list of genes associated with each sig GO term to df
-
-    genes_per_term <- genesInTerm(GO_data)
-    
-    genes_per_term_df <- enframe(genes_per_term, name = "GO.ID", value = "Genes") %>%
-      mutate(Genes = sapply(Genes, function(x) paste(x, collapse = ", ")))
-    
-    known_mirna_target_go_list[[known_mirna]] <- known_mirna_target_go_list[[known_mirna]] %>%
-      left_join(genes_per_term_df)
-   
-   if (nrow(known_mirna_target_go_list[[known_mirna]]) > 0){
-   
-     write_tsv(known_mirna_target_go_list[[known_mirna]],
-               file.path(results_dir,
-                         glue::glue("{known_mirna}-target-go-enrichment.tsv")))
-     
-   }
-   
-  }
+    go_table <- GenTable(GO_data, classicFisher = result,
+                         topNodes = length(usedGO(GO_data)), numChar = 100000)
+  })
   
+  go_table <- go_table %>%
+    mutate(fdr = p.adjust(classicFisher, method = "BH")) %>%
+    filter(fdr < 0.05)
+  
+  if (nrow(go_table) == 0) return(NULL)
+  
+  # Add gene lists per term
+  genes_per_term_df <- enframe(genesInTerm(GO_data), name = "GO.ID", value = "Genes") %>%
+    mutate(Genes = sapply(Genes, paste, collapse = ", "))
+  
+  go_table <- left_join(go_table, genes_per_term_df, by = "GO.ID")
+  
+  write_tsv(go_table, file.path(results_dir, glue::glue("{de_mirna}-target-go-enrichment.tsv")))
+  
+  return(go_table)
 }
+
+# Run GO enrichment in parallel
+de_mirna_target_go_list <- future_lapply(top_de_mirnas, run_go_for_mirna)
 ```
 
 Print session info
 
-```{r session info}
+```{r session-info}
 sessionInfo()
 ```
+
+

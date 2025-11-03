@@ -39,9 +39,9 @@ go_enr_files <- results_files[grepl("target-go-enrichment.tsv", results_files)]
 
 Define list of keywords to search for among enriched GO terms for plotting
 
-```{r define term keywords}
-
-keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense"
+```{r keywords}
+# provided by Dalia
+keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense|cytokine|chemokine|interferon|glycolysis|lactate|antigen|MHC|HLA|checkpoint"
 ```
 
 Loop through GO enrichment files for each DE miRNA, and plot enrichment of terms matching keywords defined above
