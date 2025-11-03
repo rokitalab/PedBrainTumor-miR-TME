@@ -20,9 +20,10 @@
 ├── 03-xcell2-plot.html
 ├── README.md
 ├── plots
-│   ├── xCell2_scaled_heatmap_ImmGenData.pdf
-│   ├── xCell2_scaled_heatmap_MouseRNAseqData.pdf
-│   ├── xCell2_scaled_heatmap_TabulaMurisBlood.pdf
+│   ├── xCell2_scaled_heatmap_ImmGenData_clustered.pdf
+│   ├── xCell2_scaled_heatmap_ImmGenData_ordered.pdf
+│   ├── xCell2_scaled_heatmap_MouseRNAseqData_clustered.pdf
+│   ├── xCell2_scaled_heatmap_MouseRNAseqData_ordered.pdf
 │   ├── xcell2_EnrichmentScore_ImmGenData_Day14.pdf
 │   ├── xcell2_EnrichmentScore_ImmGenData_Day21.pdf
 │   ├── xcell2_EnrichmentScore_MouseRNAseqData_Day14.pdf
@@ -32,6 +33,6 @@
 │   ├── MouseRNAseqData_xCell2_results.tsv
 │   ├── TabulaMurisBlood_xCell2_results.tsv
 │   ├── xCell2_all_references_merged.tsv
-│   └── xCell2_scaled_within_reference.tsv
+│   └── xCell2_scaled_within_reference_filtered.tsv
 └── run_module.sh
 ```
