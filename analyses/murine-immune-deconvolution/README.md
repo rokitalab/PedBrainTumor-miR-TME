@@ -26,9 +26,7 @@
 │   ├── xcell2_EnrichmentScore_ImmGenData_Day14.pdf
 │   ├── xcell2_EnrichmentScore_ImmGenData_Day21.pdf
 │   ├── xcell2_EnrichmentScore_MouseRNAseqData_Day14.pdf
-│   ├── xcell2_EnrichmentScore_MouseRNAseqData_Day21.pdf
-│   ├── xcell2_EnrichmentScore_byTreatment_Day14.pdf
-│   └── xcell2_EnrichmentScore_byTreatment_Day21.pdf
+│   └── xcell2_EnrichmentScore_MouseRNAseqData_Day21.pdf
 ├── results
 │   ├── ImmGenData_xCell2_results.tsv
 │   ├── MouseRNAseqData_xCell2_results.tsv

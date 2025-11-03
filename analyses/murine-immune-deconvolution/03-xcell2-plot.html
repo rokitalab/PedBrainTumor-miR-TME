@@ -11,7 +11,7 @@
 
 <meta name="author" content="Bicna Song" />
 
-<meta name="date" content="2025-10-29" />
+<meta name="date" content="2025-11-03" />
 
 <title>Mouse Immune Deconvolution Summary</title>
 
@@ -1481,7 +1481,7 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">Mouse Immune Deconvolution Summary</h1>
 <h4 class="author">Bicna Song</h4>
-<h4 class="date">2025-10-29</h4>
+<h4 class="date">2025-11-03</h4>
 
 </div>
 
@@ -1557,50 +1557,6 @@ xcell2_long &lt;- read_tsv(file.path(results_dir, &quot;xCell2_all_references_me
 </div>
 <div id="plot-xcell2-enrichment-score" class="section level3">
 <h3>Plot xCell2 Enrichment Score</h3>
-<pre class="r"><code># Define treatment contrasts (for stat_compare_means)
-treatment_contrasts &lt;- list(c(&quot;CAR&quot;, &quot;Ctrl CAR&quot;), c(&quot;CAR&quot;, &quot;Untreated&quot;))
-
-# Function to plot each time point
-plot_xcell2_by_time &lt;- function(df, time_point) {
-  df %&gt;%
-    filter(Time == time_point) %&gt;%
-    ggplot(aes(x = Treatment, y = EnrichmentScore)) +
-    geom_jitter(aes(fill = Treatment),
-                shape = 21, width = 0.2, size = 2.5,
-                alpha = 0.85, show.legend = FALSE) +
-    geom_boxplot(alpha = 0.05, outlier.shape = NA) +
-    stat_compare_means(
-      method = &quot;wilcox&quot;,
-      comparisons = treatment_contrasts,
-      method.args = list(alternative = &quot;two.sided&quot;),
-      label = &quot;p.signif&quot;,
-      step.increase = 0.15
-    ) +
-    labs(x = NULL,
-         y = &quot;xCell2 Enrichment Score&quot;,
-         title = glue(&quot;xCell2 Immune Enrichment — {time_point}&quot;)) +
-    facet_grid(Reference ~ CellType,
-               scales = &quot;free_y&quot;,
-               labeller = labeller(CellType = label_wrap_gen(18))) +
-    scale_y_continuous(expand = expansion(mult = c(0.05, 0.25))) +
-    theme_Publication() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      strip.text.x = element_text(size = 10, face = &quot;bold&quot;),
-      strip.text.y = element_text(size = 10, face = &quot;bold&quot;),
-      plot.title = element_text(size = 14, face = &quot;bold&quot;, hjust = 0.5)
-    )
-}
-
-# Generate and save plots for each time point
-p_day14 &lt;- plot_xcell2_by_time(xcell2_long, &quot;Day14&quot;)
-p_day21 &lt;- plot_xcell2_by_time(xcell2_long, &quot;Day21&quot;)
-
-ggsave(file.path(plot_dir, &quot;xcell2_EnrichmentScore_byTreatment_Day14.pdf&quot;),
-       plot = p_day14, width = 14, height = 6)
-
-ggsave(file.path(plot_dir, &quot;xcell2_EnrichmentScore_byTreatment_Day21.pdf&quot;),
-       plot = p_day21, width = 14, height = 6)</code></pre>
 <pre class="r"><code># Define pairwise comparisons between treatments
 treatment_contrasts &lt;- list(c(&quot;CAR&quot;, &quot;Ctrl CAR&quot;), c(&quot;CAR&quot;, &quot;Untreated&quot;))
 
@@ -1613,13 +1569,13 @@ plot_xcell2 &lt;- function(df, ref_name, time_point) {
                 shape = 21, width = 0.2, size = 2.5,
                 alpha = 0.85, show.legend = FALSE) +
     geom_boxplot(alpha = 0.05, outlier.shape = NA) +
-    stat_compare_means(
-      method = &quot;wilcox&quot;,
-      comparisons = treatment_contrasts,
-      method.args = list(alternative = &quot;two.sided&quot;),
-      label = &quot;p.signif&quot;,
-      step.increase = 0.15
-    ) +
+    #stat_compare_means(
+    #  method = &quot;wilcox&quot;,
+    #  comparisons = treatment_contrasts,
+    #  method.args = list(alternative = &quot;two.sided&quot;),
+    #  label = &quot;p.signif&quot;,
+    #  step.increase = 0.15
+    #) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.2))) +
     labs(
       x = NULL,
