@@ -1,0 +1,132 @@
+---
+title: "Mouse Immune Deconvolution Summary"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+### Setup
+
+```{r load-packages, message=FALSE, warning=FALSE}
+# Load libraries
+library(tidyverse)
+library(ggpubr)
+library(rprojroot)
+library(glue)
+
+# Define directories
+root_dir <- find_root(has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "murine-immune-deconvolution")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+# Source custom theme
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+### Load files
+
+```{r}
+# Read metadata and keep unique Bioassay_IDs
+metadata <- read_tsv(file.path(root_dir, "analyses", "murine-rna-expression", "input", "Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv")) %>%
+  distinct(Bioassay_ID, .keep_all = TRUE)
+
+# Define cell types to keep
+keep_mouse <- c("Microglia", "macrophage", "monocyte",
+                "natural killer cell", "T cell", "astrocyte")
+
+keep_immgen <- c("CD4-positive, alpha-beta T cell", "macrophage", "monocyte",
+                 "CD8-positive, alpha-beta T cell", "T cell",
+                 "natural killer cell", "Gamma-delta T cell")
+
+# Read, reshape, merge, and filter
+xcell2_long <- read_tsv(file.path(results_dir, "xCell2_all_references_merged.tsv")) %>%
+  pivot_longer(cols = starts_with("BA_"), names_to = "Bioassay_ID", values_to = "EnrichmentScore") %>%
+  select(Bioassay_ID, CellType, Reference, EnrichmentScore) %>%
+  left_join(metadata %>% select(Bioassay_ID, Treatment, Day), by = "Bioassay_ID") %>%
+  rename(Time = Day) %>%
+  mutate(
+    Treatment = recode(Treatment,
+                       "B7H3 CAR" = "CAR",
+                       "B7H3 STOP CAR" = "Ctrl CAR"),
+    Time = recode(as.character(Time),
+                  "21" = "Day21",
+                  "14" = "Day14"),
+    Time = factor(Time, levels = c("Day14", "Day21")),
+    Treatment = factor(Treatment, levels = c("CAR", "Ctrl CAR", "Untreated"))
+  ) %>%
+  filter(
+    (Reference == "MouseRNAseqData" & CellType %in% keep_mouse) |
+    (Reference == "ImmGenData" & CellType %in% keep_immgen)
+  )
+``` 
+
+### Plot xCell2 Enrichment Score
+
+```{r plot-by-reference, message=FALSE, warning=FALSE}
+# Define pairwise comparisons between treatments
+treatment_contrasts <- list(c("CAR", "Ctrl CAR"), c("CAR", "Untreated"))
+
+# Function to plot one reference and time point
+plot_xcell2 <- function(df, ref_name, time_point) {
+  df %>%
+    filter(Reference == ref_name, Time == time_point) %>%
+    ggplot(aes(x = Treatment, y = EnrichmentScore)) +
+    geom_jitter(aes(fill = Treatment),
+                shape = 21, width = 0.2, size = 2.5,
+                alpha = 0.85, show.legend = FALSE) +
+    geom_boxplot(alpha = 0.05, outlier.shape = NA) +
+    #stat_compare_means(
+    #  method = "wilcox",
+    #  comparisons = treatment_contrasts,
+    #  method.args = list(alternative = "two.sided"),
+    #  label = "p.signif",
+    #  step.increase = 0.15
+    #) +
+    scale_y_continuous(expand = expansion(mult = c(0.05, 0.2))) +
+    labs(
+      x = NULL,
+      y = "xCell2 Enrichment Score",
+      title = glue("{ref_name} — {time_point}")
+    ) +
+    facet_wrap(~CellType, nrow = 2, scales = "free_y",
+               labeller = labeller(CellType = label_wrap_gen(18))) +
+    theme_Publication() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      strip.text.x = element_text(size = 10, face = "bold"),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
+}
+
+# Generate unique combinations of references and time points
+plot_combos <- expand_grid(
+  Reference = unique(xcell2_long$Reference),
+  Time = unique(xcell2_long$Time)
+)
+
+# Loop through each combo and save
+for (i in seq_len(nrow(plot_combos))) {
+  ref <- plot_combos$Reference[i]
+  time <- plot_combos$Time[i]
+  
+  p <- plot_xcell2(xcell2_long, ref, time)
+  
+  ggsave(
+    file.path(plot_dir, glue("xcell2_EnrichmentScore_{ref}_{time}.pdf")),
+    plot = p, width = 12, height = 6
+  )
+}
+```
+
+### Session info
+
+```{r session-info}
+sessionInfo()
+```
+
+
