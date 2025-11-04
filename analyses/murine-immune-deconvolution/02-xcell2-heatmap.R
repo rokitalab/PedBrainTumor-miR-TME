@@ -29,30 +29,34 @@ metadata_df <- read_delim(metadata_file) %>%
   filter(experimental_strategy == "RNA-Seq") %>%
   select(external_sample_id, Day, Treatment, Bioassay_ID) %>%
   distinct(external_sample_id, .keep_all = TRUE) %>%
-  rename(time = Day) %>%
-  rename(treatment = Treatment) %>%
+  rename(time = Day, treatment = Treatment) %>%
   mutate(
     time = paste0("Day", time),
-    treatment = str_remove(treatment, "\\s*CAR\\b"),
-    treatment = str_squish(treatment),
-    treatment = if_else(treatment == "B7H3 STOP", "STOP", treatment)
+    treatment = recode(treatment,
+                       "B7H3 CAR" = "CAR",
+                       "B7H3 STOP CAR" = "Ctrl CAR",
+                       "Untreated" = "Untreated")
   ) 
 
-# Pivot to long format for scaling
-scaled_results <- merged_results %>%
-  pivot_longer(
-    cols = -c(CellType, Reference),
-    names_to = "Bioassay_ID",
-    values_to = "Score"
-  ) %>%
-  group_by(Reference, CellType) %>%
-  mutate(
-    Scaled_Score = if (sd(Score, na.rm = TRUE) == 0) 0 
-    else scale(Score)[, 1]
-  ) %>%
-  ungroup()
+# Filter to keep only selected immune-related cell types
+keep_mouse <- c("Microglia", "macrophage", "monocyte",
+                "natural killer cell", "T cell", "astrocyte")
 
-# Pivot back to wide format if needed (for plotting heatmap or saving)
+keep_immgen <- c("CD4-positive, alpha-beta T cell", "macrophage", "monocyte",
+                 "CD8-positive, alpha-beta T cell", "T cell",
+                 "natural killer cell", "Gamma-delta T cell")
+
+# Scale scores within each reference
+scaled_results <- merged_results %>%
+  pivot_longer(cols = -c(CellType, Reference),
+               names_to = "Bioassay_ID", values_to = "Score") %>%
+  group_by(Reference, CellType) %>%
+  mutate(Scaled_Score = if (sd(Score, na.rm = TRUE) == 0) 0 else scale(Score)[, 1]) %>%
+  ungroup() %>%
+  filter((Reference == "MouseRNAseqData" & CellType %in% keep_mouse) |
+           (Reference == "ImmGenData" & CellType %in% keep_immgen))
+
+# Save scaled results
 scaled_results_wide <- scaled_results %>%
   select(CellType, Bioassay_ID, Scaled_Score, Reference) %>%
   pivot_wider(
@@ -61,9 +65,9 @@ scaled_results_wide <- scaled_results %>%
   )
 
 # Save scaled results
-write.table(scaled_results_wide, file.path(results_dir, "xCell2_scaled_within_reference.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(scaled_results_wide, file.path(results_dir, "xCell2_scaled_within_reference_filtered.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
-message("✅ Scaled enrichment scores (z-scores) saved to: xCell2_scaled_within_reference.tsv")
+message("✅ Filtered and scaled enrichment scores saved.")
 
 # Generate heatmaps per reference
 unique_refs <- unique(scaled_results$Reference)
@@ -76,8 +80,8 @@ time_cols <- c(
 )
 
 treatment_cols <- c(
-  "B7H3"      = "#E64B35FF",
-  "STOP"      = "#4DBBD5FF",
+  "CAR" = "#E64B35FF",
+  "Ctrl CAR" = "#4DBBD5FF",
   "Untreated" = "#00A087FF"
 )
 
@@ -108,9 +112,6 @@ for (ref in unique_refs) {
   # Ensure column order matches matrix columns
   meta_ref <- meta_ref[colnames(mat), , drop = FALSE]
   
-  # Get column order based on treatment and time
-  col_order_indices <- order(meta_ref$treatment, meta_ref$time)
-  
   # Define annotations
   ha_col <- HeatmapAnnotation(
     Treatment = meta_ref$treatment,
@@ -126,36 +127,60 @@ for (ref in unique_refs) {
     )
   )
   
+  # (1) Clustered columns version
+  
   # Define clustering
   row_hclust <- hclust(dist(mat, method = "euclidean"), method = "ward.D2")
+  col_hclust <- hclust(dist(t(mat), method = "euclidean"), method = "ward.D2")
   
-  # Create heatmap
-  ht <- Heatmap(
+  ht_clustered <- Heatmap(
     mat,
     name = "Z-score",
     col = col_fun,
     cluster_rows = row_hclust,
-    cluster_columns = FALSE,
+    cluster_columns = col_hclust,
+    top_annotation = ha_col,
+    show_row_names = TRUE,
+    show_column_names = FALSE,
+    row_names_gp = gpar(fontsize = 7),
+    column_names_gp = gpar(fontsize = 7),
+    column_title = paste(ref, "xCell2 (Clustered Columns)"),
+    heatmap_legend_param = list(title = "Z-score", legend_direction = "horizontal")
+  )
+  
+  pdf_clustered <- file.path(plot_dir, paste0("xCell2_scaled_heatmap_", ref, "_clustered.pdf"))
+  pdf(pdf_clustered, width = 10, height = 8)
+  draw(ht_clustered, merge_legend = TRUE,
+       heatmap_legend_side = "right", annotation_legend_side = "bottom")
+  dev.off()
+  message(paste0("✅ Saved clustered heatmap: ", pdf_clustered))
+    
+  
+  # (2) Fixed column order version
+  col_order_indices <- order(meta_ref$treatment, meta_ref$time)
+  
+  ht_fixed <- Heatmap(
+    mat,
+    name = "Z-score",
+    col = col_fun,
+    cluster_rows = row_hclust,
+    cluster_columns = FALSE,   # turn off column clustering
     column_order = col_order_indices,
     top_annotation = ha_col,
     show_row_names = TRUE,
-    show_column_names = TRUE,
+    show_column_names = FALSE,
     row_names_gp = gpar(fontsize = 7),
     column_names_gp = gpar(fontsize = 7),
-    column_title = paste(ref, "xCell2 (Scaled)"),
-    heatmap_legend_param = list(
-      title = "Z-score",
-      legend_direction = "horizontal"
-    )
+    column_title = paste(ref, "xCell2 (Ordered Columns)"),
+    heatmap_legend_param = list(title = "Z-score", legend_direction = "horizontal")
   )
   
-  # Save to PDF
-  pdf_file <- file.path(plot_dir, paste0("xCell2_scaled_heatmap_", ref, ".pdf"))
-  pdf(pdf_file, width = 10, height = 8)
-  draw(ht, merge_legend = TRUE, heatmap_legend_side = "right", annotation_legend_side = "bottom")
+  pdf_fixed <- file.path(plot_dir, paste0("xCell2_scaled_heatmap_", ref, "_ordered.pdf"))
+  pdf(pdf_fixed, width = 10, height = 8)
+  draw(ht_fixed, merge_legend = TRUE,
+       heatmap_legend_side = "right", annotation_legend_side = "bottom")
   dev.off()
-  
-  message(paste0("✅ Saved annotated ComplexHeatmap to: ", pdf_file))
+  message(paste0("✅ Saved ordered heatmap: ", pdf_fixed))
 }
 
 
