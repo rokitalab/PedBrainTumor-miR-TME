@@ -11,9 +11,9 @@
 
 <meta name="author" content="Bicna Song" />
 
-<meta name="date" content="2025-04-16" />
+<meta name="date" content="2025-10-29" />
 
-<title>Annotate miRanda Output with Gene ID and Gene Symbol</title>
+<title>Human 3′ UTR Extraction and miRanda Target Prediction</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1479,105 +1479,168 @@ border-radius: 0px;
 
 
 
-<h1 class="title toc-ignore">Annotate miRanda Output with Gene ID and
-Gene Symbol</h1>
+<h1 class="title toc-ignore">Human 3′ UTR Extraction and miRanda Target
+Prediction</h1>
 <h4 class="author">Bicna Song</h4>
-<h4 class="date">2025-04-16</h4>
+<h4 class="date">2025-10-29</h4>
 
 </div>
 
 
-<p>Load packages</p>
-<pre class="r"><code>library(readr)
-library(dplyr)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>library(rtracklayer)</code></pre>
-<pre><code>## Loading required package: GenomicRanges</code></pre>
-<pre><code>## Loading required package: stats4</code></pre>
-<pre><code>## Loading required package: BiocGenerics</code></pre>
-<pre><code>## 
-## Attaching package: &#39;BiocGenerics&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     combine, intersect, setdiff, union</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     IQR, mad, sd, var, xtabs</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     anyDuplicated, aperm, append, as.data.frame, basename, cbind,
-##     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
-##     get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
-##     match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-##     Position, rank, rbind, Reduce, rownames, sapply, setdiff, table,
-##     tapply, union, unique, unsplit, which.max, which.min</code></pre>
-<pre><code>## Loading required package: S4Vectors</code></pre>
-<pre><code>## 
-## Attaching package: &#39;S4Vectors&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     first, rename</code></pre>
-<pre><code>## The following object is masked from &#39;package:utils&#39;:
-## 
-##     findMatches</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     expand.grid, I, unname</code></pre>
-<pre><code>## Loading required package: IRanges</code></pre>
-<pre><code>## 
-## Attaching package: &#39;IRanges&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     collapse, desc, slice</code></pre>
-<pre><code>## Loading required package: GenomeInfoDb</code></pre>
-<p>Set directory paths</p>
-<pre class="r"><code>root_dir &lt;- rprojroot::find_root(rprojroot::has_dir(&quot;.git&quot;))
-
+<div id="load-packages" class="section level3">
+<h3>Load packages</h3>
+<pre class="r"><code>suppressPackageStartupMessages({
+  library(GenomicFeatures)
+  library(Biostrings)
+  library(rtracklayer)
+  library(BSgenome.Hsapiens.UCSC.hg38)
+  library(dplyr)
+  library(rprojroot)
+  library(GenomeInfoDb)
+  library(stringr)
+  library(readr)
+  library(rtracklayer)
+})</code></pre>
+</div>
+<div id="set-directory-paths" class="section level3">
+<h3>Set directory paths</h3>
+<pre class="r"><code>root_dir &lt;- find_root(has_dir(&quot;.git&quot;))
 data_dir &lt;- file.path(root_dir, &quot;data&quot;)
 analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;human-novel-mirna-target-prediction&quot;)
 results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)</code></pre>
-<p>Set file paths</p>
-<pre class="r"><code>miranda_file &lt;- file.path(results_dir, &quot;miranda_output_parsed.csv&quot;)
-gtf_file &lt;- file.path(data_dir, &quot;gencode.v39.primary_assembly.annotation.gtf.gz&quot;)
-output_file &lt;- file.path(results_dir, &quot;miranda_output_parsed_anno.csv&quot;)</code></pre>
-<pre class="r"><code>miranda &lt;- read_csv(miranda_file)</code></pre>
-<pre><code>## Rows: 110520 Columns: 7
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (3): Seq1, Seq2, Positions
-## dbl (4): Max Score, Max Energy, Len1, Len2
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>gtf &lt;- import(gtf_file)
+</div>
+<div id="set-gtf-file-path" class="section level3">
+<h3>Set GTF file path</h3>
+<pre class="r"><code>gtf_file &lt;- file.path(data_dir, &quot;gencode.v39.primary_assembly.annotation.gtf.gz&quot;)</code></pre>
+</div>
+<div id="create-txdb-and-extract-3-utrs" class="section level3">
+<h3>Create TxDb and extract 3′ UTRs</h3>
+<pre class="r"><code>txdb &lt;- makeTxDbFromGFF(gtf_file, format = &quot;gtf&quot;)</code></pre>
+<pre><code>## Warning in call_fun_in_txdbmaker(&quot;makeTxDbFromGFF&quot;, ...): makeTxDbFromGFF() has moved from GenomicFeatures to the txdbmaker package,
+##   and is formally deprecated in GenomicFeatures &gt;= 1.59.1. Please call
+##   txdbmaker::makeTxDbFromGFF() to get rid of this warning.</code></pre>
+<pre><code>## Import genomic features from the file as a GRanges object ... OK
+## Prepare the &#39;metadata&#39; data frame ... OK
+## Make the TxDb object ...</code></pre>
+<pre><code>## Warning in .get_cds_IDX(mcols0$type, mcols0$phase): The &quot;phase&quot; metadata column contains non-NA values for features of type
+##   stop_codon. This information was ignored.</code></pre>
+<pre><code>## Warning in .makeTxDb_normarg_chrominfo(chrominfo): genome version information
+## is not available for this TxDb object</code></pre>
+<pre><code>## OK</code></pre>
+<pre class="r"><code>three_utrs &lt;- threeUTRsByTranscript(txdb, use.names = TRUE)</code></pre>
+</div>
+<div id="load-the-genome-reference-and-extract-sequences" class="section level3">
+<h3>Load the genome reference and extract sequences</h3>
+<pre class="r"><code>genome &lt;- BSgenome.Hsapiens.UCSC.hg38
+valid_chroms &lt;- intersect(seqlevels(three_utrs), seqnames(genome))
+
+three_utrs_filtered &lt;- keepSeqlevels(three_utrs, valid_chroms, pruning.mode = &quot;coarse&quot;)
+utr_seqs &lt;- extractTranscriptSeqs(genome, three_utrs_filtered)</code></pre>
+</div>
+<div id="save-3-utr-sequences-to-fasta" class="section level3">
+<h3>Save 3′ UTR sequences to FASTA</h3>
+<pre class="r"><code>utr_fasta_path &lt;- file.path(results_dir, &quot;gencode.v39.3utr.fa&quot;)
+writeXStringSet(utr_seqs, filepath = utr_fasta_path)
+message(&quot;✅ Saved 3′ UTR FASTA: &quot;, utr_fasta_path)</code></pre>
+<pre><code>## ✅ Saved 3′ UTR FASTA: /home/rstudio/haydar-mirna/analyses/human-novel-mirna-target-prediction/results/gencode.v39.3utr.fa</code></pre>
+</div>
+<div id="generate-fasta-of-de-novel-mirnas" class="section level3">
+<h3>Generate FASTA of DE Novel miRNAs</h3>
+<pre class="r"><code># Get unique novel DE miRNAs across DIPG/DMG, MB, EPN, and LGG
+tumor_files &lt;- c(
+  &quot;DIPG or DMG_sig_DE_miRNA_list.csv&quot;,
+  &quot;EPN_sig_DE_miRNA_list.csv&quot;,
+  &quot;MB_sig_DE_miRNA_list.csv&quot;,
+  &quot;DESeq2_LGG_vs_healthyNormal_sig.csv&quot;
+)
+
+novel_de_mirnas_all &lt;- tumor_files %&gt;%
+  file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;, &quot;results&quot;, .) %&gt;%
+  lapply(read_csv, show_col_types = FALSE) %&gt;%
+  lapply(\(df) df %&gt;% filter(grepl(&quot;Novel&quot;, miRNA)) %&gt;% pull(miRNA)) %&gt;%
+  unlist() %&gt;%
+  unique()</code></pre>
+<pre class="r"><code># Read and combine novel miRNA annotation tables from both batches
+batch1 &lt;- read_tsv(file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;, &quot;results&quot;, &quot;30-931106737-all_novel_miRNA_merged_id.tsv&quot;), col_types = cols())
+batch2 &lt;- read_tsv(file.path(root_dir, &quot;analyses&quot;, &quot;human-mirna-expression&quot;, &quot;results&quot;, &quot;30-1075661268-all_novel_miRNA_merged_id.tsv&quot;), col_types = cols())
+
+mirna_df &lt;- bind_rows(batch1, batch2) %&gt;%
+distinct(merged_id, .keep_all = TRUE)
+
+# Filter for DE novel miRNAs only
+mirna_filtered &lt;- mirna_df %&gt;%
+filter(merged_id %in% novel_de_mirnas_all)
+
+# Convert mature miRNA sequences to FASTA
+mature_mirna &lt;- RNAStringSet(mirna_filtered$mature_seq)
+names(mature_mirna) &lt;- mirna_filtered$merged_id
+
+# Save FASTA file
+output_fasta &lt;- file.path(results_dir, &quot;novel_de_mirnas.fa&quot;)
+writeXStringSet(mature_mirna, filepath = output_fasta)
+
+cat(&quot;✅ Saved FASTA with&quot;, length(mature_mirna), &quot;novel DE miRNAs to:&quot;, output_fasta, &quot;\n&quot;)</code></pre>
+<pre><code>## ✅ Saved FASTA with 58 novel DE miRNAs to: /home/rstudio/haydar-mirna/analyses/human-novel-mirna-target-prediction/results/novel_de_mirnas.fa</code></pre>
+</div>
+<div id="run-miranda" class="section level3">
+<h3>Run miRanda</h3>
+<pre class="r"><code># Run miRanda
+de_mirna_fa &lt;- file.path(results_dir, &quot;novel_de_mirnas.fa&quot;)
+miranda_out &lt;- file.path(results_dir, &quot;human_miranda_output.txt&quot;)
+cmd &lt;- sprintf(&quot;miranda %s %s -sc 140 -en -20 -out %s&quot;,
+               de_mirna_fa, utr_fasta_path, miranda_out)
+message(&quot;🚀 Running miRanda...&quot;)</code></pre>
+<pre><code>## 🚀 Running miRanda...</code></pre>
+<pre class="r"><code>system(cmd)
+message(&quot;✅ miRanda completed. Results: &quot;, miranda_out)</code></pre>
+<pre><code>## ✅ miRanda completed. Results: /home/rstudio/haydar-mirna/analyses/human-novel-mirna-target-prediction/results/human_miranda_output.txt</code></pre>
+</div>
+<div id="parse-and-annotate-miranda-results" class="section level3">
+<h3>Parse and Annotate miRanda Results</h3>
+<pre class="r"><code>annotated_csv &lt;- file.path(results_dir, &quot;human_miranda_output_parsed_anno.csv&quot;)
+
+# Parse miRanda raw output
+lines &lt;- readLines(miranda_out)
+pred_lines &lt;- lines[str_detect(lines, &quot;^&gt;&gt;&quot;)]
+fields &lt;- str_split_fixed(str_sub(pred_lines, 3), &quot;\t&quot;, n = 10)
+
+parsed_df &lt;- tibble(
+  Seq1        = fields[,1],  # miRNA
+  Seq2    = fields[,2],  # target
+  Max_Score   = as.numeric(fields[,5]),
+  Max_Energy  = as.numeric(fields[,6]),
+  Len1        = as.integer(fields[,8]),
+  Len2        = as.integer(fields[,9]),
+  Positions   = str_trim(fields[,10])
+)
+
+# Read GTF and build transcript–gene mapping
+gtf &lt;- import(gtf_file)
 transcript_anno &lt;- gtf[gtf$type == &quot;transcript&quot;]
 
 transcript_df &lt;- as.data.frame(mcols(transcript_anno)) %&gt;%
-  select(transcript_id, gene_id, gene_name) %&gt;%
-  mutate(transcript_id_clean = sub(&quot;\\.\\d+$&quot;, &quot;&quot;, transcript_id),
-         gene_id_clean = sub(&quot;\\.\\d+$&quot;, &quot;&quot;, gene_id)) %&gt;%
-  distinct(transcript_id_clean, gene_id_clean, gene_name)</code></pre>
-<pre class="r"><code>miranda_annotated &lt;- miranda %&gt;%
-  left_join(transcript_df, by = c(&quot;Seq2&quot; = &quot;transcript_id_clean&quot;))
+  dplyr::select(transcript_id, gene_id, gene_name)
 
-colnames(miranda_annotated)[8] &lt;- &quot;GeneID&quot;
-colnames(miranda_annotated)[9] &lt;- &quot;GeneSymbol&quot;</code></pre>
-<pre class="r"><code>write_csv(miranda_annotated, output_file)</code></pre>
+# Join annotations and export
+miranda_annotated &lt;- parsed_df %&gt;%
+  left_join(transcript_df, by = c(&quot;Seq2&quot; = &quot;transcript_id&quot;)) %&gt;%
+  dplyr::rename(GeneID = gene_id, GeneSymbol = gene_name)
+
+write_csv(miranda_annotated, annotated_csv)
+
+message(&quot;✅ miRanda results parsed and annotated: &quot;, annotated_csv)</code></pre>
+<pre><code>## ✅ miRanda results parsed and annotated: /home/rstudio/haydar-mirna/analyses/human-novel-mirna-target-prediction/results/human_miranda_output_parsed_anno.csv</code></pre>
+</div>
+<div id="session-info" class="section level3">
+<h3>Session Info</h3>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 4.4.0 (2024-04-24)
+<pre><code>## R version 4.5.0 (2025-04-11)
 ## Platform: x86_64-pc-linux-gnu
-## Running under: Ubuntu 22.04.4 LTS
+## Running under: Ubuntu 24.04.2 LTS
 ## 
 ## Matrix products: default
 ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so;  LAPACK version 3.10.0
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -1595,45 +1658,56 @@ colnames(miranda_annotated)[9] &lt;- &quot;GeneSymbol&quot;</code></pre>
 ## [8] base     
 ## 
 ## other attached packages:
-## [1] rtracklayer_1.64.0   GenomicRanges_1.56.2 GenomeInfoDb_1.40.1 
-## [4] IRanges_2.38.1       S4Vectors_0.42.1     BiocGenerics_0.50.0 
-## [7] dplyr_1.1.4          readr_2.1.5         
+##  [1] readr_2.1.5                       stringr_1.5.1                    
+##  [3] rprojroot_2.0.4                   dplyr_1.1.4                      
+##  [5] BSgenome.Hsapiens.UCSC.hg38_1.4.5 BSgenome_1.76.0                  
+##  [7] BiocIO_1.18.0                     rtracklayer_1.68.0               
+##  [9] Biostrings_2.76.0                 XVector_0.48.0                   
+## [11] GenomicFeatures_1.60.0            AnnotationDbi_1.70.0             
+## [13] Biobase_2.68.0                    GenomicRanges_1.60.0             
+## [15] GenomeInfoDb_1.44.3               IRanges_2.42.0                   
+## [17] S4Vectors_0.46.0                  BiocGenerics_0.54.1              
+## [19] generics_0.1.4                   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] SummarizedExperiment_1.34.0 rjson_0.2.21               
-##  [3] xfun_0.44                   bslib_0.7.0                
-##  [5] Biobase_2.64.0              lattice_0.22-6             
-##  [7] tzdb_0.4.0                  vctrs_0.6.5                
-##  [9] tools_4.4.0                 bitops_1.0-7               
-## [11] generics_0.1.3              curl_5.2.1                 
-## [13] parallel_4.4.0              tibble_3.2.1               
-## [15] fansi_1.0.6                 pkgconfig_2.0.3            
-## [17] Matrix_1.7-0                lifecycle_1.0.4            
-## [19] GenomeInfoDbData_1.2.12     compiler_4.4.0             
-## [21] Rsamtools_2.20.0            Biostrings_2.72.1          
-## [23] codetools_0.2-20            htmltools_0.5.8.1          
-## [25] sass_0.4.9                  RCurl_1.98-1.14            
-## [27] yaml_2.3.8                  pillar_1.9.0               
-## [29] crayon_1.5.2                jquerylib_0.1.4            
-## [31] BiocParallel_1.38.0         cachem_1.1.0               
-## [33] DelayedArray_0.30.1         abind_1.4-5                
-## [35] tidyselect_1.2.1            digest_0.6.35              
-## [37] restfulr_0.0.15             rprojroot_2.0.4            
-## [39] fastmap_1.2.0               grid_4.4.0                 
-## [41] SparseArray_1.4.8           cli_3.6.2                  
-## [43] magrittr_2.0.3              S4Arrays_1.4.1             
-## [45] XML_3.99-0.16.1             utf8_1.2.4                 
-## [47] withr_3.0.0                 UCSC.utils_1.0.0           
-## [49] bit64_4.0.5                 rmarkdown_2.27             
-## [51] XVector_0.44.0              httr_1.4.7                 
-## [53] matrixStats_1.3.0           bit_4.0.5                  
-## [55] hms_1.1.3                   evaluate_0.24.0            
-## [57] knitr_1.47                  BiocIO_1.14.0              
-## [59] rlang_1.1.4                 glue_1.7.0                 
-## [61] vroom_1.6.5                 rstudioapi_0.16.0          
-## [63] jsonlite_1.8.8              R6_2.5.1                   
-## [65] MatrixGenerics_1.16.0       GenomicAlignments_1.40.0   
-## [67] zlibbioc_1.50.0</code></pre>
+##  [1] tidyselect_1.2.1            blob_1.2.4                 
+##  [3] filelock_1.0.3              bitops_1.0-9               
+##  [5] fastmap_1.2.0               RCurl_1.98-1.17            
+##  [7] BiocFileCache_2.16.2        GenomicAlignments_1.44.0   
+##  [9] XML_3.99-0.18               digest_0.6.37              
+## [11] lifecycle_1.0.4             KEGGREST_1.48.1            
+## [13] RSQLite_2.4.1               magrittr_2.0.3             
+## [15] compiler_4.5.0              rlang_1.1.6                
+## [17] sass_0.4.10                 progress_1.2.3             
+## [19] tools_4.5.0                 yaml_2.3.10                
+## [21] knitr_1.50                  prettyunits_1.2.0          
+## [23] S4Arrays_1.8.1              bit_4.6.0                  
+## [25] curl_6.3.0                  DelayedArray_0.34.1        
+## [27] xml2_1.3.8                  abind_1.4-8                
+## [29] BiocParallel_1.42.2         withr_3.0.2                
+## [31] txdbmaker_1.4.2             grid_4.5.0                 
+## [33] biomaRt_2.64.0              SummarizedExperiment_1.38.1
+## [35] cli_3.6.5                   rmarkdown_2.29             
+## [37] crayon_1.5.3                httr_1.4.7                 
+## [39] tzdb_0.5.0                  rjson_0.2.23               
+## [41] DBI_1.2.3                   cachem_1.1.0               
+## [43] parallel_4.5.0              restfulr_0.0.15            
+## [45] matrixStats_1.5.0           vctrs_0.6.5                
+## [47] Matrix_1.7-3                jsonlite_2.0.0             
+## [49] hms_1.1.3                   bit64_4.6.0-1              
+## [51] jquerylib_0.1.4             glue_1.8.0                 
+## [53] codetools_0.2-20            stringi_1.8.7              
+## [55] UCSC.utils_1.4.0            tibble_3.3.0               
+## [57] pillar_1.10.2               rappdirs_0.3.3             
+## [59] htmltools_0.5.8.1           GenomeInfoDbData_1.2.14    
+## [61] R6_2.6.1                    dbplyr_2.5.0               
+## [63] httr2_1.1.2                 vroom_1.6.5                
+## [65] evaluate_1.0.3              lattice_0.22-7             
+## [67] png_0.1-8                   Rsamtools_2.24.1           
+## [69] memoise_2.0.1               bslib_0.9.0                
+## [71] SparseArray_1.8.1           xfun_0.52                  
+## [73] MatrixGenerics_1.20.0       pkgconfig_2.0.3</code></pre>
+</div>
 
 
 

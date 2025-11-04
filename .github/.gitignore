@@ -53,7 +53,7 @@ analyses/human-novel-mirna-target-prediction/results/gencode.v39.3utr.fa
 analyses/murine-novel-mirna-target-prediction/results/Mus_musculus.GRCm39.3utr.fa
 
 # Ignore miranda ouput
-analyses/human-novel-mirna-target-prediction/result/miranda_output.txt
+analyses/human-novel-mirna-target-prediction/result/human_miranda_output.txt
 analyses/murine-novel-mirna-target-prediction/results/mouse_miranda_output.txt
 
 # Ignore large files
