@@ -30,7 +30,8 @@ plot_keywords <- "MHC|antigen|myeloid|T cell selection|T cell activation|cytotox
 target_clusters <- c(1, 2, 5)
 
 ### Load cluster membership
-cluster_df <- read_tsv(cluster_file)
+cluster_df <- read_tsv(cluster_file) %>%
+  filter(grepl("up", expr_pattern))
 
 ### Function to build GO enrichment table and plot per cluster
 generate_cluster_plot <- function(cluster_id) {
