@@ -19,6 +19,8 @@
 │   ├── de-mirna-heatmap-Day21.pdf
 │   └── de-mirna-heatmap.pdf
 ├── results
+│   ├── mouse_sig_DE_miRNA_list.csv
+│   ├── mouse-de-mirna-cluster-membership.tsv
 │   └── murine-mirna-tpm.rds
 └── run_module.sh
 ```
