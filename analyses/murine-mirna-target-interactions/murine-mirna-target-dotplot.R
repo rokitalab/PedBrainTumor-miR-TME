@@ -45,12 +45,28 @@ df <- df %>%
 
 #  Helper to build and save plots
 make_plot <- function(data, title_suffix, outfile, color_values, height = 18) {
+  
+  # Compute maximum log2FC
+  if (all(c("log2FoldChange_b7h3_vs_untr_Day14", "log2FoldChange_b7h3_vs_untr_Day21") %in% colnames(data))) {
+    data <- data %>%
+      mutate(max_log2FC = ifelse(
+        abs(log2FoldChange_b7h3_vs_untr_Day14) > abs(log2FoldChange_b7h3_vs_untr_Day21),
+        log2FoldChange_b7h3_vs_untr_Day14,
+        log2FoldChange_b7h3_vs_untr_Day21
+      ))
+  } else if ("log2FoldChange_b7h3_vs_untr_Day14" %in% colnames(data)) {
+    data <- data %>% mutate(max_log2FC = log2FoldChange_b7h3_vs_untr_Day14)
+  } else if ("log2FoldChange_b7h3_vs_untr_Day21" %in% colnames(data)) {
+    data <- data %>% mutate(max_log2FC = log2FoldChange_b7h3_vs_untr_Day21)
+  } else {
+    stop("No log2FoldChange columns found for Day14 or Day21.")
+  }
+  
+  # Plot: larger dots for stronger downregulation (negative values)
   p <- ggplot(data, aes(x = miRNA, y = Genes)) +
-    geom_point(aes(size = abs(log2FoldChange_b7h3_vs_untr_Day21),
-                   color = expr_pattern),
-               alpha = 0.85) +
+    geom_point(aes(size = max_log2FC, color = expr_pattern), alpha = 0.85) +
     scale_color_manual(values = color_values) +
-    scale_size_continuous(name = "|log2FC|", range = c(2, 7)) +
+    scale_size_continuous(name = "log2FC", trans = "reverse", range = c(2, 7)) +
     labs(
       x = "miRNA",
       y = "Immune-related target gene",
