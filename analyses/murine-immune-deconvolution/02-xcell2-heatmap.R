@@ -40,7 +40,7 @@ metadata_df <- read_delim(metadata_file) %>%
 
 # Filter to keep only selected immune-related cell types
 keep_mouse <- c("Microglia", "macrophage", "monocyte",
-                "natural killer cell", "T cell", "astrocyte")
+                "natural killer cell", "T cell")
 
 keep_immgen <- c("CD4-positive, alpha-beta T cell", "macrophage", "monocyte",
                  "CD8-positive, alpha-beta T cell", "T cell",
@@ -130,8 +130,8 @@ for (ref in unique_refs) {
   # (1) Clustered columns version
   
   # Define clustering
-  row_hclust <- hclust(dist(mat, method = "euclidean"), method = "ward.D2")
-  col_hclust <- hclust(dist(t(mat), method = "euclidean"), method = "ward.D2")
+  row_hclust <- hclust(dist(mat, method = "euclidean"), method = "ward.D")
+  col_hclust <- hclust(dist(t(mat), method = "euclidean"), method = "ward.D")
   
   ht_clustered <- Heatmap(
     mat,
