@@ -34,7 +34,8 @@ dmg_cluster_df <- read_tsv(dmg_cluster_file)
 
 # filter for cluster 6 miRNAs
 cluster_6_mirnas <- dmg_cluster_df %>%
-  dplyr::filter(row_cluster == 6) %>%
+  dplyr::filter(row_cluster == 6,
+                direction == "up") %>%
   pull(miRNA)
 
 # Define key words to use for filtering GO enrichment results

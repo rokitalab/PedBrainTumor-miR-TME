@@ -150,20 +150,21 @@ for (hist in histologies) {
     }
     df <- read_tsv(path, col_types = cols())
     de_lists[[ctr]] <- df %>%
-      filter(str_detect(miRNA, "^hsa")) %>%
-      distinct(miRNA) %>%
-      pull(miRNA)
-    message("   • ", ctr, ": ", length(de_lists[[ctr]]), " miRNAs")
+      distinct(miRNA, target_gene_id)
+  #  message("   • ", ctr, ": ", nrow(de_lists[[ctr]]), " miRNAs")
   }
   
   # Find miRNAs DE in at least one contrast
-  total_de <- unique(unlist(de_lists))
-  message("   → DE miRNAs: ", length(total_de))
-  if (length(total_de) == 0) next
+  de_mirnas <- unique(unlist(lapply(de_lists, function(x) x[["miRNA"]])))
+  message("   → DE miRNAs: ", length(de_mirnas))
+  if (length(de_mirnas) == 0) next
+  
+  collapsed_df <- do.call(rbind, de_lists) %>%
+    distinct()
   
   # run GO enrichment on all shared DE miRNA targets
-  future_lapply(total_de, 
-                function(x) go_enrichment(x, df, hist))
+  future_lapply(de_mirnas, 
+                function(x) go_enrichment(x, collapsed_df, hist))
   
 }
 ```

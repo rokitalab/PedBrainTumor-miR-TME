@@ -51,6 +51,28 @@ write_tsv(mirTarBase_df,
           file.path(results_dir, "human-mirna-target-predictions-miRTarBase.tsv.gz"))
 ```
 
+Load miRanda target prediction results for novel miRNAs 
+
+```{r miRanda results}
+miranda_res <- read_csv(file.path(root_dir, "analyses",
+                                  "human-novel-mirna-target-prediction",
+                                  "results",
+                                  "human_miranda_output_parsed_anno.csv")) %>% 
+#  dplyr::filter(Max_Score > 150) %>%
+  distinct(Seq1, GeneSymbol, .keep_all = TRUE) %>%
+  dplyr::rename(miRNA = Seq1,
+                `Target Gene` = GeneSymbol)
+```
+Merge miRTarBase and miRanda target predictions
+
+```{r merge mirna-targets}
+merged_mirna_target_df <- mirTarBase_df %>%
+  dplyr::select(miRNA, `Target Gene`) %>%
+  bind_rows(miranda_res %>% 
+              dplyr::select(miRNA, `Target Gene`)) %>%
+  distinct()
+```
+
 ### Process DE Results and Annotate Targets
 
 ```{r define-histologies}
@@ -91,7 +113,7 @@ for (hist in histologies) {
     # Only keep miRNA targets with detectable mRNA expression (baseMean != NA)
     interactions <- de_mirna_df %>%
       dplyr::filter(padj < 0.05) %>%
-      left_join(mirTarBase_df, by = c("miRNA")) %>%
+      left_join(merged_mirna_target_df, by = c("miRNA")) %>%
       rename(target_gene_id = `Target Gene`) %>%
       left_join(de_rna_df, by = c("target_gene_id" = "gene_symbol"),
                 suffix = c("_miRNA","_mRNA")) %>%
