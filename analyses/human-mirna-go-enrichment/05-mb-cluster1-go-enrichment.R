@@ -129,7 +129,7 @@ plot_df %>%
 # save plot
 ggsave(file.path(plot_dir,
                  "MB-cluster-1-immune-go-term-dotplot.pdf"),
-       width = 11, height = 8)
+       plot = p, width = 11, height = 8)
 
 
 # save full and reduced merged GO enrichment tables
