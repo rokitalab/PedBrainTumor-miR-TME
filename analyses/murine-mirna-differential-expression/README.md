@@ -8,9 +8,10 @@ This analysis module performs miRNA differential expression in mice treated with
 
 ## Folder contents
 
-1. `01-mirna-differential-expression.Rmd`; Performs miRNA differential expression analysis of CAR-T versus untreated mice at each time point
-2. `02-GO_enrichment.Rmd`; perform GO enrichment analysis on DE miRNA targets
-3. `03-plot_gsea.Rmd`; plots DE miRNA target gene GO enrichment
+1. `01-mirna-differential-expression.Rmd`: Performs miRNA differential expression analysis of CAR-T versus untreated mice at each time point
+2. `02-GO_enrichment.Rmd`: Performs GO enrichment analysis on DE miRNA targets
+3. `03-plot_gsea.Rmd`: Plots DE miRNA target gene GO enrichment results
+4. `04-cluster-go-enrichment.R`: Generates immune-related GO term dot plots for murine miRNA clusters 1, 2, and 5
 
 ##Analysis module directory structure
 
@@ -22,11 +23,16 @@ This analysis module performs miRNA differential expression in mice treated with
 ├── 02-GO_enrichment.html
 ├── 03-plot_gsea.Rmd
 ├── 03-plot_gsea.html
+├── 04-cluster-go-enrichment.R
+├── 04-cluster-go-enrichment.html
 ├── README.md
 ├── plots
 │   ├── NovelmiRNA-1265-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── NovelmiRNA-1309-targets-immune-go-term-enrichment-dotplot.pdf
 │   ├── NovelmiRNA-325-targets-immune-go-term-enrichment-dotplot.pdf
+│   ├── cluster-1-immune-go-term-dotplot.pdf
+│   ├── cluster-2-immune-go-term-dotplot.pdf
+│   ├── cluster-5-immune-go-term-dotplot.pdf
 │   ├── mirna-pca-plot-all.pdf
 │   ├── mirna-pca-plot-by-timepoint.pdf
 │   ├── mirna-pca-plot-by-treatment.pdf
@@ -114,6 +120,12 @@ This analysis module performs miRNA differential expression in mice treated with
 │   ├── NovelmiRNA-1265-target-go-enrichment.tsv
 │   ├── NovelmiRNA-1309-target-go-enrichment.tsv
 │   ├── NovelmiRNA-325-target-go-enrichment.tsv
+│   ├── cluster1-mirna-target-go-enr-immune-terms-full.tsv
+│   ├── cluster1-mirna-target-go-enr-immune-terms-reduced.tsv
+│   ├── cluster2-mirna-target-go-enr-immune-terms-full.tsv
+│   ├── cluster2-mirna-target-go-enr-immune-terms-reduced.tsv
+│   ├── cluster5-mirna-target-go-enr-immune-terms-full.tsv
+│   ├── cluster5-mirna-target-go-enr-immune-terms-reduced.tsv
 │   ├── mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv
 │   ├── mmu-let-7a-5p-target-go-enrichment.tsv
 │   ├── mmu-let-7b-3p-target-go-enrichment.tsv

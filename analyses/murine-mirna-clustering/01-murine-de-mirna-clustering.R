@@ -177,6 +177,28 @@ mirna_ht <- Heatmap(
 pdf(file.path(plot_dir, glue::glue("de-mirna-heatmap.pdf")), width = 8, height = 12)
 mirna_ht <- draw(mirna_ht)
 dev.off()
+
+# create miRNA df that includes cluster assignment
+
+row_idx <- unlist(row_order(mirna_ht))
+row_idx_list <- row_order(mirna_ht)
+row_cluster_by_order <- rep(seq_along(row_idx_list), lengths(row_idx_list))
+
+mirna_clusters <- tibble::tibble(
+  miRNA = rownames(miRNA_expr_sub)[row_idx],
+  row_cluster = row_cluster_by_order
+)
+
+colnames(mirna_clusters)[1] <- "mirna_id"
+
+# add other annotation columns
+mirna_clusters <- mirna_clusters %>%
+  left_join(mirna_anno) 
+
+# write to output
+write_tsv(mirna_clusters,
+          file.path(results_dir,
+                    glue::glue("mouse-de-mirna-cluster-membership.tsv")))
  
 ### Per-time point heatmaps
 # Generate one heatmap per time point (e.g., Day 14, Day 21) using only the miRNAs significantly associated with that condition (up/down)
