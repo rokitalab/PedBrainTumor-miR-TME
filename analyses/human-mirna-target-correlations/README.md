@@ -20,7 +20,6 @@ This module identifies significant associations between DE miRNAs in clusters of
 .
 ├── 01-dmg-cluster6-mirna-target-interactions.R
 ├── 02-dmg-cluster6-mirna-target-dotplot.R
-├── dmg-cluster6-mirna-target-dotplot.R
 ├── input
 │   └── dipg-dmg-cluster6-mirna-immune-target-sig-interactions.txt
 ├── plots
