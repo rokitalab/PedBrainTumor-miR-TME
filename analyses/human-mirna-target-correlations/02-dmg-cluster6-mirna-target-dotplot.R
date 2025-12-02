@@ -106,7 +106,7 @@ ggplot(tcell_res, aes(x = miRNA, y = `Target Gene`,
 
 # save plot
 ggsave(file.path(plot_dir, "dmg-cluster6-target-t-cell-dotplot.pdf"),
-       height = 8, width = 10)
+       height = 10, width = 10)
 
 # Filter for myeloid cell processes 
 myeloid_cell_res <- res %>%
