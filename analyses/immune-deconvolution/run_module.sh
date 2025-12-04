@@ -43,3 +43,6 @@ R -e "rmarkdown::render('04-mirna-xcell-score-correlations.Rmd')"
 
 # Run T cell marker gene expression versus miRNA tpm correlation analyses 
 R -e "rmarkdown::render('05-tcell-marker-gene-correlations.Rmd')"
+
+# create heatmaps
+Rscript --vanilla 06-plot-cell-fraction-heatmap.R
