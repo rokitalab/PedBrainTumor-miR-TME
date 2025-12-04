@@ -1,21 +1,28 @@
 miRNA	Target Gene	pathways	mirna_target_pearson_r	mirna_target_pearson_p	log2FC_tumor_vs_adj_normal	padj_tumor_vs_adj_normal	log2FC_tumor_vs_healthy_normal	padj_tumor_vs_healthy_normal	category_broad	category_narrow
-hsa-miR-148a-3p	ARL8B	antigen processing and presentation	-0.704257814	0.022992372	-0.658000941	0.033090567	-0.452786602	0.18488793		Antigen Presentation
-hsa-miR-532-5p	B2M	regulation of T cell mediated cytotoxicity;myeloid cell homeostasis;antigen processing and presentation of peptide antigen via MHC class Ib;antigen processing and presentation via MHC class Ib;antigen processing and presentation of endogenous peptide antigen;antigen processing and presentation of endogenous antigen;antigen processing and presentation of peptide antigen via MHC class I	-0.795046477	0.005978463	1.745732384	1.94E-06	-0.29274942	0.532591429		Antigen Presentation
-hsa-miR-148a-3p	PDIA3	antigen processing and presentation;antigen processing and presentation of peptide antigen via MHC class I;antigen processing and presentation of peptide antigen	-0.83830086	0.002448786	0.581144032	0.062627797	0.281475366	0.487042213		Antigen Presentation
-hsa-miR-148a-3p	RAB10	antigen processing and presentation	-0.823627145	0.003401721	0.087443398	0.808664465	0.070026889	0.857387898		Antigen Presentation
-hsa-miR-148a-3p	RAB34	antigen processing and presentation	-0.458035148	0.183115322	-1.162630822	0.008827145	-0.676203807	0.12238591		Antigen Presentation
-hsa-miR-320b	HLA-E	T Cell Activation	-0.313769987	0.377304446	0.225010564	0.539540918	-1.083810744	0.021465115	Co-stimulatory / Ligand-Receptor	"Antigen Presentation,T Cell Activation"
-hsa-miR-320c	HLA-E	T Cell Activation;regulation of T Cell Activation	-0.244134377	0.496663807	0.225010564	0.539540918	-1.083810744	0.021465115	Co-stimulatory / Ligand-Receptor	"Antigen Presentation,T Cell Activation"
-hsa-miR-320d	HLA-E	T Cell Activation;regulation of T Cell Activation	-0.266649475	0.456438379	0.225010564	0.539540918	-1.083810744	0.021465115	Co-stimulatory / Ligand-Receptor	"Antigen Presentation,T Cell Activation"
-hsa-miR-532-5p	HLA-A	regulation of T cell mediated cytotoxicity;natural killer cell mediated cytotoxicity;antigen processing and presentation of peptide antigen via MHC class Ib;antigen processing and presentation via MHC class Ib;antigen processing and presentation of endogenous peptide antigen;antigen processing and presentation of endogenous antigen;antigen processing and presentation of peptide antigen via MHC class I	-0.682156692	0.029773526	1.885675439	2.31E-06	0.161724592	0.733468951	Co-stimulatory / Ligand-Receptor	"Antigen Presentation, T Cell-mediated Cytotoxicity"
 hsa-miR-21-5p	ARID4A	myeloid cell differentiation	-0.74248181	0.013909055	-0.121240978	0.740758827	-0.468145062	0.146433116		Myeloid Cell Differentiation
-hsa-miR-21-5p	TLR4	myeloid cell differentiation;regulation of myeloid cell differentiation;macrophage differentiation	-0.636991988	0.047622714	-0.326232725	0.388492732	-0.570891479	0.132477869	Inflammatory / Pro-Activation	Myeloid Cell & Macrophage Differentiation
-hsa-miR-21-5p	VPS54	myeloid cell differentiation;macrophage differentiation	-0.791001434	0.006430753	0.268293473	0.384164148	0.30735701	0.367297768		Myeloid Cell & Macrophage Differentiation
+hsa-miR-148a-3p	ARL8B	antigen processing and presentation	-0.704257814	0.022992372	-0.658000941	0.033090567	-0.452786602	0.18488793		Antigen Presentation
+hsa-miR-155-5p	AXL	myeloid cell homeostasis	0.267684066	0.454626065	-1.047474085	8.76E-04	-0.256454042	0.491304621	Inflammatory / Pro-Activation	Myeloid Cell Homeostasis
+hsa-miR-10b-5p	AXL	myeloid cell homeostasis	-0.125250099	0.73027326	-1.047474085	8.76E-04	-0.256454042	0.491304621	Inflammatory / Pro-Activation	Myeloid Cell Homeostasis
+hsa-miR-532-5p	B2M	regulation of T cell mediated cytotoxicity;myeloid cell homeostasis;antigen processing and presentation of peptide antigen via MHC class Ib;antigen processing and presentation via MHC class Ib;antigen processing and presentation of endogenous peptide antigen;antigen processing and presentation of endogenous antigen;antigen processing and presentation of peptide antigen via MHC class I	-0.795046477	0.005978463	1.745732384	1.94E-06	-0.29274942	0.532591429		Antigen Presentation
+hsa-miR-3144-3p	BCL2	"CD8-positive, alpha-beta T Cell Activation"	-0.646996962	0.043176589	-0.071111685	0.86609626	-0.024593496	0.959156664	Suppressive / Regulatory	T Cell Activation
+hsa-miR-320b	BID	T Cell Activation	-0.719004038	0.019112176	-0.024792765	0.953695434	-0.027010065	0.954860304	T cell Survival / Apoptosis	T Cell Activation
+hsa-miR-320b	CASP3	T Cell Activation	-0.733698342	0.015721883	0.439838057	0.157306071	0.240060607	0.429426495	T cell Survival / Apoptosis	T Cell Activation
+hsa-miR-320c	CASP3	T Cell Activation;regulation of T Cell Activation	-0.687126081	0.028143478	0.439838057	0.157306071	0.240060607	0.429426495	T cell Survival / Apoptosis	T Cell Activation
+hsa-miR-320b	CD47	T Cell Activation	-0.701938883	0.02364821	-0.176785256	0.557984727	-0.141440896	0.757903878	Co-stimulatory / Ligand-Receptor	T Cell Activation
 hsa-miR-3065-5p	CDC42	myeloid cell differentiation	-0.770324663	0.009129324	0.235761439	0.4347826	-0.284354463	0.408545939		Myeloid Cell Differentiation
 hsa-miR-193a-5p	CDK6	myeloid cell differentiation	-0.645792129	0.043696626	0.41268915	0.192794138	0.223617097	0.634968198		Myeloid Cell Differentiation
+hsa-miR-148a-3p	CEBPG	myeloid cell homeostasis	-0.637749035	0.047276056	0.02971359	0.944138365	0.738292226	0.024234366		Myeloid Cell Homeostasis
 hsa-miR-3065-5p	CHMP5	myeloid cell differentiation	-0.831480083	0.002863803	0.003607352	0.994425167	-0.403769547	0.300511057		Myeloid Cell Differentiation
 hsa-miR-501-3p	CREB1	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.63227869	0.049819168	0.335380772	0.236349494	0.244053345	0.324259676		Myeloid Cell Differentiation
 hsa-miR-502-3p	CREB1	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.777957124	0.008054918	0.335380772	0.236349494	0.244053345	0.324259676		Myeloid Cell Differentiation
+hsa-miR-320b	CYLD	T Cell Activation	-0.921624057	1.50E-04	-0.345857215	0.302160077	-0.833824285	0.007231156	T cell Negative Regulators/ Checkpoint	T Cell Activation
+hsa-miR-320c	CYLD	T Cell Activation;regulation of T Cell Activation	-0.863190736	0.001295087	-0.345857215	0.302160077	-0.833824285	0.007231156	T cell Negative Regulators/ Checkpoint	T Cell Activation
+hsa-miR-320d	CYLD	T Cell Activation;regulation of T Cell Activation	-0.665900075	0.035553535	-0.345857215	0.302160077	-0.833824285	0.007231156	T cell Negative Regulators/ Checkpoint	T Cell Activation
+hsa-miR-320b	DLG1	T Cell Activation	-0.836108542	0.002577097	-0.319818658	0.329503023	-0.971676734	0.009522019	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-320c	DLG1	T Cell Activation;regulation of T Cell Activation	-0.777885713	0.008064533	-0.319818658	0.329503023	-0.971676734	0.009522019	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-320d	DLG1	T Cell Activation;regulation of T Cell Activation	-0.523192916	0.120696819	-0.319818658	0.329503023	-0.971676734	0.009522019	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-450b-5p	DUSP22	T Cell Activation	0.168856075	0.64098008	-0.396536341	0.204171432	-0.63439144	0.015454642	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-450b-5p	EFNB2	T Cell Activation	-0.318703999	0.369436422	-1.591837209	1.63E-07	-0.922384372	0.045772064	Co-stimulatory / Ligand-Receptor	T Cell Activation
 hsa-miR-3065-5p	EPAS1	myeloid cell differentiation	0.277100765	0.438280703	-1.214437517	0.002478894	-0.395607804	0.352992183		Myeloid Cell Differentiation
 hsa-miR-20a-5p	EPAS1	myeloid cell differentiation;myeloid cell homeostasis	-0.21882587	0.543588916	-1.214437517	0.002478894	-0.395607804	0.352992183		Myeloid Cell Differentiation
 hsa-miR-501-3p	EPAS1	myeloid cell differentiation;myeloid cell homeostasis	0.191239803	0.596629823	-1.214437517	0.002478894	-0.395607804	0.352992183		Myeloid Cell Differentiation
@@ -24,25 +31,75 @@ hsa-miR-17-5p	EPAS1	myeloid cell differentiation;myeloid cell homeostasis	-0.243
 hsa-miR-21-5p	FAXDC2	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.619311031	0.05620744	-0.448057724	0.214986486	-1.404648977	0.004785325		Myeloid Cell Differentiation
 hsa-miR-450b-5p	FBXW7	myeloid cell differentiation;regulation of myeloid cell differentiation	0.038526774	0.915847664	-1.462274858	1.82E-07	-1.158863909	0.021181573		Myeloid Cell Differentiation
 hsa-miR-193a-5p	FECH	myeloid cell differentiation	-0.377660928	0.281955236	-1.048694589	0.008254841	-1.580406146	2.66E-04		Myeloid Cell Differentiation
+hsa-miR-21-5p	FOXO3	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.693102085	0.02626532	-0.276315805	0.364843852	0.001616325	0.997861034	Suppressive / Regulatory	Myeloid Cell Differentiation
+hsa-miR-320b	FOXO3	T Cell Activation	-0.669713176	0.034134992	-0.276315805	0.364843852	0.001616325	0.997861034	T cell Survival / Apoptosis	T Cell Activation
+hsa-miR-320c	FOXO3	T Cell Activation;regulation of T Cell Activation	-0.696037711	0.025374956	-0.276315805	0.364843852	0.001616325	0.997861034	T cell Survival / Apoptosis	T Cell Activation
 hsa-miR-3065-5p	GLO1	myeloid cell differentiation	-0.712024525	0.020887069	-0.275062096	0.357700295	-0.066819103	0.873509996		Myeloid Cell Differentiation
 hsa-miR-21-5p	GP5	myeloid cell differentiation	-0.64430006	0.044346438	-0.398990215	0.437790283	-0.695461378	0.22524279		Myeloid Cell Differentiation
+hsa-miR-155-5p	GPAM	T Cell Activation	-0.329494694	0.352516423	-1.15780056	7.31E-04	-0.719028764	0.026816189	T cell Metabolism / Proliferation	T Cell Activation
+hsa-miR-193a-5p	HIPK2	myeloid cell differentiation	-0.637261127	0.047499279	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-3065-5p	HIPK2	myeloid cell differentiation	-0.276883584	0.438654609	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-450b-5p	HIPK2	myeloid cell differentiation;myeloid cell homeostasis	0.247988753	0.489673005	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-19a-3p	HIPK2	myeloid cell homeostasis;myeloid cell differentiation	-0.200215744	0.579166514	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-532-5p	HLA-A	regulation of T cell mediated cytotoxicity;natural killer cell mediated cytotoxicity;antigen processing and presentation of peptide antigen via MHC class Ib;antigen processing and presentation via MHC class Ib;antigen processing and presentation of endogenous peptide antigen;antigen processing and presentation of endogenous antigen;antigen processing and presentation of peptide antigen via MHC class I	-0.682156692	0.029773526	1.885675439	2.31E-06	0.161724592	0.733468951	Co-stimulatory / Ligand-Receptor	"Antigen Presentation, T Cell-mediated Cytotoxicity"
+hsa-miR-320b	HLA-E	T Cell Activation	-0.313769987	0.377304446	0.225010564	0.539540918	-1.083810744	0.021465115	Co-stimulatory / Ligand-Receptor	"Antigen Presentation,T Cell Activation"
+hsa-miR-320c	HLA-E	T Cell Activation;regulation of T Cell Activation	-0.244134377	0.496663807	0.225010564	0.539540918	-1.083810744	0.021465115	Co-stimulatory / Ligand-Receptor	"Antigen Presentation,T Cell Activation"
+hsa-miR-320d	HLA-E	T Cell Activation;regulation of T Cell Activation	-0.266649475	0.456438379	0.225010564	0.539540918	-1.083810744	0.021465115	Co-stimulatory / Ligand-Receptor	"Antigen Presentation,T Cell Activation"
+hsa-miR-532-5p	HMGB1	myeloid cell homeostasis	-0.67850295	0.031012272	0.147112309	0.666984784	-0.138701496	0.716291721		Myeloid Cell Homeostasis
+hsa-miR-148a-3p	HMGB1	T Cell Activation;alpha-beta T Cell Activation;regulation of T cell proliferation;myeloid cell homeostasis;interleukin-12 production;regulation of interleukin-12 production	-0.713742579	0.020440031	0.147112309	0.666984784	-0.138701496	0.716291721		"T Cell Activation,Myeloid Cell Homeostasis,Interleukin-12 Production"
+hsa-miR-532-5p	HSPA9	myeloid cell homeostasis	-0.73374003	0.01571291	-0.112580488	0.74862139	-0.269417729	0.410075157		Myeloid Cell Homeostasis
+hsa-miR-320d	ICOSLG	T Cell Activation;regulation of T Cell Activation	-0.675543943	0.03204083	0.623794547	0.114661438	0.005319647	0.993280001	Co-stimulatory / Ligand-Receptor	T Cell Activation
+hsa-miR-450b-5p	IGF1	T Cell Activation	-0.464631571	0.176077064	-0.306494306	0.550988775	-1.523923863	0.024060398	T cell Metabolism / Proliferation	T Cell Activation & Proliferation
+hsa-miR-193a-5p	IGF1	regulation of activated T cell proliferation;activated T cell proliferation;regulation of T cell proliferation	0.118728911	0.743910795	-0.306494306	0.550988775	-1.523923863	0.024060398	T cell Metabolism / Proliferation	T Cell Activation & Proliferation
+hsa-miR-505-3p	IGF1	regulation of T Cell Activation;T Cell Activation	-0.633991139	0.049013507	-0.306494306	0.550988775	-1.523923863	0.024060398	T cell Metabolism / Proliferation	T Cell Activation & Proliferation
+hsa-miR-19a-3p	IKZF1	myeloid cell homeostasis;myeloid cell differentiation	-0.112550903	0.75689012	0.438243717	0.341406501	-1.098179368	0.04457266		Myeloid Cell Differentiation & Homeostasis
 hsa-miR-3065-5p	IL1RL1	myeloid cell differentiation	-0.149828496	0.679509113	-2.29015676	2.11E-04	0.148811975	0.782932516	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
 hsa-miR-193a-5p	IL1RL1	myeloid cell differentiation	-0.348452899	0.323762551	-2.29015676	2.11E-04	0.148811975	0.782932516	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
 hsa-miR-21-5p	IREB2	myeloid cell differentiation	-0.785867781	0.007039126	0.106753993	0.767291974	0.036764537	0.939546064		Myeloid Cell Differentiation
 hsa-miR-21-5p	ITGB8	myeloid cell differentiation	-0.735840901	0.015265342	0.051484746	0.904583599	0.114849855	0.784617682		Myeloid Cell Differentiation
+hsa-miR-19a-3p	KITLG	myeloid cell homeostasis;myeloid cell differentiation;regulation of myeloid cell differentiation	0.141929659	0.695707783	-1.622241804	1.35E-05	-0.996699339	0.026253081		"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
+hsa-miR-320b	KITLG	T Cell Activation	-0.181270411	0.616245635	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
+hsa-miR-450b-5p	KITLG	T Cell Activation;myeloid cell differentiation;regulation of myeloid cell differentiation;myeloid cell homeostasis	0.243474844	0.497864255	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
+hsa-miR-320c	KITLG	T Cell Activation;regulation of T Cell Activation	-0.107868974	0.766763107	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
+hsa-miR-320d	KITLG	T Cell Activation;regulation of T Cell Activation	0.20083421	0.577970346	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
 hsa-miR-502-3p	KLF10	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.662314656	0.036923278	0.512985543	0.169927528	0.564316469	0.236879083		Myeloid Cell Differentiation
 hsa-miR-3065-5p	KLF13	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.417883553	0.229479536	-0.193402405	0.517373558	-0.556479188	0.03444326		Myeloid Cell Differentiation
 hsa-miR-532-5p	KLF13	myeloid cell homeostasis	-0.149016535	0.681168945	-0.193402405	0.517373558	-0.556479188	0.03444326		Myeloid Cell Differentiation
 hsa-miR-19a-3p	KLF13	myeloid cell homeostasis;myeloid cell differentiation;regulation of myeloid cell differentiation	-0.441561306	0.201406099	-0.193402405	0.517373558	-0.556479188	0.03444326		Myeloid Cell Differentiation
 hsa-miR-501-3p	KLF13	regulation of myeloid cell differentiation;myeloid cell differentiation;myeloid cell homeostasis	-0.146818771	0.685667836	-0.193402405	0.517373558	-0.556479188	0.03444326		Myeloid Cell Differentiation
 hsa-miR-502-3p	KLF13	regulation of myeloid cell differentiation;myeloid cell differentiation;myeloid cell homeostasis	-0.197519804	0.584391488	-0.193402405	0.517373558	-0.556479188	0.03444326		Myeloid Cell Differentiation
+hsa-miR-320b	KMT2A	T Cell Activation	-0.816209536	0.003973078	0.037714503	0.924148342	0.230356824	0.412406418	Transcription / Epigenetic Regulation	T Cell Activation
+hsa-miR-193a-5p	LRRC32	regulation of activated T cell proliferation;activated T cell proliferation;regulation of T cell proliferation	0.532395462	0.113138042	-0.747902762	0.049646587	0.332288747	0.500726261		T Cell Proliferation
+hsa-miR-155-5p	MAPK14	myeloid cell differentiation;myeloid cell homeostasis;regulation of myeloid cell differentiation	-0.659181204	0.038149174	-0.115486265	0.740758827	0.010534298	0.979646511		Myeloid Cell Differentiation & Homeostasis
+hsa-miR-532-5p	MED1	myeloid cell homeostasis	-0.677325847	0.031418703	0.292898949	0.320462966	0.185097464	0.570336725		Myeloid Cell Differentiation & Homeostasis
+hsa-miR-501-3p	MED1	regulation of myeloid cell differentiation;myeloid cell differentiation;myeloid cell homeostasis	-0.741257238	0.014152555	0.292898949	0.320462966	0.185097464	0.570336725		Myeloid Cell Differentiation & Homeostasis
+hsa-miR-502-3p	MED1	regulation of myeloid cell differentiation;myeloid cell differentiation;myeloid cell homeostasis	-0.802996461	0.005156244	0.292898949	0.320462966	0.185097464	0.570336725		Myeloid Cell Differentiation & Homeostasis
 hsa-miR-21-5p	MEF2C	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.4545955	0.186850142	-2.991355233	2.80E-12	-2.838895097	7.44E-06	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
 hsa-miR-450b-5p	MEF2C	myeloid cell differentiation;regulation of myeloid cell differentiation	0.667923961	0.034795742	-2.991355233	2.80E-12	-2.838895097	7.44E-06	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
 hsa-miR-155-5p	MEIS1	myeloid cell differentiation;regulation of myeloid cell differentiation;myeloid cell development	-0.820538437	0.003631922	1.654775251	1.09E-04	0.27929771	0.538825228		Myeloid Cell Differentiation
+hsa-miR-450b-5p	MICA	T Cell Activation	-0.691130542	0.026875148	-0.663095152	0.105466688	0.511976615	0.303983256	Co-stimulatory / Ligand-Receptor	T Cell Activation
+hsa-miR-501-3p	NCAPG2	myeloid cell differentiation;myeloid cell homeostasis	-0.726668037	0.017286638	1.089813196	0.005609204	0.878547755	0.02508254		Myeloid Cell Differentiation & Homeostasis
+hsa-miR-502-3p	NCAPG2	myeloid cell differentiation;myeloid cell homeostasis	-0.706935169	0.022250863	1.089813196	0.005609204	0.878547755	0.02508254		Myeloid Cell Differentiation & Homeostasis
+hsa-miR-320b	NCK2	T Cell Activation	-0.658634634	0.038365783	-0.058316151	0.886308949	0.05643152	0.89303263	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-320c	NCK2	T Cell Activation;regulation of T Cell Activation	-0.633137433	0.049414059	-0.058316151	0.886308949	0.05643152	0.89303263	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-320b	NFATC3	T Cell Activation	-0.687249143	0.028103904	0.153914646	0.647132796	0.071094608	0.860695331	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-320c	NFATC3	T Cell Activation	-0.652369458	0.040908192	0.153914646	0.647132796	0.071094608	0.860695331	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-148a-3p	PDIA3	antigen processing and presentation;antigen processing and presentation of peptide antigen via MHC class I;antigen processing and presentation of peptide antigen	-0.83830086	0.002448786	0.581144032	0.062627797	0.281475366	0.487042213		Antigen Presentation
+hsa-miR-320b	PDP2	T Cell Activation	-0.764347633	0.010038446	-0.272106713	0.386245733	-0.259307845	0.439439615	T cell Metabolism / Proliferation	T Cell Activation
+hsa-miR-320c	PDP2	T Cell Activation	-0.773537703	0.008665433	-0.272106713	0.386245733	-0.259307845	0.439439615	T cell Metabolism / Proliferation	T Cell Activation
+hsa-miR-320d	PDPK1	T Cell Activation;regulation of T Cell Activation	-0.555340302	0.095607689	-0.957337845	4.60E-04	-0.455257919	0.232304917	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-320b	PDPK1	T Cell Activation	-0.754496644	0.011673062	-0.957337845	4.60E-04	-0.455257919	0.232304917	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-320c	PDPK1	T Cell Activation;regulation of T Cell Activation	-0.733725094	0.015716125	-0.957337845	4.60E-04	-0.455257919	0.232304917	TCR activation/ Downstream Signaling	T Cell Activation
 hsa-miR-21-5p	PIAS3	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.8095871	0.004538554	0.299237005	0.337892308	0.179791587	0.570336725	Suppressive / Regulatory	Myeloid Cell Differentiation
+hsa-miR-10b-5p	PIK3CD	myeloid cell homeostasis;myeloid cell differentiation	-0.145086672	0.689219782	-0.190566642	0.607397033	-1.081661832	0.009753376	Inflammatory / Pro-Activation	Myeloid Cell Differentiation & Homeostasis
 hsa-miR-17-5p	PIK3R1	myeloid cell differentiation	-0.356497382	0.311943029	-0.859043042	0.003305703	-1.063101448	0.002232868	Suppressive / Regulatory	Myeloid Cell Differentiation
 hsa-miR-21-5p	PIK3R1	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.560010152	0.092266444	-0.859043042	0.003305703	-1.063101448	0.002232868	Suppressive / Regulatory	Myeloid Cell Differentiation
 hsa-miR-3065-5p	PIK3R1	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.355713622	0.313084475	-0.859043042	0.003305703	-1.063101448	0.002232868	Suppressive / Regulatory	Myeloid Cell Differentiation
+hsa-miR-320b	PIK3R1	T Cell Activation	-0.447543489	0.194646252	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-320c	PIK3R1	T Cell Activation	-0.4771063	0.163212534	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-320d	PIK3R1	T Cell Activation	-0.101331781	0.780598807	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-155-5p	PIK3R1	T Cell Activation;myeloid cell differentiation;regulation of myeloid cell differentiation	-0.406590645	0.24360752	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
+hsa-miR-450b-5p	PIK3R2	T Cell Activation	0.244661911	0.495704504	-0.744034782	0.03254597	-0.324077448	0.504411835	TCR activation/ Downstream Signaling	T Cell Activation
 hsa-miR-501-3p	PIP4K2A	myeloid cell differentiation	-0.310872994	0.381962152	-0.31556938	0.411757304	-1.145913594	0.036645959	Suppressive / Regulatory	Myeloid Cell Differentiation
 hsa-miR-502-3p	PIP4K2A	myeloid cell differentiation	-0.494040614	0.146678543	-0.31556938	0.411757304	-1.145913594	0.036645959	Suppressive / Regulatory	Myeloid Cell Differentiation
 hsa-miR-93-5p	PIP4K2A	myeloid cell differentiation	-0.109707718	0.762881984	-0.31556938	0.411757304	-1.145913594	0.036645959	Suppressive / Regulatory	Myeloid Cell Differentiation
@@ -53,13 +110,28 @@ hsa-miR-21-5p	PITHD1	myeloid cell differentiation;regulation of myeloid cell dif
 hsa-miR-3065-5p	PPP3CA	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.70110521	0.023887098	-1.600759376	3.71E-07	-0.691738808	0.167287531		Myeloid Cell Differentiation
 hsa-miR-501-3p	PPP3CA	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.624875003	0.053403792	-1.600759376	3.71E-07	-0.691738808	0.167287531		Myeloid Cell Differentiation
 hsa-miR-502-3p	PPP3CA	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.538371654	0.108392232	-1.600759376	3.71E-07	-0.691738808	0.167287531		Myeloid Cell Differentiation
+hsa-miR-320b	PRKAR1A	T Cell Activation	-0.836922167	0.002528926	-0.485970127	0.141967065	-0.496766764	0.165471355	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-320c	PRKAR1A	T Cell Activation;regulation of T Cell Activation	-0.804475538	0.0050127	-0.485970127	0.141967065	-0.496766764	0.165471355	TCR activation/ Downstream Signaling	T Cell Activation
+hsa-miR-148a-3p	PRNP	T Cell Activation;regulation of T cell proliferation	-0.895024848	4.67E-04	-1.105023185	2.56E-04	-0.943273196	0.051793897	T cell Survival / Apoptosis	T Cell Activation & Proliferation
 hsa-miR-155-5p	PSEN1	T Cell Activation;myeloid cell differentiation	-0.131461574	0.717346349	-0.0255934	0.955455179	-0.974633102	0.015698172	T cell Adhesion / Trafficking	Myeloid Cell Differentiation
+hsa-miR-3065-5p	PTPN11	myeloid cell differentiation	-0.501222452	0.139987897	-0.325728681	0.299828803	-0.609537131	0.045915736	Suppressive / Regulatory	"T Cell Activation,Myeloid Cell Differentiation"
+hsa-miR-505-3p	PTPN11	regulation of T Cell Activation;T Cell Activation	-0.457038975	0.184192412	-0.325728681	0.299828803	-0.609537131	0.045915736		"T Cell Activation,Myeloid Cell Differentiation"
+hsa-miR-320b	PTPN11	T Cell Activation	-0.762887269	0.010269904	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
+hsa-miR-450b-5p	PTPN11	T Cell Activation;myeloid cell differentiation	0.037175919	0.918789975	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
+hsa-miR-320c	PTPN11	T Cell Activation;regulation of T Cell Activation	-0.726801103	0.017256058	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
+hsa-miR-320d	PTPN11	T Cell Activation;regulation of T Cell Activation	-0.329168898	0.353021454	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
 hsa-miR-21-5p	PURB	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.734576755	0.015533575	-0.269864369	0.383679628	-0.141947392	0.733142428		Myeloid Cell Differentiation
 hsa-miR-3065-5p	PURB	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.645670953	0.043749159	-0.269864369	0.383679628	-0.141947392	0.733142428		Myeloid Cell Differentiation
 hsa-miR-501-3p	PURB	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.648478001	0.042543042	-0.269864369	0.383679628	-0.141947392	0.733142428		Myeloid Cell Differentiation
 hsa-miR-502-3p	PURB	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.657055845	0.038996119	-0.269864369	0.383679628	-0.141947392	0.733142428		Myeloid Cell Differentiation
 hsa-miR-501-3p	QKI	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.635428495	0.04834401	0.497255339	0.105460861	-0.129229275	0.793445941		Myeloid Cell Differentiation
 hsa-miR-502-3p	QKI	regulation of myeloid cell differentiation;myeloid cell differentiation	-0.838359728	0.002445406	0.497255339	0.105460861	-0.129229275	0.793445941		Myeloid Cell Differentiation
+hsa-miR-148a-3p	RAB10	antigen processing and presentation	-0.823627145	0.003401721	0.087443398	0.808664465	0.070026889	0.857387898		Antigen Presentation
+hsa-miR-148a-3p	RAB34	antigen processing and presentation	-0.458035148	0.183115322	-1.162630822	0.008827145	-0.676203807	0.12238591		Antigen Presentation
+hsa-miR-450b-5p	RABL3	T Cell Activation	0.101417086	0.780417899	-0.445259729	0.152001614	-0.711007775	0.034555773	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-148a-3p	RPS17	myeloid cell homeostasis	-0.776990817	0.008185721	0.461023052	0.15575166	0.018470963	0.972391511		Myeloid Cell Homeostasis
+hsa-miR-18a-5p	SDC4	T Cell Activation	0.136194355	0.707539802	-1.256177986	4.06E-04	-0.249881006	0.55109999	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-532-5p	SERPINB9	natural killer cell mediated cytotoxicity	-0.296864981	0.404875338	-0.875306376	0.025024812	-0.871631382	0.028838681		NK Cell Cytotoxicity 
 hsa-miR-21-5p	SFXN1	myeloid cell differentiation	-0.674963865	0.032245149	0.012089641	0.978015146	0.11088676	0.806344469		Myeloid Cell Differentiation
 hsa-miR-532-5p	SFXN1	myeloid cell homeostasis	-0.634995246	0.048545164	0.012089641	0.978015146	0.11088676	0.806344469		Myeloid Cell Differentiation
 hsa-miR-450b-5p	SH3PXD2A	myeloid cell differentiation	0.088353147	0.808229177	-0.419041002	0.208414829	-0.953428609	0.009710595	Suppressive / Regulatory	Myeloid Cell Differentiation
@@ -68,34 +140,17 @@ hsa-miR-3065-5p	SH3PXD2A	myeloid cell differentiation	-0.135422976	0.709135538	-
 hsa-miR-501-3p	SH3PXD2A	myeloid cell differentiation	-0.161314644	0.656164411	-0.419041002	0.208414829	-0.953428609	0.009710595	Suppressive / Regulatory	Myeloid Cell Differentiation
 hsa-miR-502-3p	SH3PXD2A	myeloid cell differentiation	-0.387910691	0.268016285	-0.419041002	0.208414829	-0.953428609	0.009710595	Suppressive / Regulatory	Myeloid Cell Differentiation
 hsa-miR-93-5p	SH3PXD2A	myeloid cell differentiation	-0.124768829	0.731277449	-0.419041002	0.208414829	-0.953428609	0.009710595	Suppressive / Regulatory	Myeloid Cell Differentiation
-hsa-miR-21-5p	SNRK	myeloid cell differentiation	-0.90014079	3.85E-04	-0.165782205	0.631846519	-0.134983558	0.779748388		Myeloid Cell Differentiation
-hsa-miR-3065-5p	TCTA	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.609585143	0.061338672	-0.278856171	0.388492732	-0.737335572	0.020407238		Myeloid Cell Differentiation
-hsa-miR-19a-3p	TF	myeloid cell differentiation	-0.656914921	0.039052721	0.234315515	0.641734666	-0.560868238	0.287138031		Myeloid Cell Differentiation
-hsa-miR-21-5p	TGFBR3	myeloid cell differentiation	0.045159438	0.901414946	-0.891063308	0.00922234	0.27056451	0.552708726	Suppressive / Regulatory	Myeloid Cell Differentiation
-hsa-miR-3065-5p	TGFBR3	myeloid cell differentiation	0.167268365	0.644167135	-0.891063308	0.00922234	0.27056451	0.552708726	Suppressive / Regulatory	Myeloid Cell Differentiation
-hsa-miR-19a-3p	TNF	myeloid cell differentiation;regulation of myeloid cell differentiation	0.084435562	0.816608398	-0.045866803	NA	-1.923793987	0.018931206	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
-hsa-miR-193a-5p	TNF	myeloid cell differentiation	-0.309602086	0.38401431	-0.045866803	NA	-1.923793987	0.018931206	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
-hsa-miR-19a-3p	TNFRSF11A	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.548779656	0.100430329	-0.228425378	0.598102924	-1.680202781	2.96E-04	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
-hsa-miR-155-5p	MAPK14	myeloid cell differentiation;myeloid cell homeostasis;regulation of myeloid cell differentiation	-0.659181204	0.038149174	-0.115486265	0.740758827	0.010534298	0.979646511		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-532-5p	MED1	myeloid cell homeostasis	-0.677325847	0.031418703	0.292898949	0.320462966	0.185097464	0.570336725		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-501-3p	MED1	regulation of myeloid cell differentiation;myeloid cell differentiation;myeloid cell homeostasis	-0.741257238	0.014152555	0.292898949	0.320462966	0.185097464	0.570336725		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-502-3p	MED1	regulation of myeloid cell differentiation;myeloid cell differentiation;myeloid cell homeostasis	-0.802996461	0.005156244	0.292898949	0.320462966	0.185097464	0.570336725		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-501-3p	NCAPG2	myeloid cell differentiation;myeloid cell homeostasis	-0.726668037	0.017286638	1.089813196	0.005609204	0.878547755	0.02508254		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-502-3p	NCAPG2	myeloid cell differentiation;myeloid cell homeostasis	-0.706935169	0.022250863	1.089813196	0.005609204	0.878547755	0.02508254		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-10b-5p	PIK3CD	myeloid cell homeostasis;myeloid cell differentiation	-0.145086672	0.689219782	-0.190566642	0.607397033	-1.081661832	0.009753376	Inflammatory / Pro-Activation	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-3144-3p	SH3RF1	"CD8-positive, alpha-beta T Cell Activation"	-0.504654286	0.136858006	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-320c	SH3RF1	T Cell Activation;regulation of T Cell Activation	-0.683934064	0.029183316	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-320b	SH3RF1	T Cell Activation	-0.765494068	0.009859337	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-320d	SH3RF1	T Cell Activation;regulation of T Cell Activation	-0.359312103	0.307861816	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
+hsa-miR-20a-5p	SIRPA	interferon-beta production;regulation of interferon-beta production	-0.211705139	0.55709874	-1.526449907	1.51E-07	-0.964368352	0.0214886	Suppressive / Regulatory	"T Cell Activation,Interferon-beta Production"
+hsa-miR-320b	SIRPA	T Cell Activation	-0.902098152	3.57E-04	-1.526449907	1.51E-07	-0.964368352	0.0214886	T cell Adhesion / Trafficking	"T Cell Activation,Interferon-beta Production"
+hsa-miR-320c	SIRPA	T Cell Activation;regulation of T Cell Activation	-0.871659372	0.001013751	-1.526449907	1.51E-07	-0.964368352	0.0214886	T cell Adhesion / Trafficking	"T Cell Activation,Interferon-beta Production"
+hsa-miR-320d	SIRPA	T Cell Activation;regulation of T Cell Activation	-0.598260464	0.067690406	-1.526449907	1.51E-07	-0.964368352	0.0214886	T cell Adhesion / Trafficking	"T Cell Activation,Interferon-beta Production"
 hsa-miR-155-5p	SLC25A40	myeloid cell differentiation;myeloid cell homeostasis;myeloid cell development	-0.678659171	0.030958603	-0.45796962	0.104160838	-0.22262379	0.595800303		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-501-3p	TRIM58	myeloid cell differentiation;myeloid cell homeostasis	-0.788851536	0.006680783	0.649698535	0.079206277	-0.341511828	0.47855191	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-502-3p	TRIM58	myeloid cell differentiation;myeloid cell homeostasis	-0.824036836	0.003371995	0.649698535	0.079206277	-0.341511828	0.47855191	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-216a-5p	ZBTB7A	myeloid cell differentiation	-0.047574057	0.896166967	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-93-5p	ZBTB7A	myeloid cell differentiation;myeloid cell homeostasis	-0.459700278	0.181323255	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-17-5p	ZBTB7A	myeloid cell differentiation;myeloid cell homeostasis	-0.509255914	0.132729232	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-20a-5p	ZBTB7A	myeloid cell differentiation;myeloid cell homeostasis	-0.396751424	0.256303442	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-155-5p	AXL	myeloid cell homeostasis	0.267684066	0.454626065	-1.047474085	8.76E-04	-0.256454042	0.491304621	Inflammatory / Pro-Activation	Myeloid Cell Homeostasis
-hsa-miR-10b-5p	AXL	myeloid cell homeostasis	-0.125250099	0.73027326	-1.047474085	8.76E-04	-0.256454042	0.491304621	Inflammatory / Pro-Activation	Myeloid Cell Homeostasis
-hsa-miR-148a-3p	CEBPG	myeloid cell homeostasis	-0.637749035	0.047276056	0.02971359	0.944138365	0.738292226	0.024234366		Myeloid Cell Homeostasis
-hsa-miR-532-5p	HMGB1	myeloid cell homeostasis	-0.67850295	0.031012272	0.147112309	0.666984784	-0.138701496	0.716291721		Myeloid Cell Homeostasis
-hsa-miR-532-5p	HSPA9	myeloid cell homeostasis	-0.73374003	0.01571291	-0.112580488	0.74862139	-0.269417729	0.410075157		Myeloid Cell Homeostasis
-hsa-miR-148a-3p	RPS17	myeloid cell homeostasis	-0.776990817	0.008185721	0.461023052	0.15575166	0.018470963	0.972391511		Myeloid Cell Homeostasis
+hsa-miR-320c	SLC7A1	T Cell Activation;regulation of T Cell Activation	-0.752593577	0.012009086	-0.119921886	0.734175949	0.245735517	0.570417472	T cell Metabolism / Proliferation	T Cell Activation
+hsa-miR-320b	SLC7A1	T Cell Activation	-0.689197191	0.027482504	-0.119921886	0.734175949	0.245735517	0.570417472	T cell Metabolism / Proliferation	T Cell Activation
 hsa-miR-155-5p	SLC7A11	myeloid cell homeostasis	0.286058316	0.422987307	-1.142822958	0.005287085	-1.063693897	0.008329915		Myeloid Cell Homeostasis
 hsa-miR-148a-3p	SLC7A11	myeloid cell homeostasis	-0.235841111	0.511847648	-1.142822958	0.005287085	-1.063693897	0.008329915		Myeloid Cell Homeostasis
 hsa-miR-17-5p	SLC7A11	myeloid cell homeostasis	-0.355201119	0.313832055	-1.142822958	0.005287085	-1.063693897	0.008329915		Myeloid Cell Homeostasis
@@ -104,88 +159,33 @@ hsa-miR-20a-5p	SLC7A11	myeloid cell homeostasis	-0.290876299	0.41486618	-1.14282
 hsa-miR-501-3p	SLC7A11	myeloid cell homeostasis	-0.171369932	0.635944746	-1.142822958	0.005287085	-1.063693897	0.008329915		Myeloid Cell Homeostasis
 hsa-miR-502-3p	SLC7A11	myeloid cell homeostasis	-0.235117784	0.513181036	-1.142822958	0.005287085	-1.063693897	0.008329915		Myeloid Cell Homeostasis
 hsa-miR-93-5p	SLC7A11	myeloid cell homeostasis	-0.478253816	0.162058396	-1.142822958	0.005287085	-1.063693897	0.008329915		Myeloid Cell Homeostasis
-hsa-miR-532-5p	STAT1	myeloid cell homeostasis	-0.699551798	0.02433664	0.303021291	0.326119864	-0.790262049	NA	Inflammatory / Pro-Activation	Myeloid Cell Homeostasis
-hsa-miR-21-5p	FOXO3	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.693102085	0.02626532	-0.276315805	0.364843852	0.001616325	0.997861034	Suppressive / Regulatory	Myeloid Cell Differentiation
-hsa-miR-193a-5p	HIPK2	myeloid cell differentiation	-0.637261127	0.047499279	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-3065-5p	HIPK2	myeloid cell differentiation	-0.276883584	0.438654609	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-450b-5p	HIPK2	myeloid cell differentiation;myeloid cell homeostasis	0.247988753	0.489673005	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-19a-3p	HIPK2	myeloid cell homeostasis;myeloid cell differentiation	-0.200215744	0.579166514	-0.214983086	0.580914918	-0.955438137	0.045320767	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
-hsa-miR-19a-3p	IKZF1	myeloid cell homeostasis;myeloid cell differentiation	-0.112550903	0.75689012	0.438243717	0.341406501	-1.098179368	0.04457266		Myeloid Cell Differentiation & Homeostasis
-hsa-miR-532-5p	SERPINB9	natural killer cell mediated cytotoxicity	-0.296864981	0.404875338	-0.875306376	0.025024812	-0.871631382	0.028838681		NK Cell Cytotoxicity 
-hsa-miR-320d	PDPK1	T Cell Activation;regulation of T Cell Activation	-0.555340302	0.095607689	-0.957337845	4.60E-04	-0.455257919	0.232304917	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-3144-3p	BCL2	"CD8-positive, alpha-beta T Cell Activation"	-0.646996962	0.043176589	-0.071111685	0.86609626	-0.024593496	0.959156664	Suppressive / Regulatory	T Cell Activation
-hsa-miR-320b	BID	T Cell Activation	-0.719004038	0.019112176	-0.024792765	0.953695434	-0.027010065	0.954860304	T cell Survival / Apoptosis	T Cell Activation
-hsa-miR-320b	CASP3	T Cell Activation	-0.733698342	0.015721883	0.439838057	0.157306071	0.240060607	0.429426495	T cell Survival / Apoptosis	T Cell Activation
-hsa-miR-320c	CASP3	T Cell Activation;regulation of T Cell Activation	-0.687126081	0.028143478	0.439838057	0.157306071	0.240060607	0.429426495	T cell Survival / Apoptosis	T Cell Activation
-hsa-miR-320b	CD47	T Cell Activation	-0.701938883	0.02364821	-0.176785256	0.557984727	-0.141440896	0.757903878	Co-stimulatory / Ligand-Receptor	T Cell Activation
-hsa-miR-320b	CYLD	T Cell Activation	-0.921624057	1.50E-04	-0.345857215	0.302160077	-0.833824285	0.007231156	T cell Negative Regulators/ Checkpoint	T Cell Activation
-hsa-miR-320c	CYLD	T Cell Activation;regulation of T Cell Activation	-0.863190736	0.001295087	-0.345857215	0.302160077	-0.833824285	0.007231156	T cell Negative Regulators/ Checkpoint	T Cell Activation
-hsa-miR-320d	CYLD	T Cell Activation;regulation of T Cell Activation	-0.665900075	0.035553535	-0.345857215	0.302160077	-0.833824285	0.007231156	T cell Negative Regulators/ Checkpoint	T Cell Activation
-hsa-miR-320b	DLG1	T Cell Activation	-0.836108542	0.002577097	-0.319818658	0.329503023	-0.971676734	0.009522019	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320c	DLG1	T Cell Activation;regulation of T Cell Activation	-0.777885713	0.008064533	-0.319818658	0.329503023	-0.971676734	0.009522019	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320d	DLG1	T Cell Activation;regulation of T Cell Activation	-0.523192916	0.120696819	-0.319818658	0.329503023	-0.971676734	0.009522019	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-450b-5p	DUSP22	T Cell Activation	0.168856075	0.64098008	-0.396536341	0.204171432	-0.63439144	0.015454642	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-450b-5p	EFNB2	T Cell Activation	-0.318703999	0.369436422	-1.591837209	1.63E-07	-0.922384372	0.045772064	Co-stimulatory / Ligand-Receptor	T Cell Activation
-hsa-miR-320b	FOXO3	T Cell Activation	-0.669713176	0.034134992	-0.276315805	0.364843852	0.001616325	0.997861034	T cell Survival / Apoptosis	T Cell Activation
-hsa-miR-320c	FOXO3	T Cell Activation;regulation of T Cell Activation	-0.696037711	0.025374956	-0.276315805	0.364843852	0.001616325	0.997861034	T cell Survival / Apoptosis	T Cell Activation
-hsa-miR-155-5p	GPAM	T Cell Activation	-0.329494694	0.352516423	-1.15780056	7.31E-04	-0.719028764	0.026816189	T cell Metabolism / Proliferation	T Cell Activation
-hsa-miR-320d	ICOSLG	T Cell Activation;regulation of T Cell Activation	-0.675543943	0.03204083	0.623794547	0.114661438	0.005319647	0.993280001	Co-stimulatory / Ligand-Receptor	T Cell Activation
-hsa-miR-450b-5p	IGF1	T Cell Activation	-0.464631571	0.176077064	-0.306494306	0.550988775	-1.523923863	0.024060398	T cell Metabolism / Proliferation	T Cell Activation
-hsa-miR-320b	KMT2A	T Cell Activation	-0.816209536	0.003973078	0.037714503	0.924148342	0.230356824	0.412406418	Transcription / Epigenetic Regulation	T Cell Activation
-hsa-miR-450b-5p	MICA	T Cell Activation	-0.691130542	0.026875148	-0.663095152	0.105466688	0.511976615	0.303983256	Co-stimulatory / Ligand-Receptor	T Cell Activation
-hsa-miR-320b	NCK2	T Cell Activation	-0.658634634	0.038365783	-0.058316151	0.886308949	0.05643152	0.89303263	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320c	NCK2	T Cell Activation;regulation of T Cell Activation	-0.633137433	0.049414059	-0.058316151	0.886308949	0.05643152	0.89303263	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320b	NFATC3	T Cell Activation	-0.687249143	0.028103904	0.153914646	0.647132796	0.071094608	0.860695331	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320c	NFATC3	T Cell Activation	-0.652369458	0.040908192	0.153914646	0.647132796	0.071094608	0.860695331	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320b	PDP2	T Cell Activation	-0.764347633	0.010038446	-0.272106713	0.386245733	-0.259307845	0.439439615	T cell Metabolism / Proliferation	T Cell Activation
-hsa-miR-320c	PDP2	T Cell Activation	-0.773537703	0.008665433	-0.272106713	0.386245733	-0.259307845	0.439439615	T cell Metabolism / Proliferation	T Cell Activation
-hsa-miR-320b	PDPK1	T Cell Activation	-0.754496644	0.011673062	-0.957337845	4.60E-04	-0.455257919	0.232304917	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320c	PDPK1	T Cell Activation;regulation of T Cell Activation	-0.733725094	0.015716125	-0.957337845	4.60E-04	-0.455257919	0.232304917	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320b	PIK3R1	T Cell Activation	-0.447543489	0.194646252	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320c	PIK3R1	T Cell Activation	-0.4771063	0.163212534	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320d	PIK3R1	T Cell Activation	-0.101331781	0.780598807	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-450b-5p	PIK3R2	T Cell Activation	0.244661911	0.495704504	-0.744034782	0.03254597	-0.324077448	0.504411835	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320b	PRKAR1A	T Cell Activation	-0.836922167	0.002528926	-0.485970127	0.141967065	-0.496766764	0.165471355	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-320c	PRKAR1A	T Cell Activation;regulation of T Cell Activation	-0.804475538	0.0050127	-0.485970127	0.141967065	-0.496766764	0.165471355	TCR activation/ Downstream Signaling	T Cell Activation
-hsa-miR-450b-5p	RABL3	T Cell Activation	0.101417086	0.780417899	-0.445259729	0.152001614	-0.711007775	0.034555773	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-18a-5p	SDC4	T Cell Activation	0.136194355	0.707539802	-1.256177986	4.06E-04	-0.249881006	0.55109999	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-3144-3p	SH3RF1	"CD8-positive, alpha-beta T Cell Activation"	-0.504654286	0.136858006	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320c	SH3RF1	T Cell Activation;regulation of T Cell Activation	-0.683934064	0.029183316	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320b	SH3RF1	T Cell Activation	-0.765494068	0.009859337	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320d	SH3RF1	T Cell Activation;regulation of T Cell Activation	-0.359312103	0.307861816	-0.311723694	0.378174549	-0.725420948	0.025135389	T cell Adhesion / Trafficking	T Cell Activation
-hsa-miR-320c	SLC7A1	T Cell Activation;regulation of T Cell Activation	-0.752593577	0.012009086	-0.119921886	0.734175949	0.245735517	0.570417472	T cell Metabolism / Proliferation	T Cell Activation
-hsa-miR-320b	SLC7A1	T Cell Activation	-0.689197191	0.027482504	-0.119921886	0.734175949	0.245735517	0.570417472	T cell Metabolism / Proliferation	T Cell Activation
 hsa-miR-320c	SMARCA2	T Cell Activation;regulation of T Cell Activation	-0.686224292	0.028434638	-0.409085291	0.114189295	-0.522389606	0.103502864	Transcription / Epigenetic Regulation	T Cell Activation
 hsa-miR-320b	SMARCA2	T Cell Activation	-0.648972664	0.042332837	-0.409085291	0.114189295	-0.522389606	0.103502864	Transcription / Epigenetic Regulation	T Cell Activation
 hsa-miR-320c	SMARCC1	T Cell Activation;regulation of T Cell Activation	-0.691865984	0.026646544	0.264895877	0.386942361	-0.019113277	0.968364311	Transcription / Epigenetic Regulation	T Cell Activation
+hsa-miR-21-5p	SNRK	myeloid cell differentiation	-0.90014079	3.85E-04	-0.165782205	0.631846519	-0.134983558	0.779748388		Myeloid Cell Differentiation
 hsa-miR-320c	SOX4	T Cell Activation;regulation of T Cell Activation	-0.681367956	0.030038028	3.74667961	9.14E-15	2.37730442	9.43E-07	Transcription / Epigenetic Regulation	T Cell Activation
 hsa-miR-320b	SOX4	T Cell Activation	-0.70282463	0.023396206	3.74667961	9.14E-15	2.37730442	9.43E-07	Transcription / Epigenetic Regulation	T Cell Activation
+hsa-miR-532-5p	STAT1	myeloid cell homeostasis	-0.699551798	0.02433664	0.303021291	0.326119864	-0.790262049	NA	Inflammatory / Pro-Activation	Myeloid Cell Homeostasis
 hsa-miR-450b-5p	STAT6	T Cell Activation	-0.556345476	0.09488209	-0.975970991	0.012457722	-0.555718193	0.24738616		T Cell Activation
+hsa-miR-3065-5p	TCTA	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.609585143	0.061338672	-0.278856171	0.388492732	-0.737335572	0.020407238		Myeloid Cell Differentiation
+hsa-miR-19a-3p	TF	myeloid cell differentiation	-0.656914921	0.039052721	0.234315515	0.641734666	-0.560868238	0.287138031		Myeloid Cell Differentiation
+hsa-miR-21-5p	TGFBR3	myeloid cell differentiation	0.045159438	0.901414946	-0.891063308	0.00922234	0.27056451	0.552708726	Suppressive / Regulatory	Myeloid Cell Differentiation
+hsa-miR-3065-5p	TGFBR3	myeloid cell differentiation	0.167268365	0.644167135	-0.891063308	0.00922234	0.27056451	0.552708726	Suppressive / Regulatory	Myeloid Cell Differentiation
+hsa-miR-21-5p	TLR4	myeloid cell differentiation;regulation of myeloid cell differentiation;macrophage differentiation	-0.636991988	0.047622714	-0.326232725	0.388492732	-0.570891479	0.132477869	Inflammatory / Pro-Activation	Myeloid Cell & Macrophage Differentiation
+hsa-miR-19a-3p	TNF	myeloid cell differentiation;regulation of myeloid cell differentiation	0.084435562	0.816608398	-0.045866803	NA	-1.923793987	0.018931206	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
+hsa-miR-193a-5p	TNF	myeloid cell differentiation	-0.309602086	0.38401431	-0.045866803	NA	-1.923793987	0.018931206	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
+hsa-miR-19a-3p	TNFRSF11A	myeloid cell differentiation;regulation of myeloid cell differentiation	-0.548779656	0.100430329	-0.228425378	0.598102924	-1.680202781	2.96E-04	Inflammatory / Pro-Activation	Myeloid Cell Differentiation
+hsa-miR-501-3p	TRIM58	myeloid cell differentiation;myeloid cell homeostasis	-0.788851536	0.006680783	0.649698535	0.079206277	-0.341511828	0.47855191	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-502-3p	TRIM58	myeloid cell differentiation;myeloid cell homeostasis	-0.824036836	0.003371995	0.649698535	0.079206277	-0.341511828	0.47855191	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
 hsa-miR-320b	TSC1	T Cell Activation	-0.819725847	0.003694294	-0.209199241	0.465285297	-0.171971653	0.536349021	T cell Metabolism / Proliferation	T Cell Activation
 hsa-miR-320c	TSC1	T Cell Activation	-0.770155282	0.009154255	-0.209199241	0.465285297	-0.171971653	0.536349021	T cell Metabolism / Proliferation	T Cell Activation
 hsa-miR-320c	TWSG1	T Cell Activation;regulation of T Cell Activation	-0.662298511	0.036929525	-0.044324	0.922029992	-0.130909666	0.766857792	T cell Negative Regulators/ Checkpoint	T Cell Activation
 hsa-miR-320b	TWSG1	T Cell Activation	-0.700393322	0.024092397	-0.044324	0.922029992	-0.130909666	0.766857792	T cell Negative Regulators/ Checkpoint	T Cell Activation
+hsa-miR-21-5p	VPS54	myeloid cell differentiation;macrophage differentiation	-0.791001434	0.006430753	0.268293473	0.384164148	0.30735701	0.367297768		Myeloid Cell & Macrophage Differentiation
 hsa-miR-148a-3p	WNT10B	T Cell Activation	-0.018775787	0.958942443	-2.618857464	2.33E-04	-2.096848545	0.009836363	T Cell Differentiation	T Cell Activation
+hsa-miR-216a-5p	ZBTB7A	myeloid cell differentiation	-0.047574057	0.896166967	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-93-5p	ZBTB7A	myeloid cell differentiation;myeloid cell homeostasis	-0.459700278	0.181323255	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-17-5p	ZBTB7A	myeloid cell differentiation;myeloid cell homeostasis	-0.509255914	0.132729232	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
+hsa-miR-20a-5p	ZBTB7A	myeloid cell differentiation;myeloid cell homeostasis	-0.396751424	0.256303442	-1.834298809	1.14E-08	-0.502666591	0.227307759	Suppressive / Regulatory	Myeloid Cell Differentiation & Homeostasis
 hsa-miR-320c	ZMIZ1	T Cell Activation;regulation of T Cell Activation	-0.709921954	0.021443288	0.12929909	0.690627631	0.659012752	0.061739275	Transcription / Epigenetic Regulation	T Cell Activation
 hsa-miR-320b	ZMIZ1	T Cell Activation	-0.649993002	0.041901454	0.12929909	0.690627631	0.659012752	0.061739275	Transcription / Epigenetic Regulation	T Cell Activation
-hsa-miR-148a-3p	PRNP	T Cell Activation;regulation of T cell proliferation	-0.895024848	4.67E-04	-1.105023185	2.56E-04	-0.943273196	0.051793897	T cell Survival / Apoptosis	T Cell Activation & Proliferation
-hsa-miR-155-5p	PIK3R1	T Cell Activation;myeloid cell differentiation;regulation of myeloid cell differentiation	-0.406590645	0.24360752	-0.859043042	0.003305703	-1.063101448	0.002232868	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
-hsa-miR-3065-5p	PTPN11	myeloid cell differentiation	-0.501222452	0.139987897	-0.325728681	0.299828803	-0.609537131	0.045915736	Suppressive / Regulatory	"T Cell Activation,Myeloid Cell Differentiation"
-hsa-miR-505-3p	PTPN11	regulation of T Cell Activation;T Cell Activation	-0.457038975	0.184192412	-0.325728681	0.299828803	-0.609537131	0.045915736		"T Cell Activation,Myeloid Cell Differentiation"
-hsa-miR-320b	PTPN11	T Cell Activation	-0.762887269	0.010269904	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
-hsa-miR-450b-5p	PTPN11	T Cell Activation;myeloid cell differentiation	0.037175919	0.918789975	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
-hsa-miR-320c	PTPN11	T Cell Activation;regulation of T Cell Activation	-0.726801103	0.017256058	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
-hsa-miR-320d	PTPN11	T Cell Activation;regulation of T Cell Activation	-0.329168898	0.353021454	-0.325728681	0.299828803	-0.609537131	0.045915736	TCR activation/ Downstream Signaling	"T Cell Activation,Myeloid Cell Differentiation"
-hsa-miR-20a-5p	SIRPA	interferon-beta production;regulation of interferon-beta production	-0.211705139	0.55709874	-1.526449907	1.51E-07	-0.964368352	0.0214886	Suppressive / Regulatory	"T Cell Activation,Interferon-beta Production"
-hsa-miR-320b	SIRPA	T Cell Activation	-0.902098152	3.57E-04	-1.526449907	1.51E-07	-0.964368352	0.0214886	T cell Adhesion / Trafficking	"T Cell Activation,Interferon-beta Production"
-hsa-miR-320c	SIRPA	T Cell Activation;regulation of T Cell Activation	-0.871659372	0.001013751	-1.526449907	1.51E-07	-0.964368352	0.0214886	T cell Adhesion / Trafficking	"T Cell Activation,Interferon-beta Production"
-hsa-miR-320d	SIRPA	T Cell Activation;regulation of T Cell Activation	-0.598260464	0.067690406	-1.526449907	1.51E-07	-0.964368352	0.0214886	T cell Adhesion / Trafficking	"T Cell Activation,Interferon-beta Production"
-hsa-miR-19a-3p	KITLG	myeloid cell homeostasis;myeloid cell differentiation;regulation of myeloid cell differentiation	0.141929659	0.695707783	-1.622241804	1.35E-05	-0.996699339	0.026253081		"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
-hsa-miR-320b	KITLG	T Cell Activation	-0.181270411	0.616245635	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
-hsa-miR-450b-5p	KITLG	T Cell Activation;myeloid cell differentiation;regulation of myeloid cell differentiation;myeloid cell homeostasis	0.243474844	0.497864255	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
-hsa-miR-320c	KITLG	T Cell Activation;regulation of T Cell Activation	-0.107868974	0.766763107	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
-hsa-miR-320d	KITLG	T Cell Activation;regulation of T Cell Activation	0.20083421	0.577970346	-1.622241804	1.35E-05	-0.996699339	0.026253081	Co-stimulatory / Ligand-Receptor	"T Cell Activation,Myeloid Cell Differentiation & Homeostasis"
-hsa-miR-148a-3p	HMGB1	T Cell Activation;alpha-beta T Cell Activation;regulation of T cell proliferation;myeloid cell homeostasis;interleukin-12 production;regulation of interleukin-12 production	-0.713742579	0.020440031	0.147112309	0.666984784	-0.138701496	0.716291721		"T Cell Activation,Myeloid Cell Homeostasis,Interleukin-12 Production"
-hsa-miR-193a-5p	IGF1	regulation of activated T cell proliferation;activated T cell proliferation;regulation of T cell proliferation	0.118728911	0.743910795	-0.306494306	0.550988775	-1.523923863	0.024060398	T cell Metabolism / Proliferation	T Cell Proliferation
-hsa-miR-505-3p	IGF1	regulation of T Cell Activation;T Cell Activation	-0.633991139	0.049013507	-0.306494306	0.550988775	-1.523923863	0.024060398	T cell Metabolism / Proliferation	T Cell Proliferation
-hsa-miR-193a-5p	LRRC32	regulation of activated T cell proliferation;activated T cell proliferation;regulation of T cell proliferation	0.532395462	0.113138042	-0.747902762	0.049646587	0.332288747	0.500726261		T Cell Proliferation

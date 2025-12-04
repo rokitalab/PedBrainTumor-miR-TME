@@ -8,5 +8,11 @@ set -o pipefail
 # Identify significant miRNA - immune target assocations among DMG cluster6 miRNAs
 Rscript --vanilla 01-dmg-cluster6-mirna-target-interactions.R
 
-# Plot significant associations by immune cell process
+# Plot significant associations in DMG by immune cell process
 Rscript --vanilla 02-dmg-cluster6-mirna-target-dotplot.R
+
+# Identify significant miRNA - immune target assocations among MB cluster1 miRNAs
+Rscript --vanilla 03-mb-cluster1-mirna-target-interactions.R
+
+# Plot significant associations in MB by immune cell process
+Rscript --vanilla 04-mb-cluster1-mirna-target-dotplot.R
