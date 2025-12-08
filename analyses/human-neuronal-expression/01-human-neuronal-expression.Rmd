@@ -1,0 +1,207 @@
+---
+title: "Neuronal & Synaptic Gene Dysregulation Across Pediatric Brain Tumors"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+author: Bicna Song
+date: "`r Sys.Date()`"
+---
+
+This analysis evaluates expression changes of neuronal gene programs across pediatric brain tumors by leveraging previously generated differential expression results from DESeq2.
+
+We analyze the following comparison outputs:
+
+- **Tumor vs Tumor-Adjacent Normal**
+- **Tumor vs Healthy Normal Brain (B1–B5)**
+
+Tumor groups included:
+
+- DIPG/DMG  
+- MB  
+- EPN  
+- LGG (healthy-normal only)
+
+---
+
+### Setup
+
+```{r load-packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readr)
+library(rprojroot)
+library(ggplot2)
+library(ggpubr)
+library(Biobase)
+
+root_dir <- find_root(has_dir(".git"))
+analysis_dir <- file.path(root_dir, "analyses", "human-neuronal-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+``` 
+
+### Define Neuronal & Synaptic Gene Sets
+
+```{r define-gene-sets}
+gene_sets <- list(
+  synaptic_vesicle_trafficking = c(
+    "STX1A","STX1B","SNAP25","VAMP2","SYT1","SYT2","SYT7","CPLX1","CPLX2",
+    "RAB3A","RAB3B","RAB3C","RAB27A","UNC13A","UNC13B","STXBP1"),
+  neurotransmitter_receptors = c(
+    paste0("GRIA",1:4),
+    "GRIN1", paste0("GRIN2",c("A","B","C","D")), paste0("GRIN3",c("A","B")),
+    paste0("GRIK",1:5),
+    paste0("GABRA",1:6), paste0("GABRB",1:3), paste0("GABRG",1:3),
+    "GABRD","GABBR1","GABBR2"),
+  postsynaptic_scaffolding = c(
+    "DLG4", paste0("DLG",1:3),
+    paste0("SHANK",1:3), paste0("HOMER",1:3),
+    paste0("DLGAP",1:4)),
+  cell_adhesion = c(
+    paste0("NRXN",1:3),
+    paste0("NLGN",1:4),
+    "CDH2",
+    paste0("PCDH", c("A1","A2","A3","B2","GA3","GB4")),
+    paste0("LRRTM",1:4)),
+  neuromodulatory = c(
+    paste0("DRD",1:5),
+    paste0("HTR1",c("A","B","D","E","F")), paste0("HTR2",c("A","B","C")),
+    paste0("HTR3",c("A","B","C","D","E")),
+    paste0("HTR",4:7),
+    paste0("CHRNA",1:10), paste0("CHRNB",1:4), paste0("CHRM",1:5),
+    "NPY","PENK","TAC1","VIP"),
+  glutamatergic = c(
+    paste0("GRIA",1:4), "GRIN1", paste0("GRIN",2:3), paste0("GRIK",1:5),
+    paste0("SLC1A",1:3), "GLUL","GLS","GLS2"),
+  gabaergic = c(
+    paste0("GABRA",1:6), paste0("GABRB",1:3), paste0("GABRG",1:3),
+    "GABRD","GABBR1","GABBR2","SLC6A1","SLC6A11","GAD1","GAD2","ABAT"),
+  cholinergic = c(
+    paste0("CHRNA",1:10), paste0("CHRNB",1:4), paste0("CHRM",1:5),
+    "SLC5A7","CHAT","ACHE"),
+  serotonergic = c(
+    paste0("HTR",1:7), "SLC6A4","TPH1","TPH2","MAOA","MAOB"),
+  purinergic = c(
+    paste0("P2RX",1:7),
+    paste0("P2RY",1:14),
+    paste0("ENTPD",1:3),
+    "NT5E"),
+  adrenergic = c("ADRA1A","ADRA1B","ADRA1D","ADRA2A","ADRA2B","ADRA2C",
+                 paste0("ADRB",1:3),"SLC6A2","DBH","MAOA","MAOB","COMT")
+)
+
+category_df <- enframe(gene_sets, name = "category", value = "gene") %>%
+  unnest(cols = "gene") %>%
+  mutate(gene = toupper(gene))
+
+category_df$unique <- isUnique(category_df$gene)
+```
+
+### Load DESeq2 Results
+
+```{r load-deseq2}
+# We will use the significant DE gene output files:
+de_files <- c(
+  "DESeq2_DIPG or DMG_paired_sig.csv",
+  "DESeq2_DIPG or DMG_vs_healthyNormal_sig.csv",
+  "DESeq2_EPN_paired_sig.csv",
+  "DESeq2_EPN_vs_healthyNormal_sig.csv",
+  "DESeq2_LGG_vs_healthyNormal_sig.csv",
+  "DESeq2_MB_paired_sig.csv",
+  "DESeq2_MB_vs_healthyNormal_sig.csv"
+)
+
+de_files <- file.path(root_dir, "analyses", "human-rna-expression", "results", de_files)
+```
+
+```{r extract-tumor-group}
+# A helper function identifies the tumor group from the filename:
+extract_group <- function(filename) {
+  if (grepl("DIPG|DMG", filename, ignore.case = TRUE)) return("DIPG_or_DMG")
+  if (grepl("MB", filename, ignore.case = TRUE)) return("MB")
+  if (grepl("EPN", filename, ignore.case = TRUE)) return("EPN")
+  if (grepl("LGG", filename, ignore.case = TRUE)) return("LGG")
+  return("Unknown")
+}
+```
+
+### Generate Neuronal/Synaptic Gene Plots for Each Tumor Type
+
+```{r generate-plots}
+for (f in de_files) {
+  
+  if (!file.exists(f)) next
+  
+  tumor_group <- extract_group(f)
+  df <- read_csv(f) %>%
+    mutate(gene = toupper(gene_symbol))
+  
+  merged <- inner_join(df, category_df, by = "gene")
+  
+  if (nrow(merged) == 0) {
+    message("No neuronal/synaptic genes found in: ", f)
+    next
+  }
+  
+  merged <- merged %>%
+    mutate(
+      fc_direction = if_else(log2FoldChange < 0, "Down", "Up"),
+      gene = reorder(gene, log2FoldChange)
+    )
+  
+  plot_title <- paste0("Neuronal & Synaptic Gene Dysregulation in ", tumor_group)
+  
+  p <- ggplot(
+        merged,
+        aes(
+          x = gene,
+          y = log2FoldChange,
+          size = -log10(padj),
+          color = fc_direction
+        )
+      ) +
+    geom_point(alpha = 0.85) +
+    facet_wrap(~ category, scales = "free_x", nrow = 2) +
+    theme_Publication() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 6),  # NEW: smaller font
+      strip.text = element_text(size = 10, face = "bold")
+    ) +
+    labs(
+      title = plot_title,
+      subtitle = basename(f),
+      x = "Gene",
+      y = "log2FC (Tumor vs Normal)",
+      size = "-log10(padj)",
+      color = "Direction"
+    ) +
+    scale_color_manual(values = c("Down" = "red3", "Up" = "green4"))
+  
+  # --- Clean output filename ---
+  base <- basename(f)
+  
+  # Extract comparison (paired or vs_healthyNormal)
+  comparison <- case_when(
+    grepl("paired", base, ignore.case = TRUE) ~ "paired",
+    grepl("vs_healthyNormal", base, ignore.case = TRUE) ~ "healthyNormal",
+    TRUE ~ "comparison"
+  )
+  
+  # Build new clean filename
+  clean_name <- paste0("neuronal_", tumor_group, "_", comparison, ".pdf")
+
+  out_file <- file.path(plot_dir, clean_name)
+  
+  ggsave(out_file, p, width = 20, height = 10)
+  message("Saved: ", out_file)
+}
+```
+
+### Session Info
+
+```{r session-info}
+sessionInfo()
+```
+
