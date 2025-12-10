@@ -6,13 +6,14 @@
 
 ## Folder contents
 
-1. `01-human-neuronal-expression.Rmd`: performs neuronal gene–level comparisons in tumor vs. normal brain samples across DIPG/DMG, MB, EPN, and LGG cohorts. The script checks for significant expression differences using the provided gene sets.
+1. `01-human-neuronal-expression.Rmd`: performs neuronal gene–level comparisons in tumor vs. normal brain samples across DIPG/DMG, MB, EPN, and LGG cohorts.
 
 ## Analysis module directory structure
 
 ```
 .
 ├── 01-human-neuronal-expression.Rmd
+├── 01-human-neuronal-expression.html
 ├── README.md
 ├── plots
 │   ├── neuronal_DIPG_or_DMG_healthyNormal.pdf
@@ -25,3 +26,4 @@
 ├── results
 └── run_module.sh
 ```
+

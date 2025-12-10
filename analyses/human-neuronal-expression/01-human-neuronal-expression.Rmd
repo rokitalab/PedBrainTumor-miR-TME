@@ -33,6 +33,8 @@ library(rprojroot)
 library(ggplot2)
 library(ggpubr)
 library(Biobase)
+library(ggforce)
+library(cowplot)
 
 root_dir <- find_root(has_dir(".git"))
 analysis_dir <- file.path(root_dir, "analyses", "human-neuronal-expression")
@@ -104,13 +106,13 @@ category_df$unique <- isUnique(category_df$gene)
 ```{r load-deseq2}
 # We will use the significant DE gene output files:
 de_files <- c(
-  "DESeq2_DIPG or DMG_paired_sig.csv",
-  "DESeq2_DIPG or DMG_vs_healthyNormal_sig.csv",
-  "DESeq2_EPN_paired_sig.csv",
-  "DESeq2_EPN_vs_healthyNormal_sig.csv",
-  "DESeq2_LGG_vs_healthyNormal_sig.csv",
-  "DESeq2_MB_paired_sig.csv",
-  "DESeq2_MB_vs_healthyNormal_sig.csv"
+  "DESeq2_DIPG or DMG_paired_full.csv",
+  "DESeq2_DIPG or DMG_vs_healthyNormal.csv",
+  "DESeq2_EPN_paired_full.csv",
+  "DESeq2_EPN_vs_healthyNormal.csv",
+  "DESeq2_LGG_vs_healthyNormal.csv",
+  "DESeq2_MB_paired_full.csv",
+  "DESeq2_MB_vs_healthyNormal.csv"
 )
 
 de_files <- file.path(root_dir, "analyses", "human-rna-expression", "results", de_files)
@@ -129,72 +131,117 @@ extract_group <- function(filename) {
 
 ### Generate Neuronal/Synaptic Gene Plots for Each Tumor Type
 
-```{r generate-plots}
+```{r generate-plot-per-histology}
+# helper functions
+reorder_within <- function(x, by, within, fun = mean, sep = "___") {
+  new_x <- paste(x, within, sep = sep)
+  stats <- tapply(by, new_x, fun)
+  ordered <- names(sort(stats))
+  factor(new_x, levels = ordered)
+}
+
+strip_within <- function(x, sep = "___") {
+  gsub(paste0(sep, ".+$"), "", x)
+}
+
+all_categories <- unique(category_df$category)
+
+# define your 3 groups of categories
+cat_groups <- list(
+  group1 = all_categories[1:4],
+  group2 = all_categories[5:8],
+  group3 = all_categories[9:11]
+)
+
+# -------------------------------
+# 🔥 LOOP OVER DESeq2 FILES
+# -------------------------------
 for (f in de_files) {
-  
+
   if (!file.exists(f)) next
-  
+
   tumor_group <- extract_group(f)
+
   df <- read_csv(f) %>%
-    mutate(gene = toupper(gene_symbol))
-  
-  merged <- inner_join(df, category_df, by = "gene")
-  
-  if (nrow(merged) == 0) {
-    message("No neuronal/synaptic genes found in: ", f)
-    next
-  }
-  
-  merged <- merged %>%
+    mutate(gene = toupper(gene_symbol)) %>%
+    select(gene, log2FoldChange, padj)
+
+  # merge with neuronal categories
+  merged_full <- category_df %>%
+    mutate(category_wrapped = gsub("_", "\n", category)) %>%
+    left_join(df, by = "gene") %>%
+    filter(!is.na(padj), !is.na(log2FoldChange)) %>%
     mutate(
-      fc_direction = if_else(log2FoldChange < 0, "Down", "Up"),
-      gene = reorder(gene, log2FoldChange)
+      de_group = case_when(
+        padj < 0.05 & log2FoldChange > 0 ~ "Up",
+        padj < 0.05 & log2FoldChange < 0 ~ "Down",
+        TRUE ~ "Not_DE"
+      ),
+      size = -log10(padj),
+      gene_ordered = reorder_within(gene, log2FoldChange, category)
     )
-  
-  plot_title <- paste0("Neuronal & Synaptic Gene Dysregulation in ", tumor_group)
-  
-  p <- ggplot(
-        merged,
-        aes(
-          x = gene,
-          y = log2FoldChange,
-          size = -log10(padj),
-          color = fc_direction
-        )
+
+  if (nrow(merged_full) == 0) next
+
+  # unified range for size scale
+  size_min <- min(merged_full$size, na.rm = TRUE)
+  size_max <- max(merged_full$size, na.rm = TRUE)
+
+  # plotting function
+  make_col_plot <- function(cat_list, show_legend = FALSE) {
+    df_sub <- merged_full %>% filter(category %in% cat_list)
+
+    ggplot(df_sub,
+           aes(x = log2FoldChange, y = gene_ordered,
+               size = size, fill = de_group)) +
+      geom_point(shape = 21, color = "black", stroke = 0.3, alpha = 0.9) +
+      facet_grid(category_wrapped ~ ., scales = "free_y",
+                 space = "free_y", switch = "y") +
+      scale_y_discrete(labels = function(x) strip_within(x)) +
+      scale_fill_manual(values = c("Up"="green4","Down"="red3",
+                                   "Not_DE"="whitesmoke"),
+                        name="DE status") +
+      scale_size_continuous(range=c(2,6),
+                            limits=c(size_min,size_max),
+                            name="-log10(padj)") +
+      guides(fill = guide_legend(order=1, override.aes = list(shape = 21, size = 5, stroke = 0.6)),
+             size = guide_legend(order=2)) +
+      theme_Publication() +
+      theme(
+        strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 90, face = "bold", size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = ifelse(show_legend, "right", "none"),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.text  = element_text(size = 12)
       ) +
-    geom_point(alpha = 0.85) +
-    facet_wrap(~ category, scales = "free_x", nrow = 2) +
-    theme_Publication() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1, size = 6),  # NEW: smaller font
-      strip.text = element_text(size = 10, face = "bold")
-    ) +
-    labs(
-      title = plot_title,
-      subtitle = basename(f),
-      x = "Gene",
-      y = "log2FC (Tumor vs Normal)",
-      size = "-log10(padj)",
-      color = "Direction"
-    ) +
-    scale_color_manual(values = c("Down" = "red3", "Up" = "green4"))
-  
-  # --- Clean output filename ---
+      labs(x="log2FoldChange", y=NULL)
+  }
+
+  # build 3-column layout
+  p1 <- make_col_plot(cat_groups$group1, show_legend = FALSE)
+  p2 <- make_col_plot(cat_groups$group2, show_legend = FALSE)
+  p3 <- make_col_plot(cat_groups$group3, show_legend = TRUE)
+
+  final_plot <- plot_grid(p1, p2, p3, ncol = 3,
+                          rel_widths = c(1,1,1))
+
+  # file naming
   base <- basename(f)
-  
-  # Extract comparison (paired or vs_healthyNormal)
   comparison <- case_when(
-    grepl("paired", base, ignore.case = TRUE) ~ "paired",
-    grepl("vs_healthyNormal", base, ignore.case = TRUE) ~ "healthyNormal",
+    grepl("paired", base, ignore.case=TRUE) ~ "paired",
+    grepl("healthyNormal", base, ignore.case=TRUE) ~ "healthyNormal",
     TRUE ~ "comparison"
   )
-  
-  # Build new clean filename
-  clean_name <- paste0("neuronal_", tumor_group, "_", comparison, ".pdf")
 
-  out_file <- file.path(plot_dir, clean_name)
-  
-  ggsave(out_file, p, width = 20, height = 10)
+  out_file <- file.path(
+    plot_dir,
+    paste0("neuronal_", tumor_group, "_", comparison, ".pdf")
+  )
+
+  ggsave(out_file, final_plot, width = 18, height = 20)
+
   message("Saved: ", out_file)
 }
 ```

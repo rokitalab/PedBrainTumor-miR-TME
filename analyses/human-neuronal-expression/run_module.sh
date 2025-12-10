@@ -10,6 +10,5 @@
 set -euo pipefail
 
 # Run neuronal expression workflow
-Rscript --vanilla 01-human-neuronal-expression.Rmd
+Rscript -e "rmarkdown::render('01-human-neuronal-expression.Rmd')"
 echo "[$(date)] Neuronal expression analysis completed successfully."
-
