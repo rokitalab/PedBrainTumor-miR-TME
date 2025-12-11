@@ -15,7 +15,8 @@ analysis_dir <- file.path(root_dir, "analyses", "murine-immune-deconvolution")
 results_dir <- file.path(analysis_dir, "results")
 
 # Load expression matrix
-mouse_rna <- readRDS(file.path(data_dir, "mouse-gene-expression-rsem-tpm-collapsed.all.rds"))
+mouse_rna <- readRDS(file.path(data_dir, "mouse-gene-expression-rsem-tpm-collapsed.rds"))
+colnames(mouse_rna) <- sub("^(([^_]+_[^_]+)).*$", "\\1", colnames(mouse_rna))
 genes_mix <- rownames(mouse_rna)
 
 # Define function for xCell2 analysis
@@ -48,3 +49,4 @@ merged_results <- dplyr::bind_rows(res_mouse, res_tm, res_immgen)
 write.table(merged_results, file = file.path(results_dir, "xCell2_all_references_merged.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 message("✅ All analyses complete. Results saved as individual .tsv files and combined summary table: xCell2_all_references_merged.tsv")
+
