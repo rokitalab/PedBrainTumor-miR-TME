@@ -114,8 +114,8 @@ merged_hist <- merged_manifest %>%
   left_join(opc_redcap, by = c("sample_id", "sample_type")) %>%
   #manually add the remaining samples
   dplyr::mutate(pathology_diagnosis = case_when(Bioassay_ID %in% c("BA_JCM7AADD", "BA_ZYTANGCY", "BA_BXKJBWBQ") ~ "Brainstem glioma- Diffuse intrinsic pontine glioma",
-                                                Bioassay_ID == "BA_0GVSQNSM" ~ "Low-grade glioma/astrocytoma (WHO grade I/II)",
-                                                Bioassay_ID %in% c("BA_ZTM72GEM", "BA_XH5N4N4T", "BA_Z1WV5RXA", "BA_1GRDW9G2", "BA_V2F01E3Z") ~ "Medulloblastoma",
+                                                Bioassay_ID %in% c("BA_0GVSQNSM", "BA_XH5N4N4T") ~ "Low-grade glioma/astrocytoma (WHO grade I/II)",
+                                                Bioassay_ID %in% c("BA_ZTM72GEM", "BA_Z1WV5RXA", "BA_1GRDW9G2", "BA_V2F01E3Z") ~ "Medulloblastoma",
                 TRUE ~ pathology_diagnosis),
                 # create short_histology column based on now having GNTs
                 short_histology = case_when(pathology_diagnosis == "Glial-neuronal tumor NOS" | Bioassay_ID %in% c("BA_T4FGR2ZE", "BA_4Z6DJ8NJ") ~ "GNT",

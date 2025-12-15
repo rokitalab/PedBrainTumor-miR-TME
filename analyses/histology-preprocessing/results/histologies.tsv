@@ -58,7 +58,7 @@ BA_54JZ0FBN	miRNA-Seq	7316-7545	1235-T	Tumor	Right Parietal	High-grade glioma/as
 BA_BAR4FW10	miRNA-Seq	7316-8051	1271-T	Tumor	NA	Low-grade glioma/astrocytoma (WHO grade I/II)	Low-grade glioma	LGG, NF1-somatic, FGFR	LGG
 BA_YDBCT0VX	miRNA-Seq	7316-3411	1309-T	Tumor	NA	Atypical Teratoid Rhabdoid Tumor (ATRT)	Atypical Teratoid Rhabdoid Tumor	ATRT, To be classified	ATRT
 BA_3X0V4JY8	miRNA-Seq	7316-7451	1320-T	Tumor	NA	Ependymoma	Ependymoma	EPN, ST ZFTA	EPN
-BA_XH5N4N4T	miRNA-Seq	7316-9624	1341-T	Tumor	NA	Medulloblastoma	Medulloblastoma	NA	LGG
+BA_XH5N4N4T	miRNA-Seq	7316-9624	1341-T	Tumor	NA	Low-grade glioma/astrocytoma (WHO grade I/II)	Low-grade glioma	NA	LGG
 BA_T4FGR2ZE	miRNA-Seq	7316-7667	1401-N	Normal-Tumor Adjacent	Left Frontal	NA	NA	NA	GNT
 BA_JJV4XAQB	miRNA-Seq	7316-7667	1401-T	Tumor	Right Cerebellum	Glial-neuronal tumor NOS	Glial-neuronal tumor NOS	GNT, RTK, CDKN2A/B	GNT
 BA_1GRDW9G2	miRNA-Seq	NA	1516-T	Tumor	NA	Medulloblastoma	Medulloblastoma	NA	MB
