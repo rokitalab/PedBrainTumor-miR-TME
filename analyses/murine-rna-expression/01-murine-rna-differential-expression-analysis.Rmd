@@ -34,7 +34,7 @@ plot_dir <- file.path(analysis_dir, "plots")
 source(file.path(root_dir, "figures", "theme.R"))
 
 # File path for counts
-gene_cts_file <- file.path(data_dir, "mouse-gene-counts-rsem-expected_count-collapsed.all.rds")
+gene_cts_file <- file.path(data_dir, "mouse-gene-counts-rsem-expected_count-collapsed.rds")
 
 # File path for metadata
 metadata_file <- file.path(analysis_dir, "input", "Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv")
@@ -61,6 +61,8 @@ metadata_df <- read_delim(metadata_file) %>%
 # load & filter genes with at least two non-zero samples
 gene_cts <- readRDS(gene_cts_file) %>%
   filter(rowSums(across(everything(), ~ . != 0)) >= 5)
+
+colnames(gene_cts) <- sub("^(([^_]+_[^_]+)).*$", "\\1", colnames(gene_cts))
 
 # subset to samples in metadata
 valid_ids <- metadata_df$Bioassay_ID
@@ -91,14 +93,6 @@ vsdata <- varianceStabilizingTransformation(dds_all)
 # Build PCA data
 pca_data <- plotPCA(vsdata, intgroup = c("time","treatment"), returnData = TRUE)
 percentVar <- round(100 * attr(pca_data, "percentVar"))
-
-# add external_sample_id for labeling
-pca_data$Bioassay_ID <- rownames(pca_data)
-pca_data <- dplyr::left_join(
-  pca_data,
-  metadata_df[, c("Bioassay_ID","external_sample_id")],
-  by = "Bioassay_ID"
-)
 
 jx <- 0.05 * diff(range(pca_data$PC1))
 jy <- 0.05 * diff(range(pca_data$PC2))
@@ -144,10 +138,6 @@ for (time in time_points) {
   pca_data <- plotPCA(vsdata_subset, intgroup = "treatment", returnData = TRUE)
   percentVar <- round(100 * attr(pca_data, "percentVar"))
   pca_data$Bioassay_ID <- rownames(pca_data)
-  
-  pca_data <- pca_data %>%
-    dplyr::left_join(metadata_subset %>% dplyr::select(Bioassay_ID, external_sample_id),
-                     by = "Bioassay_ID")
   
   p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = treatment)) +
     geom_point(size = 3, alpha = 0.9,
@@ -197,10 +187,6 @@ for (treatment in treatments) {
   pca_data <- plotPCA(vsdata_subset, intgroup = "time", returnData = TRUE)
   percentVar <- round(100 * attr(pca_data, "percentVar"))
   pca_data$Bioassay_ID <- rownames(pca_data)
-  
-  pca_data <- pca_data %>%
-    dplyr::left_join(metadata_subset %>% dplyr::select(Bioassay_ID, external_sample_id),
-                     by = "Bioassay_ID")
   
   p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = time)) +
     geom_point(size = 3, alpha = 0.9,
