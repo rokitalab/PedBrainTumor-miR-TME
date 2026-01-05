@@ -4,12 +4,13 @@
 - Data release date: 2025-12-11
 - status: available
 
-Replaced files:
-The files below were replaced with re-harmonized outputs.
-- `mouse-gene-counts-rsem-expected_count-collapsed.all.rds`; Mouse collapsed RNA-seq raw counts
-- `mouse-gene-expression-rsem-tpm-collapsed.all.rds`; Mouse collapsed RNA-seq TPMs 
+Added files:
+- `mouse-gene-counts-rsem-expected_count-collapsed.rds`; Re-harmonized mouse collapsed RNA-seq raw counts
+- `mouse-gene-expression-rsem-tpm-collapsed.rds`; Re-harmonized mouse collapsed RNA-seq TPMs 
 
 Removed files:
+- `mouse-gene-counts-rsem-expected_count-collapsed.all.rds`; Mouse collapsed RNA-seq raw counts
+- `mouse-gene-expression-rsem-tpm-collapsed.all.rds`; Mouse collapsed RNA-seq TPMs 
 - `mouse-gene-expression-rsem-fpkm-collapsed.all.rds`; Mouse collapsed RNA-seq FPKMs 
 
 ```
@@ -28,9 +29,8 @@ v7
 ├── gene-expression-rsem-tpm-collapsed.all.rds
 ├── miRNA-sample-metadata.txt
 ├── miRNA_Target_anno.csv
-├── mouse-gene-counts-rsem-expected_count-collapsed.all.rds
-├── mouse-gene-expression-rsem-fpkm-collapsed.all.rds
-├── mouse-gene-expression-rsem-tpm-collapsed.all.rds
+├── mouse-gene-counts-rsem-expected_count-collapsed.rds
+├── mouse-gene-expression-rsem-tpm-collapsed.rds
 └── release-notes.md
 ```
 
