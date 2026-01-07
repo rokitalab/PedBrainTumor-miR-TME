@@ -56,7 +56,7 @@ process_cluster <- function(cluster_id) {
   
   # Load immune-related GO enrichment results for this cluster
   cluster_file <- file.path(
-    root_dir, "analyses", "murine-mirna-differential-expression",
+    root_dir, "analyses", "murine-mirna-clustering",
     "results", sprintf("cluster%s-mirna-target-go-enr-immune-terms-reduced.tsv", cluster_id)
   )
   
@@ -91,7 +91,7 @@ process_cluster <- function(cluster_id) {
 }
 
 # Run for clusters 1, 2, and 5
-target_clusters <- c(1, 2, 5)
+target_clusters <- c(1, 2, 3, 4, 5)
 cluster_results <- map(target_clusters, process_cluster)
 
 # Session info

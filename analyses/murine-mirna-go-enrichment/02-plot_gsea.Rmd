@@ -1,0 +1,91 @@
+---
+title: 'Plot DE miRNA target GO enrichment'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2025"
+---
+
+This script plots DE miRNA target gene GO enrichment
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(ggplot2)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "murine-mirna-go-enrichment")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+List go enrichment results files
+
+```{r get go files}
+results_files <- list.files(results_dir)
+go_enr_files <- results_files[grepl("target-go-enrichment.tsv", results_files)]
+```
+
+Define list of keywords to search for among enriched GO terms for plotting
+
+```{r keywords}
+# provided by Dalia
+keywords <- "immunity|T cell|immune|leukocyte|lymphocyte|myeloid|signal transduction|transforming growth factor beta|MAPK cascade|autophagy|cell death|glial cell|Ras|small GTPase|secretion|intracellular signal transduction|phosphorylation|cell comm|cell adhesion|defense|cytokine|chemokine|interferon|glycolysis|lactate|antigen|MHC|HLA|checkpoint"
+```
+
+Loop through GO enrichment files for each DE miRNA, and plot enrichment of terms matching keywords defined above
+
+```{r plot go}
+
+for (file in go_enr_files){
+  
+  go_enr_df <- read_tsv(file.path(results_dir, file)) %>%
+    dplyr::filter(grepl(keywords, Term),
+                  nchar(Term) < 80) %>%
+    dplyr::mutate(gene_ratio = Significant/Annotated) %>%
+    arrange(gene_ratio) %>%
+    dplyr::mutate(Term = fct_relevel(Term, 
+                                        unique(Term)))
+  
+  # Skip to next if no matched terms
+  if (nrow(go_enr_df) == 0) {
+    message(glue::glue("No matching GO terms in {file}, skipping..."))
+    next
+  }
+  
+  mirna_id <- str_replace(file, "-target-go-enrichment.tsv", "")
+  
+  go_enr_df %>%
+    ggplot(aes(x = gene_ratio, y = Term,
+               size = Significant, colour = -log10(classicFisher))) +
+    geom_point(alpha = 0.9) + 
+    scale_color_gradient(low = "lightpink", high = "darkred") +
+    labs(y = NULL,
+         x = "Gene Ratio",
+         size = "Count",
+         colour = "-log10(p)",
+         title = mirna_id) +
+    theme_Publication()
+  
+  ggsave(file.path(plot_dir, glue::glue("{mirna_id}-targets-immune-go-term-enrichment-dotplot.pdf")),
+       width = 9, height = 3 + (nrow(go_enr_df) * 0.15))
+  
+}
+```
+
+Print session info
+
+```{r session info}
+sessionInfo()
+```

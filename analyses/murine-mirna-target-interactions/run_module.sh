@@ -15,9 +15,9 @@ Rscript --vanilla 01-murine-mirna-target-interactions.R
 echo "[$(date)] miRNA–target interaction table generation completed successfully."
 
 # Generate cluster-specific dot plots
-for c in 1 2 5; do
+for c in 1 2 3 4 5; do
   echo "[$(date)] Generating dot plots for cluster ${c}..."
-  Rscript --vanilla murine-mirna-target-dotplot.R \
+  Rscript --vanilla 02-murine-mirna-target-dotplot.R \
     results/cluster${c}-mirna-immune-target-interactions.tsv
   echo "[$(date)] Dot plots for cluster ${c} completed successfully."
 done

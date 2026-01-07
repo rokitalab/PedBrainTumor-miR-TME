@@ -230,10 +230,10 @@ for (timepoint in timepoints){
               suffix = c("_b7h3_vs_untr",
                          "_stop_vs_untr"),
               by = "mirna_id") %>%
-    # define B7H3-upregulated and -downregulated miRNAs as those DE in B7H3 versus untreated ONLY, and NOT DE in STOP versus untreated comparison 
+    # define B7H3-upregulated and -downregulated miRNAs as those DE in B7H3 versus untreated ONLY, and NOT DE in same dir in STOP versus untreated comparison 
     dplyr::mutate(status = case_when(
-      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr > 0 & padj_stop_vs_untr > 0.1 ~ "B7H3 upregulated",
-      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr < 0 & padj_stop_vs_untr > 0.1 ~ "B7H3 downregulated",
+      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr > 0 & (padj_stop_vs_untr > 0.1 | log2FoldChange_stop_vs_untr < 0) ~ "B7H3 upregulated",
+      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr < 0 & (padj_stop_vs_untr > 0.1  | log2FoldChange_stop_vs_untr > 0) ~ "B7H3 downregulated",
       TRUE ~ "Not DE"
     ))
   
