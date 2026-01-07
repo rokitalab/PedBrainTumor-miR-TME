@@ -1,0 +1,353 @@
+---
+title: 'Assessment of human DMG DE miRNA ortholog expression in B7H3 treated mice'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett
+date: "2026"
+---
+
+This script identifies mouse orthologs of human DE miRNAs in DMG versus normal brain by cluster, and assesses their expression patterns in B7H3 treated mice
+
+Load packages 
+```{r}
+suppressPackageStartupMessages({
+  library(rprojroot)
+  library(tidyverse)
+  library(ggplot2)
+  library(gtools)
+  library(ggsci)
+  library(ggpubr)
+})
+```
+
+Set dir paths
+```{r}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-mirna-expr-in-mouse")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+# source plotting theme
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+Set file paths
+```{r}
+# human DMG clustering file
+dmg_cluster_file <- file.path(root_dir, "analyses",
+                              "mirna-clustering",
+                              "results",
+                              "DIPG or DMG-de-mirna-cluster-membership-immune-scores.tsv")
+
+# mouse miRNA counts file
+mmu_mirna_ct_file <- file.path(data_dir,
+                               "30-963755216-miRNA_expression.csv")
+
+# mouse differential expression results
+mmu_de_file <- file.path(root_dir, "analyses",
+                         "murine-mirna-differential-expression",
+                         "results",
+                         "mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv")
+```
+
+
+Wrangle data, and remove species prefix from miRNA IDs to match orthologs
+```{r}
+# Load hsa DMG miRNA cluster df and filter for cluster 6 miRNAs
+dmg_hsa_mir_df <- read_tsv(dmg_cluster_file) %>%
+  dplyr::filter(grepl("hsa", miRNA)) %>%
+  dplyr::mutate(miRNA = str_remove(miRNA, "hsa-"))
+
+# Load mouse miRNA expression file and determine number of cluster 6 miRNAs with ortholog 
+mmu_mirna_ct_df <- read_csv(mmu_mirna_ct_file) %>%
+  dplyr::rename("mirna_id" = "...1") %>%
+  dplyr::mutate(mirna_id = str_remove(mirna_id, "mmu-"))
+
+# Load merged mouse differential expression results
+mmu_de_df <- read_tsv(mmu_de_file) %>%
+  dplyr::mutate(mirna_id = str_remove(mirna_id, "mmu-"))
+```
+
+Extract DE miRNA groups in mouse data:
+1) All DE miRs
+2) upregulated D14
+3) downregulated D14
+4) upregulated D21
+5) downregulated D21
+```{r}
+all_de_mirs <- mmu_de_df %>%
+  dplyr::filter(status_Day14 != "Not DE" | status_Day21 != "Not DE") %>%
+  pull(mirna_id)
+
+d14_up_mirs <- mmu_de_df %>%
+  dplyr::filter(status_Day14 == "B7H3 upregulated") %>%
+  pull(mirna_id)
+
+d14_down_mirs <- mmu_de_df %>%
+  dplyr::filter(status_Day14 == "B7H3 downregulated") %>%
+  pull(mirna_id)
+
+d21_up_mirs <- mmu_de_df %>%
+  dplyr::filter(status_Day21 == "B7H3 upregulated") %>%
+  pull(mirna_id)
+
+d21_down_mirs <- mmu_de_df %>%
+  dplyr::filter(status_Day21 == "B7H3 downregulated") %>%
+  pull(mirna_id)
+```
+
+Create list of DE miRNA groups
+```{r}
+de_mir_list <- list("All DE" = all_de_mirs,
+                    "D14 Up" = d14_up_mirs,
+                    "D14 Down" = d14_down_mirs,
+                    "D21 Up" = d21_up_mirs,
+                    "D21 Down" = d21_down_mirs)
+```
+
+Create data frame to store orthology and expression results by miRNA cluster
+```{r}
+cluster_summary_df <- tibble(
+                             # repeat miR clusters to test for enrichment within each mouse DE group
+                             hsa_dmg_cluster = rep(unique(dmg_hsa_mir_df$row_cluster), each = 5),
+                             de_mir_group = rep(names(de_mir_list), 8),
+                             total_n = NA_integer_,
+                             n_mmu_orthologs = NA_integer_,
+                             n_expr_orthologs = NA_integer_,
+                             n_expr_group = NA_integer_,
+                             n_mmu_mir = sum(!grepl("Novel", mmu_de_df$mirna_id)),
+                             OR = NA_integer_,
+                             OR_p = NA_integer_,
+                             OR_CI_lower = NA_integer_,
+                             OR_CI_upper = NA_integer_)
+```
+
+Loop through rows of `cluster_summary_df` to 
+1) identify number of total and expressed mouse orthologs per human DMG miR cluster
+2) Assess enrichment of orthologs for miRNAs of different B7H3-associated expression patterns 
+
+```{r}
+for (i in 1:nrow(cluster_summary_df)){
+  
+  # get cluster
+  clust <- cluster_summary_df$hsa_dmg_cluster[i]
+  
+  # get miRNAs in cluster
+  cluster_mirs <- dmg_hsa_mir_df %>%
+    dplyr::filter(row_cluster == clust) %>%
+    # remove hsa prefix from miRNA ID
+    dplyr::mutate(miRNA = str_remove(miRNA, "hsa-")) %>%
+    pull(miRNA)
+
+  # after removing species prefix, orthologous miRNAs will share the same name between species
+  # determine how many hsa DMG cluster miRNAs have orthologs in mice:
+  cluster_mirs_w_ortholog <- mmu_mirna_ct_df %>%
+    dplyr::filter(mirna_id %in% cluster_mirs) %>%
+    pull(mirna_id)
+
+  # get N expressed orthologs from DE df 
+  expr_orthologs <- mmu_de_df %>% 
+    dplyr::filter(mirna_id %in% cluster_mirs) %>%
+    pull(mirna_id)
+  
+  # append stats to summary df
+  cluster_summary_df$total_n[i] <- length(cluster_mirs)
+  cluster_summary_df$n_mmu_orthologs[i] <- length(cluster_mirs_w_ortholog)
+  cluster_summary_df$n_expr_orthologs[i] <- length(expr_orthologs)
+  
+  # define current DE group and miRs in group
+  de_group <- cluster_summary_df$de_mir_group[i]
+  
+  de_mirs <- de_mir_list[[de_group]]
+  
+  # determine number of orthologs in cluster and expression group
+  n_ortho_de <- length(intersect(expr_orthologs,
+                                 de_mirs))
+  
+  cluster_summary_df$n_expr_group[i] <- n_ortho_de
+  
+  # run fisher's exact test to assess for enrichment of orthologs in DE group
+  ftest <- fisher.test(matrix(c(n_ortho_de,
+                                length(expr_orthologs) - n_ortho_de,
+                                length(de_mirs) - n_ortho_de,
+                                cluster_summary_df$n_mmu_mir[i] - n_ortho_de - (length(expr_orthologs) - n_ortho_de) - (length(de_mirs) - n_ortho_de)),
+                              nrow = 2))
+  
+  # append FET stats to summary df 
+  cluster_summary_df$OR[i] <- ftest$estimate
+  cluster_summary_df$OR_p[i] <- ftest$p.value
+  cluster_summary_df$OR_CI_lower[i] <- ftest$conf.int[1]
+  cluster_summary_df$OR_CI_upper[i] <- ftest$conf.int[2]
+ 
+}
+```
+
+Generate df to plot % orthologs identified by cluster
+
+```{r}
+ortho_plot_df <- cluster_summary_df %>%
+  # retain one row per cluster
+  distinct(hsa_dmg_cluster, .keep_all = TRUE) %>%
+  dplyr::select(hsa_dmg_cluster,
+                total_n,
+                n_mmu_orthologs,
+                n_expr_orthologs) %>%
+  dplyr::rename(`Expressed ortholog` = n_expr_orthologs) %>%
+  dplyr::mutate(`Non-expressed ortholog` = n_mmu_orthologs - `Expressed ortholog`,
+                `No ortholog` = total_n - n_mmu_orthologs) %>%
+  dplyr::select(-n_mmu_orthologs, -total_n) %>%
+  pivot_longer(-hsa_dmg_cluster,
+               names_to = "category",
+               values_to = "n") %>%
+  dplyr::mutate(category = fct_relevel(category,
+                                       c("Expressed ortholog",
+                                         "Non-expressed ortholog",
+                                         "No ortholog"))) %>%
+  dplyr::mutate(hsa_dmg_cluster = as.factor(hsa_dmg_cluster)) %>%
+  dplyr::mutate(hsa_dmg_cluster = fct_relevel(hsa_dmg_cluster,
+                                              rev(unique(as.character(hsa_dmg_cluster)))))
+```
+
+Plot percent orthologs identified per cluster
+
+```{r}
+ortho_plot <- ggplot(ortho_plot_df,
+                      aes(x = n,
+                          y = hsa_dmg_cluster,
+                          fill = category)) +
+  geom_bar(stat = "identity",
+           color = "black") +
+  labs(x = "n miRNAs",
+       y = "human DMG DE\nmiRNA cluster") +
+  scale_fill_npg() +
+  theme_Publication() +
+  theme(
+    legend.position = "top"
+  )
+
+ggsave(file.path(plot_dir, "hsa-dmg-de-mirna-mmu-ortho-barplot.pdf"),
+       ortho_plot,
+       width = 3.5, height = 4.5)
+```
+
+Reorder expr group levels and create columns `perc_text`, `p_text` to show fractions in plots
+
+```{r}
+cluster_summary_df <- cluster_summary_df %>% 
+  dplyr::mutate(de_mir_group = fct_relevel(de_mir_group,
+                                           c("D21 Down",
+                                             "D21 Up",
+                                             "D14 Down",
+                                             "D14 Up",
+                                             "All DE"))) %>%
+  dplyr::mutate(perc_text = glue::glue("{n_expr_group}/{n_expr_orthologs}")) %>%
+  dplyr::mutate(p_text = case_when(
+    OR_p < 0.01 ~ "**",
+    OR_p < 0.05 ~ "*",
+    TRUE ~ ""
+  ))
+```
+
+Plot enrichment of miRNAs in B7H3-associated expression groups in mouse by cluster
+
+```{r}
+enr_plot <- cluster_summary_df %>% 
+  # remove clusters with <2 orthologous miRNAs
+  dplyr::filter(!hsa_dmg_cluster %in% c(2,7)) %>%
+  dplyr::mutate(OR = case_when(
+    is.infinite(OR) ~ 1000,
+    TRUE ~ OR
+  )) %>%
+  dplyr::mutate(OR_CI_upper = case_when(
+    is.infinite(OR_CI_upper) ~ 100,
+    TRUE ~ OR_CI_upper
+  )) %>%
+  ggplot(aes(x = log10(OR), y = factor(de_mir_group),
+             color = factor(de_mir_group),
+             label = p_text)) +
+  geom_point(size = 3, show.legend = FALSE) + 
+  # add log10-transformed confidence intervals
+  geom_errorbar(aes(xmin = log10(OR_CI_lower), xmax = log10(OR_CI_upper),
+                    color = factor(de_mir_group)), width = 0.2, 
+                show.legend = FALSE) +
+  geom_text(x = 1.5, hjust = 0, size = 6, fontface = 2,
+            show.legend = FALSE) +
+  labs(x = "log10-Odds Ratio\n(95% CI)", y = "B7H3 DE miRNA class") + 
+  # Add OR threshold line
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  # facet wrap by variable, place strips to left
+  facet_wrap(~hsa_dmg_cluster, scale = "fixed",
+             nrow = 8,
+             strip.position = "left") +
+  expand_limits(y=0) +
+  scale_color_manual(values = c("#3C5488FF", "#E64B35FF",
+                                "#4DBBD5FF", "#F39B7FFF",
+                                "#00A087FF")) +
+  theme_Publication() 
+```
+
+Plot percent of expressed orthologs in B7H3-associated expression groups by cluster
+
+```{r}
+perc_plot <- cluster_summary_df %>%
+  dplyr::filter(!hsa_dmg_cluster %in% c(2,7)) %>%
+  ggplot(aes(x = n_expr_group/n_expr_orthologs * 100, 
+             y = factor(de_mir_group),
+             fill = factor(de_mir_group),
+             color = factor(de_mir_group),
+             label = perc_text)) +
+  geom_bar(stat = "identity", color = "black",
+           show.legend = FALSE) + 
+  # add fractions to the right of plots
+  geom_text(x = 60, hjust = 0, size = 4, fontface = 2,
+            show.legend = FALSE) +
+  labs(x = "% human orthologs\n", y = NULL, fill = NULL) + 
+  scale_y_discrete(labels=c("PBTA" = NULL, "gnomAD" = NULL,
+                            "PMBB" = NULL)) +
+  guides(fill = guide_legend(nrow = 1)) +
+  # facet wrap by variable, place strip to left of plot
+  facet_wrap(~hsa_dmg_cluster, scale = "fixed",
+             nrow = 6,
+             strip.position = "left") +
+  coord_cartesian(clip = 'off') +
+  xlim(c(0, 55)) +
+  scale_fill_manual(values = c("#3C5488FF", "#E64B35FF",
+                                "#4DBBD5FF", "#F39B7FFF",
+                                "#00A087FF")) +
+  scale_color_manual(values = c("#3C5488FF", "#E64B35FF",
+                                "#4DBBD5FF", "#F39B7FFF",
+                                "#00A087FF")) +
+  theme_Publication() +
+  # remove facet strips
+  theme(plot.margin = unit(c(2,5,1,1), "lines"),
+        legend.position.inside = c(0.5, 1.07),
+        strip.background = element_blank(),
+        strip.text.y = element_blank()) +
+  theme(strip.placement = "outside")
+```
+
+Merge enrichment and percent plots and save
+
+```{r}
+merged_plot <- ggarrange(enr_plot, perc_plot,
+                         nrow = 1, widths = c(1,0.85),
+                         align = "h")
+
+merged_plot
+
+pdf(file.path(plot_dir, 
+                 "human-dmg-de-mirna-orthology-mouse-expr-enrichment-plot.pdf"),
+       width = 6, height = 8)
+
+merged_plot
+
+dev.off()
+```
+print session info
+
+```{r}
+sessionInfo()
+```
