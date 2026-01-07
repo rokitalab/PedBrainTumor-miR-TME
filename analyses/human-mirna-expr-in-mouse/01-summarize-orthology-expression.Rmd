@@ -265,12 +265,12 @@ enr_plot <- cluster_summary_df %>%
     is.infinite(OR_CI_upper) ~ 100,
     TRUE ~ OR_CI_upper
   )) %>%
-  ggplot(aes(x = log10(OR), y = factor(de_mir_group),
+  ggplot(aes(x = log10(OR+0.01), y = factor(de_mir_group),
              color = factor(de_mir_group),
              label = p_text)) +
   geom_point(size = 3, show.legend = FALSE) + 
   # add log10-transformed confidence intervals
-  geom_errorbar(aes(xmin = log10(OR_CI_lower), xmax = log10(OR_CI_upper),
+  geom_errorbar(aes(xmin = log10(OR_CI_lower+0.01), xmax = log10(OR_CI_upper+0.01),
                     color = factor(de_mir_group)), width = 0.2, 
                 show.legend = FALSE) +
   geom_text(x = 1.5, hjust = 0, size = 6, fontface = 2,
