@@ -35,7 +35,12 @@ metadata_df <- read_delim(metadata_file) %>%
     treatment = recode(treatment,
                        "B7H3 CAR" = "CAR",
                        "B7H3 STOP CAR" = "Ctrl CAR",
-                       "Untreated" = "Untreated")
+                       "Untreated" = "Untreated"),
+    # Add CAR detection indicators
+    CARSCFV_detected = if_else(Bioassay_ID %in% c("BA_0TFPN4X7", "BA_QKAF661T", "BA_W1SB4C0J"),
+                               "Detected", "Not detected"),
+    MCD3Z_detected   = if_else(Bioassay_ID %in% c("BA_0TFPN4X7", "BA_QKAF661T"),
+                               "Detected", "Not detected")
   ) 
 
 # Filter to keep only selected immune-related cell types
@@ -116,14 +121,20 @@ for (ref in unique_refs) {
   ha_col <- HeatmapAnnotation(
     Treatment = meta_ref$treatment,
     Time = meta_ref$time,
+    `CAR scFv` = meta_ref$CARSCFV_detected,
+    CD3z = meta_ref$MCD3Z_detected,
     col = list(
       Treatment = treatment_cols,
-      Time = time_cols
+      Time = time_cols,
+      `CAR scFv` = c("Detected" = "#8E7CC3FF", "Not detected" = "grey90"),
+      CD3z = c("Detected" = "#66A61EFF", "Not detected" = "grey90")
     ),
     annotation_name_side = "left",
     annotation_legend_param = list(
       Treatment = list(title = "Treatment", direction = "horizontal"),
-      Time = list(title = "Time", direction = "horizontal")
+      Time = list(title = "Time", direction = "horizontal"),
+      `CAR scFv` = list(title = "CAR scFv", direction = "horizontal"),
+      CD3z = list(title = "CD3z", direction = "horizontal")
     )
   )
   
