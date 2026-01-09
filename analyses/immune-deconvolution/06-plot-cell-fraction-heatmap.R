@@ -45,7 +45,9 @@ xcell_results <- readRDS(xcell_file) %>%
 # Filter to keep only selected immune-related cell types
 remove <- c("immune score", "microenvironment score", 
             "stroma score", "uncharacterized cell",
-            "Endothelial cell", "Cancer associated fibroblast")
+            "Endothelial cell", "Cancer associated fibroblast",
+            "Common lymphoid progenitor", "Common myeloid progenitor",
+            "Granulocyte-monocyte progenitor", "Hematopoietic stem cell")
 
 deconv_list <- list("Quantiseq" = quantiseq_results,
                     "XCell" = xcell_results)
@@ -76,7 +78,7 @@ for (method in names(deconv_list)){
   
   # Generate heatmaps per reference
   col_fun <- colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
-  
+
   # Custom metadata colors
   hist_cols <- c(
     "DIPG or DMG" = "#ff40d9",  # warm taupe
