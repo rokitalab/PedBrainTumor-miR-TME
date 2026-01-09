@@ -44,7 +44,8 @@ xcell_results <- readRDS(xcell_file) %>%
 
 # Filter to keep only selected immune-related cell types
 remove <- c("immune score", "microenvironment score", 
-            "stroma score", "uncharacterized cell")
+            "stroma score", "uncharacterized cell",
+            "Endothelial cell", "Cancer associated fibroblast")
 
 deconv_list <- list("Quantiseq" = quantiseq_results,
                     "XCell" = xcell_results)
