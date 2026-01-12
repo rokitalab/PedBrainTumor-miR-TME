@@ -5,7 +5,7 @@
 # Date: 2025-11
 # Description:
 #   Assess coordinated differential expression between murine miRNAs and
-#   their predicted immune-related target genes across clusters (1, 2, and 5).
+#   their predicted immune-related target genes across clusters.
 #   This script integrates miRNA target predictions (miRanda), immune-related
 #   GO enrichment results, and RNA-seq differential expression data to identify
 #   significant miRNA–target interactions for downstream visualization.
@@ -56,7 +56,7 @@ process_cluster <- function(cluster_id) {
   
   # Load immune-related GO enrichment results for this cluster
   cluster_file <- file.path(
-    root_dir, "analyses", "murine-mirna-differential-expression",
+    root_dir, "analyses", "murine-mirna-go-enrichment",
     "results", sprintf("cluster%s-mirna-target-go-enr-immune-terms-reduced.tsv", cluster_id)
   )
   
@@ -90,8 +90,8 @@ process_cluster <- function(cluster_id) {
   return(cluster_go_df)
 }
 
-# Run for clusters 1, 2, and 5
-target_clusters <- c(1, 2, 5)
+# Run for all clusters
+target_clusters <- c(1, 2, 3, 4, 5)
 cluster_results <- map(target_clusters, process_cluster)
 
 # Session info
