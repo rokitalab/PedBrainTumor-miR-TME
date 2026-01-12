@@ -5,7 +5,7 @@
 # Date: 2025-11
 # Description:
 #   Run murine miRNA–target interaction analyses and generate cluster-specific
-#   dot plots for immune-related target genes (clusters 1, 2, and 5)
+#   dot plots for immune-related target genes
 # -------------------------------------------------------------------------
 
 set -euo pipefail
