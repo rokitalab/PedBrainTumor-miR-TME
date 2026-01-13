@@ -12,3 +12,7 @@ set -euo pipefail
 # Run neuronal expression workflow
 Rscript -e "rmarkdown::render('01-human-neuronal-expression.Rmd')"
 echo "[$(date)] Neuronal expression analysis completed successfully."
+
+# Run correlation analysis
+Rscript -e "rmarkdown::render('02-human-neuronal-mirna-target-correlation.Rmd')"
+echo "[$(date)] miRNA–neuronal pathway correlation analysis completed successfully."
