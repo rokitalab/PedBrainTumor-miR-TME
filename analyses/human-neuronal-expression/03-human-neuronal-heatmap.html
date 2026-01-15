@@ -11,7 +11,7 @@
 
 <meta name="author" content="rstudio" />
 
-<meta name="date" content="2026-01-14" />
+<meta name="date" content="2026-01-15" />
 
 <title>03-human-neuronal-heatmap.R</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">03-human-neuronal-heatmap.R</h1>
 <h4 class="author">rstudio</h4>
-<h4 class="date">2026-01-14</h4>
+<h4 class="date">2026-01-15</h4>
 
 </div>
 
@@ -542,56 +542,57 @@ ra_left &lt;- rowAnnotation(
 
 ### Right annotation object for correlation annotations
 ra_right &lt;- rowAnnotation(
-  &quot;Neurotransmitter\nreceptors r&quot; = anno_barplot(
+  &quot;neurotransmitter\ntransport r&quot; = anno_barplot(
     mirna_anno$GOBP_NEUROTRANSMITTER_TRANSPORT,
     # numeric vector, one value per row
     gp = gpar(fill = &quot;steelblue&quot;),
     # bar fill color
     width = unit(2, &quot;cm&quot;)
   ),
-  &quot;Postsynaptic\nscaffolding r&quot; = anno_barplot(
+  &quot;postsynaptic membrane\norganization r&quot; = anno_barplot(
     mirna_anno$GOBP_POSTSYNAPTIC_MEMBRANE_ORGANIZATION,
     # numeric vector, one value per row
     gp = gpar(fill = &quot;steelblue4&quot;),
     # bar fill color
     width = unit(2, &quot;cm&quot;)
   ),
-  &quot;Cell\nadhesion r&quot; = anno_barplot(
+  &quot;neuron cell \ncell adhesion r&quot; = anno_barplot(
     mirna_anno$GOBP_NEURON_CELL_CELL_ADHESION,
     # numeric vector, one value per row
     gp = gpar(fill = &quot;steelblue4&quot;),
     # bar fill color
     width = unit(2, &quot;cm&quot;)
   ),
-  &quot;Synaptic\nvesicle\ntrafficking r&quot; = anno_barplot(
+  &quot;synaptic vesicle\ntransport r&quot; = anno_barplot(
     mirna_anno$GOBP_SYNAPTIC_VESICLE_TRANSPORT,
     # numeric vector, one value per row
     gp = gpar(fill = &quot;steelblue4&quot;),
     # bar fill color
     width = unit(2, &quot;cm&quot;)
   ),
-  &quot;Glutamatergic\nr&quot; = anno_barplot(
+  &quot; synaptic transmission\nglutamatergic r&quot; = anno_barplot(
     mirna_anno$GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC,
     # numeric vector, one value per row
     gp = gpar(fill = &quot;steelblue4&quot;),
     # bar fill color
     width = unit(2, &quot;cm&quot;)
   ),
-  &quot;GABAergic\nr&quot; = anno_barplot(
+  &quot; regulation of synaptic\ntransmission gabaergic r&quot; = anno_barplot(
     mirna_anno$GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC,
     # numeric vector, one value per row
     gp = gpar(fill = &quot;steelblue4&quot;),
     # bar fill color
     width = unit(2, &quot;cm&quot;)
   ),
-  &quot;Cholinergic\nr&quot; = anno_barplot(
+  &quot;  synaptic transmission\ncholinergic r&quot; = anno_barplot(
     mirna_anno$GOBP_SYNAPTIC_TRANSMISSION_CHOLINERGIC,
     # numeric vector, one value per row
     gp = gpar(fill = &quot;steelblue4&quot;),
     # bar fill color
     width = unit(2, &quot;cm&quot;)
   ),
-  annotation_name_gp = gpar(fontsize = 8)
+  annotation_name_gp = gpar(fontsize = 10),
+  annotation_name_rot = 45
 )
 
 ### Sample annotation

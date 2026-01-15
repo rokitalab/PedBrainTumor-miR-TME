@@ -128,56 +128,57 @@ ra_left <- rowAnnotation(
 
 ### Right annotation object for correlation annotations
 ra_right <- rowAnnotation(
-  "Neurotransmitter\nreceptors r" = anno_barplot(
+  "neurotransmitter\ntransport r" = anno_barplot(
     mirna_anno$GOBP_NEUROTRANSMITTER_TRANSPORT,
     # numeric vector, one value per row
     gp = gpar(fill = "steelblue"),
     # bar fill color
     width = unit(2, "cm")
   ),
-  "Postsynaptic\nscaffolding r" = anno_barplot(
+  "postsynaptic membrane\norganization r" = anno_barplot(
     mirna_anno$GOBP_POSTSYNAPTIC_MEMBRANE_ORGANIZATION,
     # numeric vector, one value per row
     gp = gpar(fill = "steelblue4"),
     # bar fill color
     width = unit(2, "cm")
   ),
-  "Cell\nadhesion r" = anno_barplot(
+  "neuron cell \ncell adhesion r" = anno_barplot(
     mirna_anno$GOBP_NEURON_CELL_CELL_ADHESION,
     # numeric vector, one value per row
     gp = gpar(fill = "steelblue4"),
     # bar fill color
     width = unit(2, "cm")
   ),
-  "Synaptic\nvesicle\ntrafficking r" = anno_barplot(
+  "synaptic vesicle\ntransport r" = anno_barplot(
     mirna_anno$GOBP_SYNAPTIC_VESICLE_TRANSPORT,
     # numeric vector, one value per row
     gp = gpar(fill = "steelblue4"),
     # bar fill color
     width = unit(2, "cm")
   ),
-  "Glutamatergic\nr" = anno_barplot(
+  " synaptic transmission\nglutamatergic r" = anno_barplot(
     mirna_anno$GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC,
     # numeric vector, one value per row
     gp = gpar(fill = "steelblue4"),
     # bar fill color
     width = unit(2, "cm")
   ),
-  "GABAergic\nr" = anno_barplot(
+  " regulation of synaptic\ntransmission gabaergic r" = anno_barplot(
     mirna_anno$GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC,
     # numeric vector, one value per row
     gp = gpar(fill = "steelblue4"),
     # bar fill color
     width = unit(2, "cm")
   ),
-  "Cholinergic\nr" = anno_barplot(
+  "  synaptic transmission\ncholinergic r" = anno_barplot(
     mirna_anno$GOBP_SYNAPTIC_TRANSMISSION_CHOLINERGIC,
     # numeric vector, one value per row
     gp = gpar(fill = "steelblue4"),
     # bar fill color
     width = unit(2, "cm")
   ),
-  annotation_name_gp = gpar(fontsize = 8)
+  annotation_name_gp = gpar(fontsize = 10),
+  annotation_name_rot = 45
 )
 
 ### Sample annotation
