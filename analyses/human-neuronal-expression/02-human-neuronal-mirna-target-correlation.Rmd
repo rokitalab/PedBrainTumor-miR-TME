@@ -81,14 +81,6 @@ mirna_tpm_file <- file.path(
   "mirna-tpm.rds"
 )
 
-de_mirna_file <- file.path(
-  root_dir,
-  "analyses",
-  "human-mirna-expression",
-  "results",
-  "DIPG or DMG_sig_DE_miRNA_list.csv"
-)
-
 histology_file <- file.path(
   root_dir,
   "analyses",
@@ -99,68 +91,103 @@ histology_file <- file.path(
 ```
 
 ```{r}
-hist <- read_tsv(histology_file, show_col_types = FALSE)
-
-dmg_mirna_ids <- hist %>% 
-  dplyr::filter(experimental_strategy == "miRNA-Seq",
-                sample_type == "Tumor",
-                histology == "DIPG or DMG",
-                !external_sample_id %in% c("1-1855-CC1", 
-                                           "4-1958-CC1")) %>%
-  arrange(external_sample_id) %>%
-  pull(external_sample_id)
-
-dmg_rna_ids <- hist %>% 
-  dplyr::filter(experimental_strategy == "RNA-Seq",
-                sample_type == "Tumor",
-                histology == "DIPG or DMG") %>%
-  arrange(external_sample_id) %>%
-  pull(Bioassay_ID)
-
-de_mirna <- read_csv(de_mirna_file, show_col_types = FALSE)
-de_mirna_ids <- unique(de_mirna$miRNA)
+tumor_types <- c("DIPG or DMG", "MB")
 ```
 
 ```{r}
-mirna_tpm <- readRDS(mirna_tpm_file) %>%
-  dplyr::filter(rownames(.) %in% de_mirna_ids) %>%
-  dplyr::select(any_of(dmg_mirna_ids))
-mirna_tpm <- log2(as.matrix(mirna_tpm) + 1)
-
 gsva_score <- neuronal_go_terms %>%
   column_to_rownames("Pathway")
-
-gsva_mat <- gsva_score %>%
-  dplyr::select(any_of(c(dmg_rna_ids))) %>%
-  as.matrix()
 ```
 
 ```{r}
-# Spearman correlation
-rho_mat <- cor(t(mirna_tpm), t(gsva_mat), method = "spearman")
-rho_mat_filtered <- rho_mat[rowSums(is.na(rho_mat)) != ncol(rho_mat), ]
+hist <- read_tsv(histology_file, show_col_types = FALSE)
+```
 
-# p-values (approx)
-n <- ncol(mirna_tpm)
-t_val <- rho_mat_filtered * sqrt((n-2)/(1 - rho_mat_filtered^2))
-pval_mat <- 2 * pt(-abs(t_val), df = n-2)
-
-# Long format with BH adjustment per miRNA
-corr_df <- as.data.frame(as.table(rho_mat_filtered)) %>%
-  rename(miRNA = Var1, Pathway = Var2, rho = Freq) %>%
-  mutate(pval = as.vector(pval_mat)) %>%
-  group_by(miRNA) %>%
-  mutate(padj = p.adjust(pval, method = "BH")) %>%
-  ungroup() %>%
-  arrange(miRNA, desc(abs(rho)))
-
-# Save the table
-write_tsv(corr_df, file.path(results_dir, "mirna_neuronal_gobp_spearman.tsv"))
-
-corr_df_sig_01 <- corr_df %>%
-  dplyr::filter(padj < 0.1)
-
-write_tsv(corr_df_sig_01, file.path(results_dir, "mirna_neuronal_gobp_spearman_FDR01.tsv"))
+```{r}
+for (tumor in tumor_types) {
+  message("Running correlation analysis for: ", tumor)
+  
+  # miRNA-seq sample IDs
+  mirna_ids <- hist %>%
+    filter(
+      experimental_strategy == "miRNA-Seq",
+      sample_type == "Tumor",
+      histology == tumor,!external_sample_id %in% c("1-1855-CC1", "4-1958-CC1")
+    ) %>%
+    arrange(external_sample_id) %>%
+    pull(external_sample_id)
+  
+  # RNA-seq sample IDs
+  rna_ids <- hist %>%
+    filter(experimental_strategy == "RNA-Seq",
+           sample_type == "Tumor",
+           histology == tumor) %>%
+    arrange(external_sample_id) %>%
+    pull(Bioassay_ID)
+  
+  # DE miRNAs
+  de_mirna_file_tumor <- file.path(
+    root_dir,
+    "analyses",
+    "human-mirna-expression",
+    "results",
+    paste0(tumor, "_sig_DE_miRNA_list.csv")
+  )
+  
+  de_mirna <- read_csv(de_mirna_file_tumor, show_col_types = FALSE)
+  de_mirna_ids <- unique(de_mirna$miRNA)
+  
+  # miRNA TPM
+  mirna_tpm <- readRDS(mirna_tpm_file) %>%
+    filter(rownames(.) %in% de_mirna_ids) %>%
+    select(any_of(mirna_ids))
+  
+  mirna_tpm <- log2(as.matrix(mirna_tpm) + 1)
+  
+  # GSVA matrix
+  gsva_mat <- gsva_score %>%
+    select(any_of(rna_ids)) %>%
+    as.matrix()
+  
+  # Remove zero-variance rows
+  mirna_tpm <- mirna_tpm[apply(mirna_tpm, 1, sd) > 0, , drop = FALSE]
+  gsva_mat  <- gsva_mat[apply(gsva_mat, 1, sd) > 0, , drop = FALSE]
+  
+  # Spearman correlation
+  rho_mat <- cor(t(mirna_tpm), t(gsva_mat), method = "spearman")
+  
+  rho_mat_filtered <- rho_mat[rowSums(is.na(rho_mat)) != ncol(rho_mat), ]
+  
+  # p-values (approx)
+  n <- ncol(mirna_tpm)
+  t_val <- rho_mat_filtered * sqrt((n - 2) / (1 - rho_mat_filtered^2))
+  pval_mat <- 2 * pt(-abs(t_val), df = n - 2)
+  
+  # Long format with BH adjustment per miRNA
+  corr_df <- as.data.frame(as.table(rho_mat_filtered)) %>%
+    rename(miRNA = Var1,
+           Pathway = Var2,
+           rho = Freq) %>%
+    mutate(pval = as.vector(pval_mat)) %>%
+    group_by(miRNA) %>%
+    mutate(padj = p.adjust(pval, method = "BH")) %>%
+    ungroup() %>%
+    arrange(miRNA, desc(abs(rho)))
+  
+  # Save outputs
+  tumor_tag <- str_replace_all(tumor, " ", "_")
+  
+  write_tsv(corr_df, file.path(
+    results_dir,
+    paste0(tumor_tag, "_mirna_neuronal_gobp_spearman.tsv")
+  ))
+  
+  write_tsv(filter(corr_df, padj < 0.1),
+            file.path(
+              results_dir,
+              paste0(tumor_tag, "_mirna_neuronal_gobp_spearman_FDR01.tsv")
+            ))
+}
 ```
 
 ### Session Info
