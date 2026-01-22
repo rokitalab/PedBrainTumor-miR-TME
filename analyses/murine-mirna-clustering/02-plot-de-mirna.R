@@ -140,7 +140,7 @@ plot_mirna_timecourse <- function(df, mirna, sig_df) {
       ),
       inherit.aes = FALSE,
       color = "black",
-      size = 4
+      size = 5
     ) +
     scale_linetype_manual(
       values = c(
@@ -176,8 +176,8 @@ for (mirna in unique(tpm_summary$mirna_id)) {
   ggsave(
     file.path(plot_dir, glue("{mirna}_log2TPM_Day14_Day21.pdf")),
     p,
-    width = 6,
-    height = 4
+    width = 4.5,
+    height = 3
   )
 }
 
