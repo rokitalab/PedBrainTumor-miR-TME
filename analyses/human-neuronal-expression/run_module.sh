@@ -20,3 +20,8 @@ echo "[$(date)] miRNA–neuronal pathway correlation analysis completed successf
 # Run clustering and generate heatmap
 Rscript --vanilla 03-human-neuronal-heatmap.R
 echo "[$(date)] Clustering and heatmap generation completed successfully."
+
+# Plot cluster-specific miRNA target GO enrichment
+Rscript --vanilla 04-human-neuronal-go-enrichment.R
+echo "[$(date)] Plotting cluster-specific miRNA target GO enrichment dot plot completed successfully."
+
