@@ -40,11 +40,9 @@
 │   └── neuronal_go_term_with_id.tsv
 ├── plots
 │   ├── DIPG_or_DMG-cluster6-neuronal-go-term-dotplot.pdf
-│   ├── DIPG_or_DMG-cluster6-target-cell-adhesion-dotplot.pdf
 │   ├── DIPG_or_DMG-cluster6-target-synaptic-dotplot.pdf
 │   ├── DIPG_or_DMG_mirna_neuronal_gobp_heatmap.pdf
 │   ├── MB-cluster1-neuronal-go-term-dotplot.pdf
-│   ├── MB-cluster1-target-cell-adhesion-dotplot.pdf
 │   ├── MB-cluster1-target-neurotransmitter-dotplot.pdf
 │   ├── MB-cluster1-target-postsynaptic-dotplot.pdf
 │   ├── MB-cluster1-target-synaptic-dotplot.pdf

@@ -11,7 +11,7 @@
 
 <meta name="author" content="rstudio" />
 
-<meta name="date" content="2026-01-26" />
+<meta name="date" content="2026-01-28" />
 
 <title>06-dmg-cluster6-mirna-target-dotplot.R</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">06-dmg-cluster6-mirna-target-dotplot.R</h1>
 <h4 class="author">rstudio</h4>
-<h4 class="date">2026-01-26</h4>
+<h4 class="date">2026-01-28</h4>
 
 </div>
 
@@ -445,7 +445,7 @@ res &lt;- read_tsv(file.path(results_dir,
     max_log2FC &lt; 0 &amp; min_padj &lt; 0.05 ~ &quot;DMG Downregulated&quot;,
     TRUE ~ &quot;Not DE&quot;
   ))</code></pre>
-<pre><code>## Rows: 401 Columns: 11
+<pre><code>## Rows: 62 Columns: 11
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (5): miRNA, Genes, Term, Experiments, Support Type
@@ -454,63 +454,6 @@ res &lt;- read_tsv(file.path(results_dir,
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre class="r"><code>pdf(NULL)
-
-# Filter for targets associated with cell adhesion processes 
-cell_adhesion_res &lt;- res %&gt;%
-  dplyr::filter(grepl(&quot;cell|adhesion&quot;,
-                      category_broad, ignore.case = TRUE)) %&gt;%
-  droplevels()
-
-# Generate dot plot
-ggplot(cell_adhesion_res, aes(x = miRNA, y = `Genes`,
-                   size = mirna_target_pearson_r,
-                   fill = de_group)) +
-  geom_point(shape = 21,          # circle with fill + border
-             colour = &quot;black&quot;,    # border color
-             stroke = 0.3,        # border thickness
-             alpha = 0.9) +
-  # add asterisks for sig correlations
-  geom_text(
-    data = cell_adhesion_res %&gt;% dplyr::filter(mirna_target_pearson_r &lt; 0,
-                                       mirna_target_pearson_p &lt; 0.05),
-    aes(x = miRNA, y = `Genes`, label = &quot;*&quot;),
-    color = &quot;grey70&quot;, 
-    size = 5,         
-    fontface = &quot;bold&quot;,
-    vjust = 0.75       
-  ) +
-  scale_fill_manual(values = c(&quot;DMG Downregulated&quot; = &quot;red3&quot;, 
-                               &quot;Not DE&quot; = &quot;whitesmoke&quot;, 
-                               &quot;DMG Upregulated&quot; = &quot;green4&quot;),
-                    guide = guide_legend(
-                      override.aes = list(size = 5))) +
-  labs(
-    x      = NULL,
-    size   = &quot;miRNA-target\nPearson r&quot;,
-    fill   = &quot;Target Expression&quot;,
-    y      = NULL
-  ) +
-  scale_size_continuous(
-    trans = &quot;reverse&quot;,
-    range = c(2, 6),  
-  ) +
-  facet_grid(
-    category_broad ~ ., 
-    scales = &quot;free_y&quot;, 
-    space  = &quot;free_y&quot;, 
-    switch = &quot;y&quot;,
-    labeller = labeller(category_broad = function(x) str_wrap(x, width = 30))
-  ) +
-  theme_Publication() +
-  theme(
-    strip.placement   = &quot;outside&quot;, 
-    strip.text.y.left = element_text(angle = 0),
-    axis.text.x       = element_text(angle = 45, vjust = 1, hjust = 1)
-  )
-
-# save plot
-ggsave(file.path(plot_dir, &quot;DIPG_or_DMG-cluster6-target-cell-adhesion-dotplot.pdf&quot;),
-       height = 26, width = 10)
 
 # Filter for synaptic-related processes 
 synaptic_res &lt;- res %&gt;%

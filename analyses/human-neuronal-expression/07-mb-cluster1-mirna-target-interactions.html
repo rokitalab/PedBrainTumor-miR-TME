@@ -11,7 +11,7 @@
 
 <meta name="author" content="rstudio" />
 
-<meta name="date" content="2026-01-26" />
+<meta name="date" content="2026-01-28" />
 
 <title>07-mb-cluster1-mirna-target-interactions.R</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">07-mb-cluster1-mirna-target-interactions.R</h1>
 <h4 class="author">rstudio</h4>
-<h4 class="date">2026-01-26</h4>
+<h4 class="date">2026-01-28</h4>
 
 </div>
 
@@ -443,7 +443,7 @@ mb_cluster1_go_df &lt;- read_tsv(mb_cluster1_go_file) %&gt;%
   # collapse enriched terms per target
   group_by(miRNA, Genes) %&gt;%
   summarise(Term = str_c(Term, collapse = &quot;;&quot;))</code></pre>
-<pre><code>## Rows: 124 Columns: 11
+<pre><code>## Rows: 103 Columns: 11
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;\t&quot;
 ## chr (5): GO.ID, Term, Genes, miRNA, class
@@ -556,46 +556,6 @@ for (i in 1:nrow(mb_cluster1_go_df)){
   
 }</code></pre>
 <pre><code>## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
-## Warning in cor(x, y): the standard deviation is zero
 ## Warning in cor(x, y): the standard deviation is zero
 ## Warning in cor(x, y): the standard deviation is zero
 ## Warning in cor(x, y): the standard deviation is zero

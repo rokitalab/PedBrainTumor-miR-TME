@@ -79,63 +79,6 @@ res <- read_tsv(file.path(results_dir,
 
 pdf(NULL)
 
-# Filter for targets associated with cell adhesion processes 
-cell_adhesion_res <- res %>%
-  dplyr::filter(grepl("cell|adhesion",
-                      category_broad, ignore.case = TRUE)) %>%
-  droplevels()
-
-# Generate dot plot
-ggplot(cell_adhesion_res, aes(x = miRNA, y = `Genes`,
-                   size = mirna_target_pearson_r,
-                   fill = de_group)) +
-  geom_point(shape = 21,          # circle with fill + border
-             colour = "black",    # border color
-             stroke = 0.3,        # border thickness
-             alpha = 0.9) +
-  # add asterisks for sig correlations
-  geom_text(
-    data = cell_adhesion_res %>% dplyr::filter(mirna_target_pearson_r < 0,
-                                       mirna_target_pearson_p < 0.05),
-    aes(x = miRNA, y = `Genes`, label = "*"),
-    color = "grey70", 
-    size = 5,         
-    fontface = "bold",
-    vjust = 0.75       
-  ) +
-  scale_fill_manual(values = c("DMG Downregulated" = "red3", 
-                               "Not DE" = "whitesmoke", 
-                               "DMG Upregulated" = "green4"),
-                    guide = guide_legend(
-                      override.aes = list(size = 5))) +
-  labs(
-    x      = NULL,
-    size   = "miRNA-target\nPearson r",
-    fill   = "Target Expression",
-    y      = NULL
-  ) +
-  scale_size_continuous(
-    trans = "reverse",
-    range = c(2, 6),  
-  ) +
-  facet_grid(
-    category_broad ~ ., 
-    scales = "free_y", 
-    space  = "free_y", 
-    switch = "y",
-    labeller = labeller(category_broad = function(x) str_wrap(x, width = 30))
-  ) +
-  theme_Publication() +
-  theme(
-    strip.placement   = "outside", 
-    strip.text.y.left = element_text(angle = 0),
-    axis.text.x       = element_text(angle = 45, vjust = 1, hjust = 1)
-  )
-
-# save plot
-ggsave(file.path(plot_dir, "DIPG_or_DMG-cluster6-target-cell-adhesion-dotplot.pdf"),
-       height = 26, width = 10)
-
 # Filter for synaptic-related processes 
 synaptic_res <- res %>%
   dplyr::filter(grepl("synaptic|vesicle|trafficking|neurotransmitter", category_broad, ignore.case = TRUE)) %>%
