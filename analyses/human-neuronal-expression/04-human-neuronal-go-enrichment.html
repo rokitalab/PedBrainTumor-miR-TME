@@ -11,7 +11,7 @@
 
 <meta name="author" content="rstudio" />
 
-<meta name="date" content="2026-01-26" />
+<meta name="date" content="2026-01-27" />
 
 <title>04-human-neuronal-go-enrichment.R</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">04-human-neuronal-go-enrichment.R</h1>
 <h4 class="author">rstudio</h4>
-<h4 class="date">2026-01-26</h4>
+<h4 class="date">2026-01-27</h4>
 
 </div>
 
@@ -404,8 +404,12 @@ cluster_configs &lt;- tribble(
 neuronal_go_ids &lt;- read_tsv(
   file.path(input_dir, &quot;neuronal_go_term_with_id.tsv&quot;),
   show_col_types = FALSE
-)
-
+) %&gt;%
+  filter(
+    Pathway == &quot;GOBP_NEURON_CELL_CELL_ADHESION&quot; |
+      !grepl(&quot;CELL_ADHESION&quot;, Pathway)
+  )
+  
 neuronal_go_terms &lt;- read_tsv(
   file.path(results_dir, &quot;neuronal_gobp_terms_from_gsva.tsv&quot;),
   show_col_types = FALSE

@@ -35,8 +35,12 @@ cluster_configs <- tribble(
 neuronal_go_ids <- read_tsv(
   file.path(input_dir, "neuronal_go_term_with_id.tsv"),
   show_col_types = FALSE
-)
-
+) %>%
+  filter(
+    Pathway == "GOBP_NEURON_CELL_CELL_ADHESION" |
+      !grepl("CELL_ADHESION", Pathway)
+  )
+  
 neuronal_go_terms <- read_tsv(
   file.path(results_dir, "neuronal_gobp_terms_from_gsva.tsv"),
   show_col_types = FALSE
