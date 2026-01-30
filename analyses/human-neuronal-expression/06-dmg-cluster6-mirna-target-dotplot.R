@@ -1,0 +1,139 @@
+# Plot cluster 6 miRNA target GO enrichment for neuronal related terms
+# Ryan Corbett | Oct 2025
+# Updated by Bicna Song | Jan 2026 
+
+# This script generates neuronal target-level dot plot indicating:
+# 1) Pearson correlation coefficients with targeting cluster 6 miRNAs in DMG
+# 2) Log2-Fold Change of targets in DIPG/DMG versus normals
+
+# Load packages
+library(tidyverse)
+library(ggplot2)
+library(gtools)
+library(ggrepel)
+
+# set dir paths
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "human-neuronal-expression")
+input_dir <- file.path(analysis_dir, "input")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+
+# wrangle data
+res <- read_tsv(file.path(results_dir,
+                          "DIPG_or_DMG-cluster6-mirna-neuronal-target-sig-interactions.tsv")) %>%
+  mutate(category_broad = case_when(
+    grepl("postsynaptic|scaffolding",
+          Term, ignore.case = TRUE) ~
+      "postsynaptic\nscaffolding",
+    grepl("synaptic|vesicle|trafficking",
+          Term, ignore.case = TRUE) &
+      !grepl("postsynaptic",
+             Term, ignore.case = TRUE) ~
+      "synaptic vesicle\ntrafficking",
+    grepl("neurotransmitter|receptors",
+          Term, ignore.case = TRUE) ~
+      "neurotransmitter\nreceptors",
+    grepl("cell|adhesion",
+          Term, ignore.case = TRUE) ~
+      "cell\nadhesion",
+    grepl("neuromodulatory",
+          Term, ignore.case = TRUE) ~
+      "neuromodulatory",
+    grepl("glutamatergic",
+          Term, ignore.case = TRUE) ~
+      "glutamatergic",
+    grepl("gabaergic",
+          Term, ignore.case = TRUE) ~
+      "gabaergic",
+    grepl("cholinergic",
+          Term, ignore.case = TRUE) ~
+      "cholinergic",
+    grepl("serotonergic",
+          Term, ignore.case = TRUE) ~
+      "serotonergic",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(category_broad)) %>%
+  # take max log2FC and min padj from dmg vs. healthy and dmg vs. adjacent contrasts
+  dplyr::mutate(max_log2FC = case_when(
+    abs(dmg_vs_adj_log2FC) > abs(dmg_vs_healthy_log2FC) ~ dmg_vs_adj_log2FC,
+    TRUE ~ dmg_vs_healthy_log2FC)) %>%
+  dplyr::mutate(min_padj = case_when(
+    dmg_vs_adj_padj < dmg_vs_healthy_padj ~ dmg_vs_adj_padj,
+    TRUE ~ dmg_vs_healthy_padj
+  )) %>%
+  # Sort target genes for plotting
+  dplyr::mutate(`Genes` = fct_relevel(`Genes`,
+                                            rev(sort(unique(`Genes`)))
+  )) %>%
+  # assign target genes to DE group for plotting 
+  dplyr::mutate(de_group = case_when(
+    max_log2FC > 0 & min_padj < 0.05 ~ "DMG Upregulated",
+    max_log2FC < 0 & min_padj < 0.05 ~ "DMG Downregulated",
+    TRUE ~ "Not DE"
+  ))
+
+pdf(NULL)
+
+# Filter for synaptic-related processes 
+synaptic_res <- res %>%
+  dplyr::filter(grepl("synaptic|vesicle|trafficking|neurotransmitter", category_broad, ignore.case = TRUE)) %>%
+  droplevels()
+
+# generate dot plot
+ggplot(synaptic_res, aes(x = miRNA, y = `Genes`,
+                      size = mirna_target_pearson_r,
+                      fill = de_group)) +
+  geom_point(shape = 21,         
+             colour = "black",   
+             stroke = 0.3,  
+             alpha = 0.9) +
+  # add asterisks for sig correlations
+  geom_text(
+    data = synaptic_res %>% dplyr::filter(mirna_target_pearson_r < 0,
+                                       mirna_target_pearson_p < 0.05),
+    aes(x = miRNA, y = `Genes`, label = "*"),
+    color = "grey70",   
+    size = 5,          
+    fontface = "bold",
+    vjust = 0.75  
+  ) +
+  scale_fill_manual(values = c("DMG Downregulated" = "red3", 
+                               "Not DE" = "whitesmoke", 
+                               "DMG Upregulated" = "green4"),
+                    guide = guide_legend(
+                      override.aes = list(size = 5))) +
+  labs(
+    x      = NULL,
+    size   = "miRNA-target\npearson r",
+    fill   = "Target Expression",
+    y      = NULL
+  ) +
+  scale_size_continuous(
+    trans = "reverse",
+    range = c(2, 6),  # adjust min/max point size
+  ) +
+  facet_grid(
+    category_broad ~ ., 
+    scales = "free_y", 
+    space  = "free_y", 
+    switch = "y",
+    labeller = labeller(category_broad = function(x) str_wrap(x, width = 30))
+  ) +
+  theme_Publication() +
+  theme(
+    strip.placement   = "outside", 
+    strip.text.y.left = element_text(angle = 0),
+    axis.text.x       = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+# Save plot
+ggsave(file.path(plot_dir, "DIPG_or_DMG-cluster6-target-synaptic-dotplot.pdf"),
+       height = 12, width = 12)
+
+# Print session info
+sessionInfo()
