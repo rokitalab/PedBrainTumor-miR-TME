@@ -62,8 +62,8 @@
 │   ├── DIPG_or_DMG_mirna_neuronal_cluster_membership.tsv
 │   ├── DIPG_or_DMG_mirna_neuronal_gobp_spearman.tsv
 │   ├── DIPG_or_DMG_mirna_neuronal_gobp_spearman_FDR01.tsv
-│   ├── MB-cluster1-mirna-immune-target-interactions.tsv
-│   ├── MB-cluster1-mirna-immune-target-sig-interactions.tsv
+│   ├── MB-cluster1-mirna-neuronal-target-interactions.tsv
+│   ├── MB-cluster1-mirna-neuronal-target-sig-interactions.tsv
 │   ├── MB-cluster1-mirna-target-go-enr-neuronal-terms-full.tsv
 │   ├── MB-cluster1-mirna-target-go-enr-neuronal-terms-reduced.tsv
 │   ├── MB_mirna_neuronal_cluster_membership.tsv
