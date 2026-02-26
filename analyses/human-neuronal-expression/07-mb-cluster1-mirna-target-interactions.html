@@ -11,7 +11,7 @@
 
 <meta name="author" content="rstudio" />
 
-<meta name="date" content="2026-01-28" />
+<meta name="date" content="2026-02-26" />
 
 <title>07-mb-cluster1-mirna-target-interactions.R</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">07-mb-cluster1-mirna-target-interactions.R</h1>
 <h4 class="author">rstudio</h4>
-<h4 class="date">2026-01-28</h4>
+<h4 class="date">2026-02-26</h4>
 
 </div>
 
@@ -361,7 +361,7 @@ display: none;
 # Ryan Corbett | Oct 2025
 # Updated by Bicna Song | Jan 2026 
 
-# This script assesses correlations between MB cluster 1 miRNA and immune pathway target expression, and assesses coordinated DE of targets to identify significant associations
+# This script assesses correlations between MB cluster 1 miRNA and neuronal pathway target expression, and assesses coordinated DE of targets to identify significant associations
 
 # Load packages
 library(tidyverse)</code></pre>
@@ -609,11 +609,11 @@ sig_interactions_df &lt;- mb_cluster1_go_df %&gt;%
 # save full and filtered files
 write_tsv(mb_cluster1_go_df,
           file.path(results_dir,
-                    &quot;MB-cluster1-mirna-immune-target-interactions.tsv&quot;))
+                    &quot;MB-cluster1-mirna-neuronal-target-interactions.tsv&quot;))
 
 write_tsv(sig_interactions_df,
           file.path(results_dir,
-                    &quot;MB-cluster1-mirna-immune-target-sig-interactions.tsv&quot;))
+                    &quot;MB-cluster1-mirna-neuronal-target-sig-interactions.tsv&quot;))
 
 # print session info
 sessionInfo()</code></pre>

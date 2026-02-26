@@ -2,7 +2,7 @@
 # Ryan Corbett | Oct 2025
 # Updated by Bicna Song | Jan 2026 
 
-# This script assesses correlations between MB cluster 1 miRNA and immune pathway target expression, and assesses coordinated DE of targets to identify significant associations
+# This script assesses correlations between MB cluster 1 miRNA and neuronal pathway target expression, and assesses coordinated DE of targets to identify significant associations
 
 # Load packages
 library(tidyverse)
@@ -189,11 +189,11 @@ sig_interactions_df <- mb_cluster1_go_df %>%
 # save full and filtered files
 write_tsv(mb_cluster1_go_df,
           file.path(results_dir,
-                    "MB-cluster1-mirna-immune-target-interactions.tsv"))
+                    "MB-cluster1-mirna-neuronal-target-interactions.tsv"))
 
 write_tsv(sig_interactions_df,
           file.path(results_dir,
-                    "MB-cluster1-mirna-immune-target-sig-interactions.tsv"))
+                    "MB-cluster1-mirna-neuronal-target-sig-interactions.tsv"))
 
 # print session info
 sessionInfo()
