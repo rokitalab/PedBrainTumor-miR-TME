@@ -7,23 +7,32 @@
 ## Folder contents
 
 1. `01-murine-rna-differential-expression-analysis.Rmd`: performs differential expression analysis of murine RNA-seq data using DESeq2.
+2. `02-GO-enrichment.Rmd`: run GO enrichment analyses on differentially expressed genes, and plot significant results
 
 ## Analysis module directory structure
 
 ```
 .
-├── 01-murine-rna-differential-expression-analysis.Rmd
 ├── 01-murine-rna-differential-expression-analysis.html
-├── README.md
+├── 01-murine-rna-differential-expression-analysis.Rmd
+├── 02-GO-enrichment.html
+├── 02-GO-enrichment.Rmd
 ├── input
-│   └── Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv
+│   └── Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv
 ├── plots
-│   ├── murine-rna-deseq2-b7h3-versus-untreated-Day14.pdf
-│   ├── murine-rna-deseq2-b7h3-versus-untreated-Day21.pdf
-│   ├── rna-pca-plot-all.pdf
-│   ├── rna-pca-plot-by-treatment.pdf
-│   └── rna-pca-plot-by-timepoint.pdf
+│   ├── b7h3_down_d21-go-term-enrichment-dotplot.pdf
+│   ├── b7h3_up_d14-go-term-enrichment-dotplot.pdf
+│   ├── b7h3_up_d21-go-term-enrichment-dotplot.pdf
+│   ├── murine-rna-deseq2-b7h3-versus-untreated-Day14.pdf
+│   ├── murine-rna-deseq2-b7h3-versus-untreated-Day21.pdf
+│   ├── rna-pca-plot-all.pdf
+│   ├── rna-pca-plot-by-timepoint.pdf
+│   └── rna-pca-plot-by-treatment.pdf
+├── README.md
 ├── results
-│   └── rna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv
+│   ├── b7h3_down_d21-enriched-go-terms.tsv
+│   ├── b7h3_up_d14-enriched-go-terms.tsv
+│   ├── b7h3_up_d21-enriched-go-terms.tsv
+│   └── rna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv
 └── run_module.sh
 ```
