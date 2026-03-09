@@ -20,7 +20,6 @@
 ├── input
 │   └── Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv
 ├── plots
-│   ├── b7h3_down_d21-go-term-enrichment-dotplot.pdf
 │   ├── b7h3_up_d14-go-term-enrichment-dotplot.pdf
 │   ├── b7h3_up_d21-go-term-enrichment-dotplot.pdf
 │   ├── murine-rna-deseq2-b7h3-versus-untreated-Day14.pdf
@@ -30,7 +29,6 @@
 │   └── rna-pca-plot-by-treatment.pdf
 ├── README.md
 ├── results
-│   ├── b7h3_down_d21-enriched-go-terms.tsv
 │   ├── b7h3_up_d14-enriched-go-terms.tsv
 │   ├── b7h3_up_d21-enriched-go-terms.tsv
 │   └── rna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv
