@@ -53,7 +53,8 @@ metadata_df <- read_delim(metadata_file) %>%
     time = paste0("Day", time),
     treatment = str_remove(treatment, "\\s*CAR\\b"),
     treatment = str_squish(treatment),
-    treatment = if_else(treatment == "B7H3 STOP", "STOP", treatment)
+    treatment = if_else(treatment == "B7H3 STOP", "STOP", treatment),
+    treatment = recode(treatment, "B7H3" = "CAR", "STOP" = "Ctrl CAR")
   )
 ```
 
@@ -97,7 +98,7 @@ percentVar <- round(100 * attr(pca_data, "percentVar"))
 jx <- 0.05 * diff(range(pca_data$PC1))
 jy <- 0.05 * diff(range(pca_data$PC2))
 
-cols_treat <- c(B7H3 = "#E64B35FF", STOP = "#4DBBD5FF", Untreated = "#00A087FF")
+cols_treat <- c(CAR = "#E64B35FF", `Ctrl CAR` = "#4DBBD5FF", Untreated = "#00A087FF")
 
 p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = treatment, shape = time)) +
   geom_point(size = 3, alpha = 0.9,
@@ -105,13 +106,13 @@ p_no_label <- ggplot(pca_data, aes(PC1, PC2, color = treatment, shape = time)) +
   scale_shape_manual(values = c("Day14" = 16, "Day21" = 17)) +
   scale_color_manual(values = cols_treat) +
   labs(title = "All Samples",
-       color = "Treatment", shape = "Time Point",
+       color = "Treatment", shape = "Time",
        x = paste0("PC1: ", percentVar[1], "% variance"),
        y = paste0("PC2: ", percentVar[2], "% variance")) +
   theme_Publication()
 
 ggsave(file.path(plot_dir, "rna-pca-plot-all.pdf"),
-       p_no_label, width = 5, height = 4)
+       p_no_label, width = 5, height = 4.5)
 
 # Labeled version
 p_labeled <- p_no_label +
@@ -169,7 +170,7 @@ p_timepoint <- ggarrange(p_list[["Day14"]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue("rna-pca-plot-by-timepoint.pdf")),
-       p_timepoint, width = 5, height = 6)
+       p_timepoint, width = 4, height = 5.5)
 ```
 
 ### Generate PCA plots by treatment
@@ -193,7 +194,7 @@ for (treatment in treatments) {
                position = position_jitter(width = 0.2, height = 0.2)) +
     #scale_color_manual(values = cols_treat) +
     labs(
-      title = treatment, color = "Time Point",
+      title = treatment, color = "Time",
       x = paste0("PC1: ", percentVar[1], "% variance"),
       y = paste0("PC2: ", percentVar[2], "% variance")
     ) +
@@ -211,15 +212,15 @@ for (treatment in treatments) {
 
 ```{r}
 # merge PCA plots
-p_timepoint <- ggarrange(p_list[["B7H3"]],
-               p_list[["STOP"]],
+p_timepoint <- ggarrange(p_list[["CAR"]],
+               p_list[["Ctrl CAR"]],
                p_list[["Untreated"]],
                ncol = 1,
                align = "h")
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue("rna-pca-plot-by-treatment.pdf")),
-       p_timepoint, width = 5, height = 10)
+       p_timepoint, width = 4, height = 8.5)
 ```
 
 ### Run differential expression analyses
@@ -244,14 +245,13 @@ for (time in time_points){
   dds <- DESeq(dds)
   
   # pull B7H3 versus untreated contrast and generate data frame
-  res_B7H3_vs_Untreated <- results(dds, 
-                                     contrast = c("treatment", "B7H3", "Untreated"))
+  res_B7H3_vs_Untreated <- results(dds, contrast = c("treatment", "CAR", "Untreated"))
   
   res_B7H3_vs_Untreated <- data.frame(res_B7H3_vs_Untreated) %>%
     rownames_to_column("gene_symbol")
-
-  # pick the N most significant genes
-  topN <- 20
+  
+  # pick the top 10 genes to label
+  topN <- 10
   
   filtered_df <- res_B7H3_vs_Untreated %>%
     filter(!is.na(padj), padj < 0.05, abs(log2FoldChange) >= 2)
@@ -266,41 +266,39 @@ for (time in time_points){
       arrange(padj, desc(abs(log2FoldChange)))
   }
   
-  top_hits <- filtered_df %>%
+  label_genes <- filtered_df %>%
     slice_head(n = topN) %>%
     pull(gene_symbol)
   
-  genes_of_interest <- unique(c(t_cell_markers,top_hits))
-  
-  label_genes <- intersect(genes_of_interest, res_B7H3_vs_Untreated$gene_symbol)
-
   # generate volcano plot
-  volc_plot <- EnhancedVolcano(res_B7H3_vs_Untreated,
-                           lab = res_B7H3_vs_Untreated$gene_symbol, 
-                           x = "log2FoldChange",
-                           y = "pvalue",
-                           title = glue::glue("B7H3 CAR-T versus Untreated, {time}"),
-                           subtitle = NULL,
-                           caption = NULL,
-                           pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj < 0.05], na.rm = TRUE),
-                           FCcutoff = 2,
-                           pointSize = 4,
-                           labSize = 4,
-                           selectLab   = label_genes,
-                           typeConnectors = "closed",
-                           drawConnectors = TRUE,
-                           widthConnectors = 1,
-                           colConnectors = 'black',
-                           max.overlaps = 100)
-
+  volc_plot <- EnhancedVolcano(
+    res_B7H3_vs_Untreated,
+    lab = res_B7H3_vs_Untreated$gene_symbol,
+    x = "log2FoldChange",
+    y = "pvalue",
+    title = glue::glue("CAR versus Untreated, {time}"),
+    subtitle = NULL,
+    caption = NULL,
+    pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj < 0.05], na.rm = TRUE),
+    FCcutoff = 2,
+    pointSize = 4,
+    labSize = 5,
+    selectLab = label_genes,
+    typeConnectors = "closed",
+    drawConnectors = TRUE,
+    widthConnectors = 1,
+    colConnectors = 'black',
+    max.overlaps = 100
+  )
+  
   ggsave(file.path(plot_dir,
-                glue::glue("murine-rna-deseq2-b7h3-versus-untreated-{time}.pdf")),
-         volc_plot, width = 8, height = 6)
+              glue::glue("murine-rna-deseq2-b7h3-versus-untreated-{time}.pdf")),
+       volc_plot, width = 6.5, height = 4.8)
   
   
   # pull STOP versus untreated contrast and generate data frame
   res_STOP_vs_untreated <- results(dds, 
-                                  contrast = c("treatment", "STOP", "Untreated"))
+                                  contrast = c("treatment", "Ctrl CAR", "Untreated"))
   
   res_STOP_vs_untreated <- data.frame(res_STOP_vs_untreated) %>%
     rownames_to_column("gene_symbol")
