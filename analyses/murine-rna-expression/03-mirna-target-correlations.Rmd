@@ -21,9 +21,8 @@ Load packages
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
-library(topGO)
-library(org.Hs.eg.db)  
-library(AnnotationDbi)
+library(ggpubr)
+library(ggsci)
 ```
 
 Set directory paths
