@@ -660,7 +660,7 @@ vsdata &lt;- varianceStabilizingTransformation(dds_all)</code></pre>
   labs(title = &quot;All Samples&quot;, color = &quot;Treatment&quot;, shape = &quot;Time&quot;)</code></pre>
 <pre><code>## using ntop=250 top features by variance</code></pre>
 <pre class="r"><code>ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-all.pdf&quot;)),
-       p_all, width = 5.5, height = 4.5)
+       p_all, width = 5, height = 4.5)
 
 # Get unique time points
 time_points &lt;- unique(colData(dds_all)$time)
@@ -696,7 +696,7 @@ p_timepoint &lt;- ggarrange(p_list[[&quot;Day14&quot;]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-by-timepoint.pdf&quot;)),
-       p_timepoint, width = 5.5, height = 8.5)</code></pre>
+       p_timepoint, width = 4, height = 8.5)</code></pre>
 <p>Generate PCA plots by treatment</p>
 <pre class="r"><code># Get unique treatments
 treatments &lt;- unique(colData(dds_all)$treatment)
@@ -729,7 +729,7 @@ p_treatment &lt;- ggarrange(p_list[[&quot;CAR&quot;]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-by-treatment.pdf&quot;)),
-       p_treatment, width = 5.5, height = 8.5)</code></pre>
+       p_treatment, width = 4, height = 8.5)</code></pre>
 <p>For differential expression analyses, we will generate DESeqDataSet
 objects for each timepoint and perform the following comparisions: -
 B7H3 versus untreated - STOP versus untreated</p>

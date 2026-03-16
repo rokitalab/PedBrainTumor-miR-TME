@@ -110,7 +110,7 @@ p_all <- plotPCA(vsdata, intgroup = c("time", "treatment"), ntop = 250) +
   labs(title = "All Samples", color = "Treatment", shape = "Time")
 
 ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-all.pdf")),
-       p_all, width = 5.5, height = 4.5)
+       p_all, width = 5, height = 4.5)
 
 # Get unique time points
 time_points <- unique(colData(dds_all)$time)
@@ -144,7 +144,7 @@ p_timepoint <- ggarrange(p_list[["Day14"]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-by-timepoint.pdf")),
-       p_timepoint, width = 5.5, height = 8.5)
+       p_timepoint, width = 4, height = 8.5)
 ```
 
 Generate PCA plots by treatment
@@ -179,7 +179,7 @@ p_treatment <- ggarrange(p_list[["CAR"]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-by-treatment.pdf")),
-       p_treatment, width = 5.5, height = 8.5)
+       p_treatment, width = 4, height = 8.5)
 ```
 
 For differential expression analyses, we will generate DESeqDataSet objects for each timepoint and perform the following comparisions:
