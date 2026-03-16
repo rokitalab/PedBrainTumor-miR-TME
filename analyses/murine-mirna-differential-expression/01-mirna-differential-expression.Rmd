@@ -57,15 +57,26 @@ Create sample metaata df
 
 ```{r metadata}
 metadata_df <- tibble(id = names(mirna_cts)) %>%
-  dplyr::mutate(time = unlist(lapply(strsplit(id, "-"), function(x) x[[1]])),
-                treatment = c(rep("B7H3", 2),
-                              rep("STOP", 3), "untreated",
-                              rep("B7H3", 3),
-                              rep("STOP", 3), 
-                              rep("untreated", 2),
-                              rep("B7H3", 2), 
-                              rep("STOP", 3), 
-                              rep("untreated", 2))
+  dplyr::mutate(
+    time = unlist(lapply(strsplit(id, "-"), function(x) x[[1]])),
+    treatment = c(rep("B7H3", 2),
+                  rep("STOP", 3), "untreated",
+                  rep("B7H3", 3),
+                  rep("STOP", 3), 
+                  rep("untreated", 2),
+                  rep("B7H3", 2), 
+                  rep("STOP", 3), 
+                  rep("untreated", 2))
+  ) %>%
+  dplyr::mutate(
+    treatment = dplyr::recode(
+      treatment,
+      "B7H3" = "CAR",
+      "STOP" = "Ctrl CAR",
+      "untreated" = "Untreated"
+    ),
+    treatment = factor(treatment, levels = c("CAR", "Ctrl CAR", "Untreated")),
+    time = factor(time, levels = c("Day14", "Day21", "Day28"))
   ) %>%
   as.data.frame()
 
@@ -88,16 +99,18 @@ Generate PCA plot from all samples, and by timepoint
 # transform raw counts
 vsdata <- varianceStabilizingTransformation(dds_all)
 
-p_all <- plotPCA(vsdata, intgroup = c("time", "treatment"), ntop = 250) +
-  aes(color = treatment, shape = time) +  # Modify aesthetics
-  scale_shape_manual(values = c("Day14" = 16, "Day21" = 17, "Day28" = 18)) +  
-  scale_color_manual(values = c("B7H3" = "#E64B35FF", "STOP" = "#4DBBD5FF", "untreated" = "#00A087FF")) +  
-  theme_Publication() +
-  labs(title = "All Samples", color = "Treatment", shape = "Time Point")
 
-# Save the plot
+p_all <- plotPCA(vsdata, intgroup = c("time", "treatment"), ntop = 250) +
+  aes(color = treatment, shape = time) +
+  scale_shape_manual(values = c("Day14" = 16, "Day21" = 17, "Day28" = 18)) +
+  scale_color_manual(values = c("CAR" = "#E64B35FF",
+                                "Ctrl CAR" = "#4DBBD5FF",
+                                "Untreated" = "#00A087FF")) +
+  theme_Publication() +
+  labs(title = "All Samples", color = "Treatment", shape = "Time")
+
 ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-all.pdf")),
-       p_all, width = 5, height = 4)
+       p_all, width = 5.5, height = 4.5)
 
 # Get unique time points
 time_points <- unique(colData(dds_all)$time)
@@ -112,10 +125,12 @@ for (time in time_points) {
   
   # Generate PCA plot
   p_list[[time]] <- plotPCA(vsdata_subset, intgroup = "treatment", ntop = 250) +
-    aes(color = treatment) +  # Modify aesthetics
-    scale_color_manual(values = c("B7H3" = "#E64B35FF", "STOP" = "#4DBBD5FF", "untreated" = "#00A087FF")) +  
-    theme_Publication() +
-    labs(title = time, color = "Treatment")
+  aes(color = treatment) +
+  scale_color_manual(values = c("CAR" = "#E64B35FF",
+                                "Ctrl CAR" = "#4DBBD5FF",
+                                "Untreated" = "#00A087FF")) +
+  theme_Publication() +
+  labs(title = time, color = "Treatment")
   
 }
 
@@ -129,7 +144,7 @@ p_timepoint <- ggarrange(p_list[["Day14"]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-by-timepoint.pdf")),
-       p_timepoint, width = 5, height = 10)
+       p_timepoint, width = 5.5, height = 8.5)
 ```
 
 Generate PCA plots by treatment
@@ -148,23 +163,23 @@ for (treatment in treatments) {
   
   # Generate PCA plot
   p_list[[treatment]] <- plotPCA(vsdata_subset, intgroup = "time", ntop = 250) +
-    ggtitle(glue::glue("PCA Plot - {treatment}")) +
-    theme_Publication() +
-    labs(title = treatment, color = "Time Point")
+  ggtitle(glue::glue("PCA Plot - {treatment}")) +
+  theme_Publication() +
+  labs(title = treatment, color = "Time")
 
 }
 
 # merge treatment PCA plots
 
-p_treatment <- ggarrange(p_list[["B7H3"]],
-               p_list[["STOP"]],
-               p_list[["untreated"]],
+p_treatment <- ggarrange(p_list[["CAR"]],
+               p_list[["Ctrl CAR"]],
+               p_list[["Untreated"]],
                ncol = 1,
                align = "h")
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue("mirna-pca-plot-by-treatment.pdf")),
-       p_treatment, width = 5, height = 10)
+       p_treatment, width = 5.5, height = 8.5)
 ```
 
 For differential expression analyses, we will generate DESeqDataSet objects for each timepoint and perform the following comparisions:
@@ -189,37 +204,46 @@ for (timepoint in timepoints){
   dds <- DESeq(dds)
   
   # pull B7H3 versus untreated contrast and generate data frame
-  res_B7H3_vs_Untreated <- results(dds, 
-                                     contrast = c("treatment", "B7H3", "untreated"))
-
+  res_B7H3_vs_Untreated <- results(dds, contrast = c("treatment", "CAR", "Untreated"))
+  
   res_B7H3_vs_Untreated <- data.frame(res_B7H3_vs_Untreated) %>%
-    rownames_to_column("mirna_id")
+    rownames_to_column("mirna_id") %>%
+    dplyr::arrange(pvalue) %>%
+    dplyr::mutate(label = ifelse(dplyr::row_number() <= 5, mirna_id, ""))
   
   # generate volcano plot
-  volc_plot <- EnhancedVolcano(res_B7H3_vs_Untreated,
-                           lab = res_B7H3_vs_Untreated$mirna_id, 
-                           x = "log2FoldChange",
-                           y = "pvalue",
-                           title = glue::glue("B7H3 CAR-T versus Untreated, {timepoint}"),
-                           subtitle = NULL,
-                           caption = NULL,
-                           pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj < 0.1], na.rm = TRUE),
-                           FCcutoff = 2,
-                           pointSize = 4,
-                           labSize = 4,
-                           typeConnectors = "closed",
-                           drawConnectors = TRUE,
-                           widthConnectors = 1,
-                           colConnectors = 'black',
-                           max.overlaps = 8)
-
-  ggsave(file.path(plot_dir,
-                glue::glue("murine-mirna-deseq2-b7h3-versus-untreated-{timepoint}.pdf")),
-         volc_plot, width = 8, height = 6)
+  volc_plot <- EnhancedVolcano(
+    res_B7H3_vs_Untreated,
+    lab = res_B7H3_vs_Untreated$label,
+    x = "log2FoldChange",
+    y = "pvalue",
+    title = glue::glue("CAR versus Untreated, {timepoint}"),
+    subtitle = NULL,
+    caption = NULL,
+    pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj < 0.1], na.rm = TRUE),
+    FCcutoff = 2,
+    pointSize = 4,
+    labSize = 4.5,
+    typeConnectors = "closed",
+    drawConnectors = TRUE,
+    widthConnectors = 1,
+    colConnectors = 'black',
+    max.overlaps = 8
+  )
+  
+  ggsave(file.path(
+    plot_dir,
+    glue::glue(
+      "murine-mirna-deseq2-b7h3-versus-untreated-{timepoint}.pdf"
+    )
+  ),
+  volc_plot,
+  width = 7,
+  height = 6)
   
   # pull STOP versus untreated contrast and generate data frame
   res_STOP_vs_untreated <- results(dds, 
-                                  contrast = c("treatment", "STOP", "untreated"))
+                                  contrast = c("treatment", "Ctrl CAR", "Untreated"))
   
   res_STOP_vs_untreated <- data.frame(res_STOP_vs_untreated) %>%
     rownames_to_column("mirna_id")

@@ -1,22 +1,22 @@
 id	time	treatment
-Day14-Tube2	Day14	B7H3
-Day14-Tube3	Day14	B7H3
-Day14-Tube4	Day14	STOP
-Day14-Tube5	Day14	STOP
-Day14-Tube6	Day14	STOP
-Day14-Tube7	Day14	untreated
-Day21-Tube8	Day21	B7H3
-Day21-Tube9	Day21	B7H3
-Day21-Tube10	Day21	B7H3
-Day21-Tube11	Day21	STOP
-Day21-Tube12	Day21	STOP
-Day21-Tube13	Day21	STOP
-Day21-Tube14	Day21	untreated
-Day21-Tube15	Day21	untreated
-Day28-Tube16	Day28	B7H3
-Day28-Tube17	Day28	B7H3
-Day28-Tube18	Day28	STOP
-Day28-Tube19	Day28	STOP
-Day28-Tube20	Day28	STOP
-Day28-Tube21	Day28	untreated
-Day28-Tube22	Day28	untreated
+Day14-Tube2	Day14	CAR
+Day14-Tube3	Day14	CAR
+Day14-Tube4	Day14	Ctrl CAR
+Day14-Tube5	Day14	Ctrl CAR
+Day14-Tube6	Day14	Ctrl CAR
+Day14-Tube7	Day14	Untreated
+Day21-Tube8	Day21	CAR
+Day21-Tube9	Day21	CAR
+Day21-Tube10	Day21	CAR
+Day21-Tube11	Day21	Ctrl CAR
+Day21-Tube12	Day21	Ctrl CAR
+Day21-Tube13	Day21	Ctrl CAR
+Day21-Tube14	Day21	Untreated
+Day21-Tube15	Day21	Untreated
+Day28-Tube16	Day28	CAR
+Day28-Tube17	Day28	CAR
+Day28-Tube18	Day28	Ctrl CAR
+Day28-Tube19	Day28	Ctrl CAR
+Day28-Tube20	Day28	Ctrl CAR
+Day28-Tube21	Day28	Untreated
+Day28-Tube22	Day28	Untreated

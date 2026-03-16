@@ -432,13 +432,13 @@ treated versus untreated mice</h1>
 in DIPG/DMG samples versus normal pons</p>
 <p>Load packages</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
 ## ✔ ggplot2   3.5.2     ✔ tibble    3.3.0
 ## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
 ## ✔ purrr     1.0.4     
-## ── Conflicts ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
@@ -596,9 +596,11 @@ of low sequencing depth</p>
 <pre><code>## New names:
 ## Rows: 2020 Columns: 23
 ## ── Column specification
-## ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
-## (1): ...1 dbl (22): Day14-Tube1, Day14-Tube2, RESUB-Day14-Tube3, Day14-Tube4, Day14-Tu...
-## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## ──────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## (1): ...1 dbl (22): Day14-Tube1, Day14-Tube2, RESUB-Day14-Tube3, Day14-Tube4,
+## Day14-Tu...
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+## Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## • `` -&gt; `...1`</code></pre>
 <pre class="r"><code>names(mirna_cts) &lt;- str_replace(names(mirna_cts), &quot;RESUB-&quot;, &quot;&quot;)
 
@@ -606,15 +608,26 @@ mirna_cts &lt;- mirna_cts %&gt;%
   filter(rowSums(across(everything(), ~ . != 0)) &gt;= 5)</code></pre>
 <p>Create sample metaata df</p>
 <pre class="r"><code>metadata_df &lt;- tibble(id = names(mirna_cts)) %&gt;%
-  dplyr::mutate(time = unlist(lapply(strsplit(id, &quot;-&quot;), function(x) x[[1]])),
-                treatment = c(rep(&quot;B7H3&quot;, 2),
-                              rep(&quot;STOP&quot;, 3), &quot;untreated&quot;,
-                              rep(&quot;B7H3&quot;, 3),
-                              rep(&quot;STOP&quot;, 3), 
-                              rep(&quot;untreated&quot;, 2),
-                              rep(&quot;B7H3&quot;, 2), 
-                              rep(&quot;STOP&quot;, 3), 
-                              rep(&quot;untreated&quot;, 2))
+  dplyr::mutate(
+    time = unlist(lapply(strsplit(id, &quot;-&quot;), function(x) x[[1]])),
+    treatment = c(rep(&quot;B7H3&quot;, 2),
+                  rep(&quot;STOP&quot;, 3), &quot;untreated&quot;,
+                  rep(&quot;B7H3&quot;, 3),
+                  rep(&quot;STOP&quot;, 3), 
+                  rep(&quot;untreated&quot;, 2),
+                  rep(&quot;B7H3&quot;, 2), 
+                  rep(&quot;STOP&quot;, 3), 
+                  rep(&quot;untreated&quot;, 2))
+  ) %&gt;%
+  dplyr::mutate(
+    treatment = dplyr::recode(
+      treatment,
+      &quot;B7H3&quot; = &quot;CAR&quot;,
+      &quot;STOP&quot; = &quot;Ctrl CAR&quot;,
+      &quot;untreated&quot; = &quot;Untreated&quot;
+    ),
+    treatment = factor(treatment, levels = c(&quot;CAR&quot;, &quot;Ctrl CAR&quot;, &quot;Untreated&quot;)),
+    time = factor(time, levels = c(&quot;Day14&quot;, &quot;Day21&quot;, &quot;Day28&quot;))
   ) %&gt;%
   as.data.frame()
 
@@ -626,22 +639,28 @@ write_tsv(metadata_df,
                               colData = metadata_df, 
                               design = ~ time + treatment)</code></pre>
 <pre><code>## converting counts to integer mode</code></pre>
-<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
-## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <p>Generate PCA plot from all samples, and by timepoint</p>
 <pre class="r"><code># transform raw counts
-vsdata &lt;- varianceStabilizingTransformation(dds_all)
-
-p_all &lt;- plotPCA(vsdata, intgroup = c(&quot;time&quot;, &quot;treatment&quot;), ntop = 250) +
-  aes(color = treatment, shape = time) +  # Modify aesthetics
-  scale_shape_manual(values = c(&quot;Day14&quot; = 16, &quot;Day21&quot; = 17, &quot;Day28&quot; = 18)) +  
-  scale_color_manual(values = c(&quot;B7H3&quot; = &quot;#E64B35FF&quot;, &quot;STOP&quot; = &quot;#4DBBD5FF&quot;, &quot;untreated&quot; = &quot;#00A087FF&quot;)) +  
+vsdata &lt;- varianceStabilizingTransformation(dds_all)</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
+<pre class="r"><code>p_all &lt;- plotPCA(vsdata, intgroup = c(&quot;time&quot;, &quot;treatment&quot;), ntop = 250) +
+  aes(color = treatment, shape = time) +
+  scale_shape_manual(values = c(&quot;Day14&quot; = 16, &quot;Day21&quot; = 17, &quot;Day28&quot; = 18)) +
+  scale_color_manual(values = c(&quot;CAR&quot; = &quot;#E64B35FF&quot;,
+                                &quot;Ctrl CAR&quot; = &quot;#4DBBD5FF&quot;,
+                                &quot;Untreated&quot; = &quot;#00A087FF&quot;)) +
   theme_Publication() +
-  labs(title = &quot;All Samples&quot;, color = &quot;Treatment&quot;, shape = &quot;Time Point&quot;)</code></pre>
+  labs(title = &quot;All Samples&quot;, color = &quot;Treatment&quot;, shape = &quot;Time&quot;)</code></pre>
 <pre><code>## using ntop=250 top features by variance</code></pre>
-<pre class="r"><code># Save the plot
-ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-all.pdf&quot;)),
-       p_all, width = 5, height = 4)
+<pre class="r"><code>ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-all.pdf&quot;)),
+       p_all, width = 5.5, height = 4.5)
 
 # Get unique time points
 time_points &lt;- unique(colData(dds_all)$time)
@@ -656,14 +675,16 @@ for (time in time_points) {
   
   # Generate PCA plot
   p_list[[time]] &lt;- plotPCA(vsdata_subset, intgroup = &quot;treatment&quot;, ntop = 250) +
-    aes(color = treatment) +  # Modify aesthetics
-    scale_color_manual(values = c(&quot;B7H3&quot; = &quot;#E64B35FF&quot;, &quot;STOP&quot; = &quot;#4DBBD5FF&quot;, &quot;untreated&quot; = &quot;#00A087FF&quot;)) +  
-    theme_Publication() +
-    labs(title = time, color = &quot;Treatment&quot;)
+  aes(color = treatment) +
+  scale_color_manual(values = c(&quot;CAR&quot; = &quot;#E64B35FF&quot;,
+                                &quot;Ctrl CAR&quot; = &quot;#4DBBD5FF&quot;,
+                                &quot;Untreated&quot; = &quot;#00A087FF&quot;)) +
+  theme_Publication() +
+  labs(title = time, color = &quot;Treatment&quot;)
   
 }</code></pre>
+<pre><code>## using ntop=250 top features by variance</code></pre>
 <pre><code>## using ntop=250 top features by variance
-## using ntop=250 top features by variance
 ## using ntop=250 top features by variance</code></pre>
 <pre class="r"><code># merge PCA plots
 
@@ -675,7 +696,7 @@ p_timepoint &lt;- ggarrange(p_list[[&quot;Day14&quot;]],
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-by-timepoint.pdf&quot;)),
-       p_timepoint, width = 5, height = 10)</code></pre>
+       p_timepoint, width = 5.5, height = 8.5)</code></pre>
 <p>Generate PCA plots by treatment</p>
 <pre class="r"><code># Get unique treatments
 treatments &lt;- unique(colData(dds_all)$treatment)
@@ -690,9 +711,9 @@ for (treatment in treatments) {
   
   # Generate PCA plot
   p_list[[treatment]] &lt;- plotPCA(vsdata_subset, intgroup = &quot;time&quot;, ntop = 250) +
-    ggtitle(glue::glue(&quot;PCA Plot - {treatment}&quot;)) +
-    theme_Publication() +
-    labs(title = treatment, color = &quot;Time Point&quot;)
+  ggtitle(glue::glue(&quot;PCA Plot - {treatment}&quot;)) +
+  theme_Publication() +
+  labs(title = treatment, color = &quot;Time&quot;)
 
 }</code></pre>
 <pre><code>## using ntop=250 top features by variance
@@ -700,15 +721,15 @@ for (treatment in treatments) {
 ## using ntop=250 top features by variance</code></pre>
 <pre class="r"><code># merge treatment PCA plots
 
-p_treatment &lt;- ggarrange(p_list[[&quot;B7H3&quot;]],
-               p_list[[&quot;STOP&quot;]],
-               p_list[[&quot;untreated&quot;]],
+p_treatment &lt;- ggarrange(p_list[[&quot;CAR&quot;]],
+               p_list[[&quot;Ctrl CAR&quot;]],
+               p_list[[&quot;Untreated&quot;]],
                ncol = 1,
                align = &quot;h&quot;)
 
 # Save the plot
 ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-by-treatment.pdf&quot;)),
-       p_treatment, width = 5, height = 10)</code></pre>
+       p_treatment, width = 5.5, height = 8.5)</code></pre>
 <p>For differential expression analyses, we will generate DESeqDataSet
 objects for each timepoint and perform the following comparisions: -
 B7H3 versus untreated - STOP versus untreated</p>
@@ -729,37 +750,46 @@ for (timepoint in timepoints){
   dds &lt;- DESeq(dds)
   
   # pull B7H3 versus untreated contrast and generate data frame
-  res_B7H3_vs_Untreated &lt;- results(dds, 
-                                     contrast = c(&quot;treatment&quot;, &quot;B7H3&quot;, &quot;untreated&quot;))
-
+  res_B7H3_vs_Untreated &lt;- results(dds, contrast = c(&quot;treatment&quot;, &quot;CAR&quot;, &quot;Untreated&quot;))
+  
   res_B7H3_vs_Untreated &lt;- data.frame(res_B7H3_vs_Untreated) %&gt;%
-    rownames_to_column(&quot;mirna_id&quot;)
+    rownames_to_column(&quot;mirna_id&quot;) %&gt;%
+    dplyr::arrange(pvalue) %&gt;%
+    dplyr::mutate(label = ifelse(dplyr::row_number() &lt;= 5, mirna_id, &quot;&quot;))
   
   # generate volcano plot
-  volc_plot &lt;- EnhancedVolcano(res_B7H3_vs_Untreated,
-                           lab = res_B7H3_vs_Untreated$mirna_id, 
-                           x = &quot;log2FoldChange&quot;,
-                           y = &quot;pvalue&quot;,
-                           title = glue::glue(&quot;B7H3 CAR-T versus Untreated, {timepoint}&quot;),
-                           subtitle = NULL,
-                           caption = NULL,
-                           pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj &lt; 0.1], na.rm = TRUE),
-                           FCcutoff = 2,
-                           pointSize = 4,
-                           labSize = 4,
-                           typeConnectors = &quot;closed&quot;,
-                           drawConnectors = TRUE,
-                           widthConnectors = 1,
-                           colConnectors = &#39;black&#39;,
-                           max.overlaps = 8)
-
-  ggsave(file.path(plot_dir,
-                glue::glue(&quot;murine-mirna-deseq2-b7h3-versus-untreated-{timepoint}.pdf&quot;)),
-         volc_plot, width = 8, height = 6)
+  volc_plot &lt;- EnhancedVolcano(
+    res_B7H3_vs_Untreated,
+    lab = res_B7H3_vs_Untreated$label,
+    x = &quot;log2FoldChange&quot;,
+    y = &quot;pvalue&quot;,
+    title = glue::glue(&quot;CAR versus Untreated, {timepoint}&quot;),
+    subtitle = NULL,
+    caption = NULL,
+    pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj &lt; 0.1], na.rm = TRUE),
+    FCcutoff = 2,
+    pointSize = 4,
+    labSize = 4.5,
+    typeConnectors = &quot;closed&quot;,
+    drawConnectors = TRUE,
+    widthConnectors = 1,
+    colConnectors = &#39;black&#39;,
+    max.overlaps = 8
+  )
+  
+  ggsave(file.path(
+    plot_dir,
+    glue::glue(
+      &quot;murine-mirna-deseq2-b7h3-versus-untreated-{timepoint}.pdf&quot;
+    )
+  ),
+  volc_plot,
+  width = 7,
+  height = 6)
   
   # pull STOP versus untreated contrast and generate data frame
   res_STOP_vs_untreated &lt;- results(dds, 
-                                  contrast = c(&quot;treatment&quot;, &quot;STOP&quot;, &quot;untreated&quot;))
+                                  contrast = c(&quot;treatment&quot;, &quot;Ctrl CAR&quot;, &quot;Untreated&quot;))
   
   res_STOP_vs_untreated &lt;- data.frame(res_STOP_vs_untreated) %&gt;%
     rownames_to_column(&quot;mirna_id&quot;)
@@ -779,34 +809,60 @@ for (timepoint in timepoints){
   
 }</code></pre>
 <pre><code>## converting counts to integer mode</code></pre>
-<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
-## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## estimating size factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## estimating dispersions</code></pre>
 <pre><code>## gene-wise dispersion estimates</code></pre>
 <pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## final dispersion estimates</code></pre>
 <pre><code>## fitting model and testing</code></pre>
-<pre><code>## Warning: ggrepel: 75 unlabeled data points (too many overlaps). Consider
-## increasing max.overlaps</code></pre>
 <pre><code>## converting counts to integer mode</code></pre>
-<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
-## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## estimating size factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## estimating dispersions</code></pre>
 <pre><code>## gene-wise dispersion estimates</code></pre>
 <pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## final dispersion estimates</code></pre>
 <pre><code>## fitting model and testing</code></pre>
-<pre><code>## Warning: ggrepel: 32 unlabeled data points (too many overlaps). Consider
-## increasing max.overlaps</code></pre>
 <pre><code>## converting counts to integer mode</code></pre>
-<pre><code>## Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
-## design formula are characters, converting to factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## estimating size factors</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## estimating dispersions</code></pre>
 <pre><code>## gene-wise dispersion estimates</code></pre>
 <pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>##   Note: levels of factors in the design contain characters other than
+##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
+##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
+##   for column names in R. [This is a message, not a warning or an error]</code></pre>
 <pre><code>## final dispersion estimates</code></pre>
 <pre><code>## fitting model and testing</code></pre>
 <p>Merge DE results by time point, and classify miRNAs based on
@@ -840,11 +896,11 @@ res_all &lt;- res[[&quot;Day14&quot;]] %&gt;%
   dplyr::select(mirna_id, status_Day14,
                 status_Day21, status_Day28)</code></pre>
 <pre><code>##           mirna_id     status_Day14     status_Day21 status_Day28
-## 1   mmu-miR-672-5p B7H3 upregulated B7H3 upregulated       Not DE
+## 1  mmu-miR-146a-5p B7H3 upregulated B7H3 upregulated       Not DE
 ## 2   mmu-miR-10b-5p B7H3 upregulated B7H3 upregulated       Not DE
-## 3 mmu-miR-92a-1-3p B7H3 upregulated B7H3 upregulated       Not DE
-## 4   mmu-miR-21a-5p B7H3 upregulated B7H3 upregulated       Not DE
-## 5  mmu-miR-146a-5p B7H3 upregulated B7H3 upregulated       Not DE
+## 3   mmu-miR-21a-5p B7H3 upregulated B7H3 upregulated       Not DE
+## 4 mmu-miR-92a-1-3p B7H3 upregulated B7H3 upregulated       Not DE
+## 5   mmu-miR-672-5p B7H3 upregulated B7H3 upregulated       Not DE
 ## 6   mmu-miR-330-5p B7H3 upregulated B7H3 upregulated       Not DE</code></pre>
 <pre class="r"><code>res_all %&gt;%
   dplyr::filter(expr_pattern == &quot;B7H3 down, multiple&quot;) %&gt;%
@@ -858,9 +914,9 @@ res_all &lt;- res[[&quot;Day14&quot;]] %&gt;%
   dplyr::select(mirna_id, status_Day14,
                 status_Day21, status_Day28)</code></pre>
 <pre><code>##          mirna_id       status_Day14       status_Day21       status_Day28
-## 1  mmu-miR-674-3p B7H3 downregulated   B7H3 upregulated             Not DE
-## 2  mmu-miR-652-3p   B7H3 upregulated B7H3 downregulated             Not DE
-## 3 mmu-miR-3068-3p B7H3 downregulated   B7H3 upregulated             Not DE
+## 1  mmu-miR-652-3p   B7H3 upregulated B7H3 downregulated             Not DE
+## 2 mmu-miR-3068-3p B7H3 downregulated   B7H3 upregulated             Not DE
+## 3  mmu-miR-674-3p B7H3 downregulated   B7H3 upregulated             Not DE
 ## 4 NovelmiRNA-1191             Not DE   B7H3 upregulated B7H3 downregulated</code></pre>
 <p>Save output</p>
 <pre class="r"><code>write_tsv(res_all,
@@ -916,19 +972,20 @@ res_all &lt;- res[[&quot;Day14&quot;]] %&gt;%
 ## [19] RColorBrewer_1.1-3      abind_1.4-8             BiocParallel_1.42.2    
 ## [22] withr_3.0.2             scales_1.4.0            cli_3.6.5              
 ## [25] rmarkdown_2.29          crayon_1.5.3            ragg_1.4.0             
-## [28] httr_1.4.7              tzdb_0.5.0              cachem_1.1.0           
-## [31] parallel_4.5.0          XVector_0.48.0          vctrs_0.6.5            
-## [34] Matrix_1.7-3            jsonlite_2.0.0          carData_3.0-5          
-## [37] car_3.1-3               hms_1.1.3               bit64_4.6.0-1          
-## [40] rstatix_0.7.2           Formula_1.2-5           systemfonts_1.2.3      
-## [43] locfit_1.5-9.12         jquerylib_0.1.4         glue_1.8.0             
-## [46] codetools_0.2-20        cowplot_1.1.3           stringi_1.8.7          
-## [49] gtable_0.3.6            UCSC.utils_1.4.0        pillar_1.10.2          
-## [52] htmltools_0.5.8.1       GenomeInfoDbData_1.2.14 R6_2.6.1               
-## [55] textshaping_1.0.1       rprojroot_2.0.4         vroom_1.6.5            
-## [58] evaluate_1.0.3          lattice_0.22-7          backports_1.5.0        
-## [61] broom_1.0.8             bslib_0.9.0             Rcpp_1.0.14            
-## [64] SparseArray_1.8.1       xfun_0.52               pkgconfig_2.0.3</code></pre>
+## [28] rstudioapi_0.17.1       httr_1.4.7              tzdb_0.5.0             
+## [31] cachem_1.1.0            parallel_4.5.0          XVector_0.48.0         
+## [34] vctrs_0.6.5             Matrix_1.7-3            jsonlite_2.0.0         
+## [37] carData_3.0-5           car_3.1-3               hms_1.1.3              
+## [40] bit64_4.6.0-1           rstatix_0.7.2           Formula_1.2-5          
+## [43] systemfonts_1.2.3       locfit_1.5-9.12         jquerylib_0.1.4        
+## [46] glue_1.8.0              codetools_0.2-20        cowplot_1.1.3          
+## [49] stringi_1.8.7           gtable_0.3.6            UCSC.utils_1.4.0       
+## [52] pillar_1.10.2           htmltools_0.5.8.1       GenomeInfoDbData_1.2.14
+## [55] R6_2.6.1                textshaping_1.0.1       rprojroot_2.0.4        
+## [58] vroom_1.6.5             evaluate_1.0.3          lattice_0.22-7         
+## [61] backports_1.5.0         broom_1.0.8             bslib_0.9.0            
+## [64] Rcpp_1.0.14             SparseArray_1.8.1       xfun_0.52              
+## [67] pkgconfig_2.0.3</code></pre>
 
 
 
