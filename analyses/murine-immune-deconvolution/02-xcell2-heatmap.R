@@ -130,11 +130,21 @@ for (ref in unique_refs) {
       CD3z = c("Detected" = "#66A61EFF", "Not detected" = "grey90")
     ),
     annotation_name_side = "left",
+    annotation_name_gp = gpar(fontsize = 8),
+    simple_anno_size = unit(0.3, "cm"),
     annotation_legend_param = list(
-      Treatment = list(title = "Treatment", direction = "horizontal"),
-      Time = list(title = "Time", direction = "horizontal"),
-      `CAR scFv` = list(title = "CAR scFv", direction = "horizontal"),
-      CD3z = list(title = "CD3z", direction = "horizontal")
+      Treatment = list(title = "Treatment", direction = "horizontal",
+                       title_gp = gpar(fontsize = 8, fontface = "bold"),
+                       labels_gp = gpar(fontsize = 8)),
+      Time = list(title = "Time", direction = "horizontal",
+                  title_gp = gpar(fontsize = 8, fontface = "bold"),
+                  labels_gp = gpar(fontsize = 8)),
+      `CAR scFv` = list(title = "CAR scFv", direction = "horizontal",
+                        title_gp = gpar(fontsize = 8, fontface = "bold"),
+                        labels_gp = gpar(fontsize = 8)),
+      CD3z = list(title = "CD3z", direction = "horizontal",
+                  title_gp = gpar(fontsize = 8, fontface = "bold"),
+                  labels_gp = gpar(fontsize = 8))
     )
   )
   
@@ -153,19 +163,22 @@ for (ref in unique_refs) {
     top_annotation = ha_col,
     show_row_names = TRUE,
     show_column_names = FALSE,
-    row_names_gp = gpar(fontsize = 7),
-    column_names_gp = gpar(fontsize = 7),
-    column_title = paste(ref, "xCell2 (Clustered Columns)"),
-    heatmap_legend_param = list(title = "Z-score", legend_direction = "horizontal")
+    row_names_gp = gpar(fontsize = 8),
+    heatmap_legend_param = list(
+      title = "Z-score",
+      legend_direction = "horizontal",
+      title_gp = gpar(fontsize = 8, fontface = "bold"),
+      labels_gp = gpar(fontsize = 8)
+    )
   )
   
   pdf_clustered <- file.path(plot_dir, paste0("xCell2_scaled_heatmap_", ref, "_clustered.pdf"))
-  pdf(pdf_clustered, width = 10, height = 8)
+  pdf(pdf_clustered, width = 6, height = 4)
   draw(ht_clustered, merge_legend = TRUE,
        heatmap_legend_side = "right", annotation_legend_side = "bottom")
   dev.off()
   message(paste0("✅ Saved clustered heatmap: ", pdf_clustered))
-    
+  
   
   # (2) Fixed column order version
   col_order_indices <- order(meta_ref$treatment, meta_ref$time)
@@ -180,19 +193,19 @@ for (ref in unique_refs) {
     top_annotation = ha_col,
     show_row_names = TRUE,
     show_column_names = FALSE,
-    row_names_gp = gpar(fontsize = 7),
-    column_names_gp = gpar(fontsize = 7),
-    column_title = paste(ref, "xCell2 (Ordered Columns)"),
-    heatmap_legend_param = list(title = "Z-score", legend_direction = "horizontal")
+    row_names_gp = gpar(fontsize = 8),
+    heatmap_legend_param = list(
+      title = "Z-score",
+      legend_direction = "horizontal",
+      title_gp = gpar(fontsize = 8, fontface = "bold"),
+      labels_gp = gpar(fontsize = 8)
+    )
   )
   
   pdf_fixed <- file.path(plot_dir, paste0("xCell2_scaled_heatmap_", ref, "_ordered.pdf"))
-  pdf(pdf_fixed, width = 10, height = 8)
+  pdf(pdf_fixed, width = 6, height = 4)
   draw(ht_fixed, merge_legend = TRUE,
        heatmap_legend_side = "right", annotation_legend_side = "bottom")
   dev.off()
   message(paste0("✅ Saved ordered heatmap: ", pdf_fixed))
 }
-
-
-

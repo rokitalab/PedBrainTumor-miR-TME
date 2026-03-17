@@ -9,11 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Ryan Corbett" />
+<meta name="author" content="rstudio" />
 
-<meta name="date" content="2025-01-01" />
+<meta name="date" content="2026-03-16" />
 
-<title>miRNA differential expression in CAR-T treated versus untreated mice</title>
+<title>02-xcell2-heatmap.R</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -335,66 +335,6 @@ display: none;
 
 
 
-<style type="text/css">
-#TOC {
-margin: 25px 0px 20px 0px;
-}
-@media (max-width: 768px) {
-#TOC {
-position: relative;
-width: 100%;
-}
-}
-@media print {
-#TOC {
-display: none !important;
-}
-.toc-content {
-
-float: right;
-}
-}
-.toc-content {
-padding-left: 30px;
-padding-right: 40px;
-}
-div.main-container {
-max-width: 1200px;
-}
-div.tocify {
-width: 20%;
-max-width: 260px;
-max-height: 85%;
-}
-@media (min-width: 768px) and (max-width: 991px) {
-div.tocify {
-width: 25%;
-}
-}
-@media (max-width: 767px) {
-div.tocify {
-width: 100%;
-max-width: none;
-}
-}
-.tocify ul, .tocify li {
-line-height: 20px;
-}
-.tocify-subheader .tocify-item {
-font-size: 0.90em;
-}
-.tocify .list-group-item {
-border-radius: 0px;
-}
-.tocify-subheader {
-display: inline;
-}
-.tocify-subheader .tocify-item {
-font-size: 0.95em;
-}
-</style>
-
-
 
 </head>
 
@@ -404,593 +344,255 @@ font-size: 0.95em;
 <div class="container-fluid main-container">
 
 
-<!-- setup 3col/9col grid for toc_float and main content  -->
-<div class="row">
-<div class="col-xs-12 col-sm-4 col-md-3">
-<div id="TOC" class="tocify">
-</div>
-</div>
-
-<div class="toc-content col-xs-12 col-sm-8 col-md-9">
-
-
 
 
 <div id="header">
 
 
 
-<h1 class="title toc-ignore">miRNA differential expression in CAR-T
-treated versus untreated mice</h1>
-<h4 class="author">Ryan Corbett</h4>
-<h4 class="date">2025</h4>
+<h1 class="title toc-ignore">02-xcell2-heatmap.R</h1>
+<h4 class="author">rstudio</h4>
+<h4 class="date">2026-03-16</h4>
 
 </div>
 
 
-<p>This script performs differential expression analysis of human miRNAs
-in DIPG/DMG samples versus normal pons</p>
-<p>Load packages</p>
-<pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.2     ✔ tibble    3.3.0
-## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.4     
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
-## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(DESeq2)</code></pre>
-<pre><code>## Loading required package: S4Vectors
-## Loading required package: stats4
-## Loading required package: BiocGenerics
-## Loading required package: generics
-## 
-## Attaching package: &#39;generics&#39;
-## 
-## The following object is masked from &#39;package:lubridate&#39;:
-## 
-##     as.difftime
-## 
-## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     explain
-## 
-## The following objects are masked from &#39;package:base&#39;:
-## 
-##     as.difftime, as.factor, as.ordered, intersect, is.element, setdiff,
-##     setequal, union
-## 
-## 
-## Attaching package: &#39;BiocGenerics&#39;
-## 
-## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     combine
-## 
-## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     IQR, mad, sd, var, xtabs
-## 
-## The following objects are masked from &#39;package:base&#39;:
-## 
-##     anyDuplicated, aperm, append, as.data.frame, basename, cbind,
-##     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
-##     get, grep, grepl, is.unsorted, lapply, Map, mapply, match, mget,
-##     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-##     rbind, Reduce, rownames, sapply, saveRDS, table, tapply, unique,
-##     unsplit, which.max, which.min
-## 
-## 
-## Attaching package: &#39;S4Vectors&#39;
-## 
-## The following objects are masked from &#39;package:lubridate&#39;:
-## 
-##     second, second&lt;-
-## 
-## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     first, rename
-## 
-## The following object is masked from &#39;package:tidyr&#39;:
-## 
-##     expand
-## 
-## The following object is masked from &#39;package:utils&#39;:
-## 
-##     findMatches
-## 
-## The following objects are masked from &#39;package:base&#39;:
-## 
-##     expand.grid, I, unname
-## 
-## Loading required package: IRanges
-## 
-## Attaching package: &#39;IRanges&#39;
-## 
-## The following object is masked from &#39;package:lubridate&#39;:
-## 
-##     %within%
-## 
-## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     collapse, desc, slice
-## 
-## The following object is masked from &#39;package:purrr&#39;:
-## 
-##     reduce
-## 
-## Loading required package: GenomicRanges
-## Loading required package: GenomeInfoDb
-## Loading required package: SummarizedExperiment
-## Loading required package: MatrixGenerics
-## Loading required package: matrixStats
-## 
-## Attaching package: &#39;matrixStats&#39;
-## 
-## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     count
-## 
-## 
-## Attaching package: &#39;MatrixGenerics&#39;
-## 
-## The following objects are masked from &#39;package:matrixStats&#39;:
-## 
-##     colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
-##     colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
-##     colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
-##     colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
-##     colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
-##     colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
-##     colWeightedMeans, colWeightedMedians, colWeightedSds,
-##     colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
-##     rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
-##     rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
-##     rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
-##     rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
-##     rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
-##     rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
-##     rowWeightedSds, rowWeightedVars
-## 
-## Loading required package: Biobase
-## Welcome to Bioconductor
-## 
-##     Vignettes contain introductory material; view with
-##     &#39;browseVignettes()&#39;. To cite Bioconductor, see
-##     &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.
-## 
-## 
-## Attaching package: &#39;Biobase&#39;
-## 
-## The following object is masked from &#39;package:MatrixGenerics&#39;:
-## 
-##     rowMedians
-## 
-## The following objects are masked from &#39;package:matrixStats&#39;:
-## 
-##     anyMissing, rowMedians</code></pre>
-<pre class="r"><code>library(ggplot2)
-library(EnhancedVolcano)</code></pre>
-<pre><code>## Loading required package: ggrepel</code></pre>
-<pre class="r"><code>library(ggpubr)</code></pre>
-<p>Set directory paths</p>
-<pre class="r"><code>root_dir &lt;- rprojroot::find_root(rprojroot::has_dir(&quot;.git&quot;))
+<pre class="r"><code># Generate xCell2-scaled enrichment heatmaps for each reference dataset
 
+# Author: Bicna Song
+
+# Load libraries
+suppressPackageStartupMessages({
+  library(rprojroot)
+  library(tidyverse)
+  library(ComplexHeatmap)
+  library(circlize)
+  library(RColorBrewer)
+})
+
+# Set path to module and results directories
+root_dir &lt;- find_root(has_dir(&quot;.git&quot;))
 data_dir &lt;- file.path(root_dir, &quot;data&quot;)
-analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;murine-mirna-differential-expression&quot;)
+analysis_dir &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;murine-immune-deconvolution&quot;)
+input_dir &lt;- file.path(analysis_dir, &quot;input&quot;)
 results_dir &lt;- file.path(analysis_dir, &quot;results&quot;)
 plot_dir &lt;- file.path(analysis_dir, &quot;plots&quot;)
 
-source(file.path(root_dir, &quot;figures&quot;, &quot;theme.R&quot;))</code></pre>
-<p>Set file paths</p>
-<pre class="r"><code>mirna_cts_file &lt;- file.path(data_dir,
-                          &quot;30-963755216-miRNA_expression.csv&quot;)</code></pre>
-<p>Wrangle data. Remove Tube1 sample due to sparse counts as a results
-of low sequencing depth</p>
-<pre class="r"><code>mirna_cts &lt;- read_csv(mirna_cts_file) %&gt;%
-  column_to_rownames(&quot;...1&quot;) %&gt;% 
-  dplyr::select(-`Day14-Tube1`)</code></pre>
-<pre><code>## New names:
-## Rows: 2020 Columns: 23
-## ── Column specification
-## ──────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
-## (1): ...1 dbl (22): Day14-Tube1, Day14-Tube2, RESUB-Day14-Tube3, Day14-Tube4,
-## Day14-Tu...
-## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
-## Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## • `` -&gt; `...1`</code></pre>
-<pre class="r"><code>names(mirna_cts) &lt;- str_replace(names(mirna_cts), &quot;RESUB-&quot;, &quot;&quot;)
+# File path
+merged_file &lt;- file.path(results_dir, &quot;xCell2_all_references_merged.tsv&quot;)
+metadata_file &lt;- file.path(root_dir, &quot;analyses&quot;, &quot;murine-rna-expression&quot;, &quot;input&quot;, &quot;Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv&quot;)
 
-mirna_cts &lt;- mirna_cts %&gt;%
-  filter(rowSums(across(everything(), ~ . != 0)) &gt;= 5)</code></pre>
-<p>Create sample metaata df</p>
-<pre class="r"><code>metadata_df &lt;- tibble(id = names(mirna_cts)) %&gt;%
-  dplyr::mutate(
-    time = unlist(lapply(strsplit(id, &quot;-&quot;), function(x) x[[1]])),
-    treatment = c(rep(&quot;B7H3&quot;, 2),
-                  rep(&quot;STOP&quot;, 3), &quot;untreated&quot;,
-                  rep(&quot;B7H3&quot;, 3),
-                  rep(&quot;STOP&quot;, 3), 
-                  rep(&quot;untreated&quot;, 2),
-                  rep(&quot;B7H3&quot;, 2), 
-                  rep(&quot;STOP&quot;, 3), 
-                  rep(&quot;untreated&quot;, 2))
-  ) %&gt;%
-  dplyr::mutate(
-    treatment = dplyr::recode(
-      treatment,
-      &quot;B7H3&quot; = &quot;CAR&quot;,
-      &quot;STOP&quot; = &quot;Ctrl CAR&quot;,
-      &quot;untreated&quot; = &quot;Untreated&quot;
+# Read merged results
+merged_results &lt;- read_tsv(merged_file)</code></pre>
+<pre><code>## Rows: 43 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr  (2): CellType, Reference
+## dbl (14): BA_0TFPN4X7, BA_8RWAXDMN, BA_9N6PPMTD, BA_CF4XNYZ2, BA_DW517KX8, B...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>metadata_df &lt;- read_delim(metadata_file) %&gt;%
+  filter(experimental_strategy == &quot;RNA-Seq&quot;) %&gt;%
+  select(external_sample_id, Day, Treatment, Bioassay_ID) %&gt;%
+  distinct(external_sample_id, .keep_all = TRUE) %&gt;%
+  rename(time = Day, treatment = Treatment) %&gt;%
+  mutate(
+    time = paste0(&quot;Day&quot;, time),
+    treatment = recode(treatment,
+                       &quot;B7H3 CAR&quot; = &quot;CAR&quot;,
+                       &quot;B7H3 STOP CAR&quot; = &quot;Ctrl CAR&quot;,
+                       &quot;Untreated&quot; = &quot;Untreated&quot;),
+    # Add CAR detection indicators
+    CARSCFV_detected = if_else(Bioassay_ID %in% c(&quot;BA_0TFPN4X7&quot;, &quot;BA_QKAF661T&quot;, &quot;BA_W1SB4C0J&quot;),
+                               &quot;Detected&quot;, &quot;Not detected&quot;),
+    MCD3Z_detected   = if_else(Bioassay_ID %in% c(&quot;BA_0TFPN4X7&quot;, &quot;BA_QKAF661T&quot;),
+                               &quot;Detected&quot;, &quot;Not detected&quot;)
+  ) </code></pre>
+<pre><code>## Rows: 72 Columns: 34
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;\t&quot;
+## chr (23): external_sample_id, external_aliquot_id, sample_type, composition,...
+## dbl  (3): file_size, total_reads, Day
+## lgl  (8): external_patient_id, is_paired_end, flow_cell_barcode, lane_number...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code># Filter to keep only selected immune-related cell types
+keep_mouse &lt;- c(&quot;Microglia&quot;, &quot;macrophage&quot;, &quot;monocyte&quot;,
+                &quot;natural killer cell&quot;, &quot;T cell&quot;)
+
+keep_immgen &lt;- c(&quot;CD4-positive, alpha-beta T cell&quot;, &quot;macrophage&quot;, &quot;monocyte&quot;,
+                 &quot;CD8-positive, alpha-beta T cell&quot;, &quot;T cell&quot;,
+                 &quot;natural killer cell&quot;, &quot;Gamma-delta T cell&quot;)
+
+# Scale scores within each reference
+scaled_results &lt;- merged_results %&gt;%
+  pivot_longer(cols = -c(CellType, Reference),
+               names_to = &quot;Bioassay_ID&quot;, values_to = &quot;Score&quot;) %&gt;%
+  group_by(Reference, CellType) %&gt;%
+  mutate(Scaled_Score = if (sd(Score, na.rm = TRUE) == 0) 0 else scale(Score)[, 1]) %&gt;%
+  ungroup() %&gt;%
+  filter((Reference == &quot;MouseRNAseqData&quot; &amp; CellType %in% keep_mouse) |
+           (Reference == &quot;ImmGenData&quot; &amp; CellType %in% keep_immgen))
+
+# Save scaled results
+scaled_results_wide &lt;- scaled_results %&gt;%
+  select(CellType, Bioassay_ID, Scaled_Score, Reference) %&gt;%
+  pivot_wider(
+    names_from = Bioassay_ID,
+    values_from = Scaled_Score
+  )
+
+# Save scaled results
+write.table(scaled_results_wide, file.path(results_dir, &quot;xCell2_scaled_within_reference_filtered.tsv&quot;), sep = &quot;\t&quot;, quote = FALSE, row.names = FALSE)
+
+message(&quot;✅ Filtered and scaled enrichment scores saved.&quot;)</code></pre>
+<pre><code>## ✅ Filtered and scaled enrichment scores saved.</code></pre>
+<pre class="r"><code># Generate heatmaps per reference
+unique_refs &lt;- unique(scaled_results$Reference)
+col_fun &lt;- colorRamp2(c(-2, 0, 2), c(&quot;blue&quot;, &quot;white&quot;, &quot;red&quot;))
+
+# Custom metadata colors
+time_cols &lt;- c(
+  &quot;Day14&quot; = &quot;#A67C52&quot;,  # warm taupe
+  &quot;Day21&quot; = &quot;#FDB462&quot;   # muted orange
+)
+
+treatment_cols &lt;- c(
+  &quot;CAR&quot; = &quot;#E64B35FF&quot;,
+  &quot;Ctrl CAR&quot; = &quot;#4DBBD5FF&quot;,
+  &quot;Untreated&quot; = &quot;#00A087FF&quot;
+)
+
+for (ref in unique_refs) {
+  message(paste0(&quot;Generating ComplexHeatmap for reference: &quot;, ref))
+  
+  mat &lt;- scaled_results %&gt;%
+    filter(Reference == ref) %&gt;%
+    select(CellType, Bioassay_ID, Scaled_Score) %&gt;%
+    pivot_wider(names_from = Bioassay_ID, values_from = Scaled_Score) %&gt;%
+    column_to_rownames(&quot;CellType&quot;) %&gt;%
+    as.matrix()
+  
+  # Remove rows with zero variance
+  non_constant &lt;- apply(mat, 1, function(x) sd(x, na.rm = TRUE) &gt; 0)
+  mat &lt;- mat[non_constant, , drop = FALSE]
+  
+  if (nrow(mat) &lt; 2 || ncol(mat) &lt; 2) {
+    message(paste0(&quot;⚠️ Skipping &quot;, ref, &quot;: insufficient variable data for clustering.&quot;))
+    next
+  }
+  
+  # Match metadata for available samples
+  meta_ref &lt;- metadata_df %&gt;%
+    filter(Bioassay_ID %in% colnames(mat)) %&gt;%
+    column_to_rownames(&quot;Bioassay_ID&quot;)
+  
+  # Ensure column order matches matrix columns
+  meta_ref &lt;- meta_ref[colnames(mat), , drop = FALSE]
+  
+  # Define annotations
+  ha_col &lt;- HeatmapAnnotation(
+    Treatment = meta_ref$treatment,
+    Time = meta_ref$time,
+    `CAR scFv` = meta_ref$CARSCFV_detected,
+    CD3z = meta_ref$MCD3Z_detected,
+    col = list(
+      Treatment = treatment_cols,
+      Time = time_cols,
+      `CAR scFv` = c(&quot;Detected&quot; = &quot;#8E7CC3FF&quot;, &quot;Not detected&quot; = &quot;grey90&quot;),
+      CD3z = c(&quot;Detected&quot; = &quot;#66A61EFF&quot;, &quot;Not detected&quot; = &quot;grey90&quot;)
     ),
-    treatment = factor(treatment, levels = c(&quot;CAR&quot;, &quot;Ctrl CAR&quot;, &quot;Untreated&quot;)),
-    time = factor(time, levels = c(&quot;Day14&quot;, &quot;Day21&quot;, &quot;Day28&quot;))
-  ) %&gt;%
-  as.data.frame()
-
-write_tsv(metadata_df,
-          file.path(results_dir,
-                    &quot;sample-metadata.tsv&quot;))</code></pre>
-<p>Construct DESeqDataSet Object</p>
-<pre class="r"><code>dds_all &lt;- DESeqDataSetFromMatrix(countData = mirna_cts, 
-                              colData = metadata_df, 
-                              design = ~ time + treatment)</code></pre>
-<pre><code>## converting counts to integer mode</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<p>Generate PCA plot from all samples, and by timepoint</p>
-<pre class="r"><code># transform raw counts
-vsdata &lt;- varianceStabilizingTransformation(dds_all)</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre class="r"><code>p_all &lt;- plotPCA(vsdata, intgroup = c(&quot;time&quot;, &quot;treatment&quot;), ntop = 250) +
-  aes(color = treatment, shape = time) +
-  scale_shape_manual(values = c(&quot;Day14&quot; = 16, &quot;Day21&quot; = 17, &quot;Day28&quot; = 18)) +
-  scale_color_manual(values = c(&quot;CAR&quot; = &quot;#E64B35FF&quot;,
-                                &quot;Ctrl CAR&quot; = &quot;#4DBBD5FF&quot;,
-                                &quot;Untreated&quot; = &quot;#00A087FF&quot;)) +
-  theme_Publication() +
-  labs(title = &quot;All Samples&quot;, color = &quot;Treatment&quot;, shape = &quot;Time&quot;)</code></pre>
-<pre><code>## using ntop=250 top features by variance</code></pre>
-<pre class="r"><code>ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-all.pdf&quot;)),
-       p_all, width = 5, height = 4.5)
-
-# Get unique time points
-time_points &lt;- unique(colData(dds_all)$time)
-
-p_list &lt;- list()
-
-# Create PCA plots for each time point
-for (time in time_points) {
-  
-  # Subset data for the specific time point
-  vsdata_subset &lt;- vsdata[,colData(vsdata)$time == time]
-  
-  # Generate PCA plot
-  p_list[[time]] &lt;- plotPCA(vsdata_subset, intgroup = &quot;treatment&quot;, ntop = 250) +
-  aes(color = treatment) +
-  scale_color_manual(values = c(&quot;CAR&quot; = &quot;#E64B35FF&quot;,
-                                &quot;Ctrl CAR&quot; = &quot;#4DBBD5FF&quot;,
-                                &quot;Untreated&quot; = &quot;#00A087FF&quot;)) +
-  theme_Publication() +
-  labs(title = time, color = &quot;Treatment&quot;)
-  
-}</code></pre>
-<pre><code>## using ntop=250 top features by variance</code></pre>
-<pre><code>## using ntop=250 top features by variance
-## using ntop=250 top features by variance</code></pre>
-<pre class="r"><code># merge PCA plots
-
-p_timepoint &lt;- ggarrange(p_list[[&quot;Day14&quot;]],
-               p_list[[&quot;Day21&quot;]],
-               p_list[[&quot;Day28&quot;]],
-               ncol = 1,
-               align = &quot;h&quot;)
-
-# Save the plot
-ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-by-timepoint.pdf&quot;)),
-       p_timepoint, width = 4, height = 8.5)</code></pre>
-<p>Generate PCA plots by treatment</p>
-<pre class="r"><code># Get unique treatments
-treatments &lt;- unique(colData(dds_all)$treatment)
-
-p_list &lt;- list()
-
-# Create PCA plots for each time point
-for (treatment in treatments) {
-  
-  # Subset data for the specific time point
-  vsdata_subset &lt;- vsdata[,colData(vsdata)$treatment == treatment]
-  
-  # Generate PCA plot
-  p_list[[treatment]] &lt;- plotPCA(vsdata_subset, intgroup = &quot;time&quot;, ntop = 250) +
-  ggtitle(glue::glue(&quot;PCA Plot - {treatment}&quot;)) +
-  theme_Publication() +
-  labs(title = treatment, color = &quot;Time&quot;)
-
-}</code></pre>
-<pre><code>## using ntop=250 top features by variance
-## using ntop=250 top features by variance
-## using ntop=250 top features by variance</code></pre>
-<pre class="r"><code># merge treatment PCA plots
-
-p_treatment &lt;- ggarrange(p_list[[&quot;CAR&quot;]],
-               p_list[[&quot;Ctrl CAR&quot;]],
-               p_list[[&quot;Untreated&quot;]],
-               ncol = 1,
-               align = &quot;h&quot;)
-
-# Save the plot
-ggsave(file.path(plot_dir, glue::glue(&quot;mirna-pca-plot-by-treatment.pdf&quot;)),
-       p_treatment, width = 4, height = 8.5)</code></pre>
-<p>For differential expression analyses, we will generate DESeqDataSet
-objects for each timepoint and perform the following comparisions: -
-B7H3 versus untreated - STOP versus untreated</p>
-<pre class="r"><code>timepoints &lt;- c(&quot;Day14&quot;, &quot;Day21&quot;, &quot;Day28&quot;)
-
-# create empty results list
-res &lt;- list()
-
-# loop through time points to perform differential expression analyses
-for (timepoint in timepoints){
-
-  # create DDS obejct
-  dds &lt;- DESeqDataSetFromMatrix(countData = mirna_cts[,metadata_df$time == timepoint], 
-                                colData = metadata_df[metadata_df$time == timepoint,], 
-                                design = ~ treatment)
-  
-  # run DESeq2
-  dds &lt;- DESeq(dds)
-  
-  # pull B7H3 versus untreated contrast and generate data frame
-  res_B7H3_vs_Untreated &lt;- results(dds, contrast = c(&quot;treatment&quot;, &quot;CAR&quot;, &quot;Untreated&quot;))
-  
-  res_B7H3_vs_Untreated &lt;- data.frame(res_B7H3_vs_Untreated) %&gt;%
-    rownames_to_column(&quot;mirna_id&quot;) %&gt;%
-    dplyr::arrange(pvalue) %&gt;%
-    dplyr::mutate(label = ifelse(dplyr::row_number() &lt;= 5, mirna_id, &quot;&quot;))
-  
-  # generate volcano plot
-  volc_plot &lt;- EnhancedVolcano(
-    res_B7H3_vs_Untreated,
-    lab = res_B7H3_vs_Untreated$label,
-    x = &quot;log2FoldChange&quot;,
-    y = &quot;pvalue&quot;,
-    title = glue::glue(&quot;CAR versus Untreated, {timepoint}&quot;),
-    subtitle = NULL,
-    caption = NULL,
-    pCutoff = max(res_B7H3_vs_Untreated$pvalue[res_B7H3_vs_Untreated$padj &lt; 0.1], na.rm = TRUE),
-    FCcutoff = 2,
-    pointSize = 4,
-    labSize = 4.5,
-    typeConnectors = &quot;closed&quot;,
-    drawConnectors = TRUE,
-    widthConnectors = 1,
-    colConnectors = &#39;black&#39;,
-    max.overlaps = 8
+    annotation_name_side = &quot;left&quot;,
+    annotation_name_gp = gpar(fontsize = 8),
+    simple_anno_size = unit(0.3, &quot;cm&quot;),
+    annotation_legend_param = list(
+      Treatment = list(title = &quot;Treatment&quot;, direction = &quot;horizontal&quot;,
+                       title_gp = gpar(fontsize = 8, fontface = &quot;bold&quot;),
+                       labels_gp = gpar(fontsize = 8)),
+      Time = list(title = &quot;Time&quot;, direction = &quot;horizontal&quot;,
+                  title_gp = gpar(fontsize = 8, fontface = &quot;bold&quot;),
+                  labels_gp = gpar(fontsize = 8)),
+      `CAR scFv` = list(title = &quot;CAR scFv&quot;, direction = &quot;horizontal&quot;,
+                        title_gp = gpar(fontsize = 8, fontface = &quot;bold&quot;),
+                        labels_gp = gpar(fontsize = 8)),
+      CD3z = list(title = &quot;CD3z&quot;, direction = &quot;horizontal&quot;,
+                  title_gp = gpar(fontsize = 8, fontface = &quot;bold&quot;),
+                  labels_gp = gpar(fontsize = 8))
+    )
   )
   
-  ggsave(file.path(
-    plot_dir,
-    glue::glue(
-      &quot;murine-mirna-deseq2-b7h3-versus-untreated-{timepoint}.pdf&quot;
+  # (1) Clustered columns version
+  
+  # Define clustering
+  row_hclust &lt;- hclust(dist(mat, method = &quot;euclidean&quot;), method = &quot;ward.D&quot;)
+  col_hclust &lt;- hclust(dist(t(mat), method = &quot;euclidean&quot;), method = &quot;ward.D&quot;)
+  
+  ht_clustered &lt;- Heatmap(
+    mat,
+    name = &quot;Z-score&quot;,
+    col = col_fun,
+    cluster_rows = row_hclust,
+    cluster_columns = col_hclust,
+    top_annotation = ha_col,
+    show_row_names = TRUE,
+    show_column_names = FALSE,
+    row_names_gp = gpar(fontsize = 8),
+    heatmap_legend_param = list(
+      title = &quot;Z-score&quot;,
+      legend_direction = &quot;horizontal&quot;,
+      title_gp = gpar(fontsize = 8, fontface = &quot;bold&quot;),
+      labels_gp = gpar(fontsize = 8)
     )
-  ),
-  volc_plot,
-  width = 7,
-  height = 6)
+  )
   
-  # pull STOP versus untreated contrast and generate data frame
-  res_STOP_vs_untreated &lt;- results(dds, 
-                                  contrast = c(&quot;treatment&quot;, &quot;Ctrl CAR&quot;, &quot;Untreated&quot;))
+  pdf_clustered &lt;- file.path(plot_dir, paste0(&quot;xCell2_scaled_heatmap_&quot;, ref, &quot;_clustered.pdf&quot;))
+  pdf(pdf_clustered, width = 6, height = 4)
+  draw(ht_clustered, merge_legend = TRUE,
+       heatmap_legend_side = &quot;right&quot;, annotation_legend_side = &quot;bottom&quot;)
+  dev.off()
+  message(paste0(&quot;✅ Saved clustered heatmap: &quot;, pdf_clustered))
   
-  res_STOP_vs_untreated &lt;- data.frame(res_STOP_vs_untreated) %&gt;%
-    rownames_to_column(&quot;mirna_id&quot;)
   
-  # join two contrast dfs by miRNA id, adding suffixes to column names to indicate comparisons
-  res[[timepoint]] &lt;- res_B7H3_vs_Untreated %&gt;%
-    left_join(res_STOP_vs_untreated,
-              suffix = c(&quot;_b7h3_vs_untr&quot;,
-                         &quot;_stop_vs_untr&quot;),
-              by = &quot;mirna_id&quot;) %&gt;%
-    # define B7H3-upregulated and -downregulated miRNAs as those DE in B7H3 versus untreated ONLY, and NOT DE in same dir in STOP versus untreated comparison 
-    dplyr::mutate(status = case_when(
-      padj_b7h3_vs_untr &lt; 0.1 &amp; log2FoldChange_b7h3_vs_untr &gt; 0 &amp; (padj_stop_vs_untr &gt; 0.1 | log2FoldChange_stop_vs_untr &lt; 0) ~ &quot;B7H3 upregulated&quot;,
-      padj_b7h3_vs_untr &lt; 0.1 &amp; log2FoldChange_b7h3_vs_untr &lt; 0 &amp; (padj_stop_vs_untr &gt; 0.1  | log2FoldChange_stop_vs_untr &gt; 0) ~ &quot;B7H3 downregulated&quot;,
-      TRUE ~ &quot;Not DE&quot;
-    ))
+  # (2) Fixed column order version
+  col_order_indices &lt;- order(meta_ref$treatment, meta_ref$time)
   
+  ht_fixed &lt;- Heatmap(
+    mat,
+    name = &quot;Z-score&quot;,
+    col = col_fun,
+    cluster_rows = row_hclust,
+    cluster_columns = FALSE,   # turn off column clustering
+    column_order = col_order_indices,
+    top_annotation = ha_col,
+    show_row_names = TRUE,
+    show_column_names = FALSE,
+    row_names_gp = gpar(fontsize = 8),
+    heatmap_legend_param = list(
+      title = &quot;Z-score&quot;,
+      legend_direction = &quot;horizontal&quot;,
+      title_gp = gpar(fontsize = 8, fontface = &quot;bold&quot;),
+      labels_gp = gpar(fontsize = 8)
+    )
+  )
+  
+  pdf_fixed &lt;- file.path(plot_dir, paste0(&quot;xCell2_scaled_heatmap_&quot;, ref, &quot;_ordered.pdf&quot;))
+  pdf(pdf_fixed, width = 6, height = 4)
+  draw(ht_fixed, merge_legend = TRUE,
+       heatmap_legend_side = &quot;right&quot;, annotation_legend_side = &quot;bottom&quot;)
+  dev.off()
+  message(paste0(&quot;✅ Saved ordered heatmap: &quot;, pdf_fixed))
 }</code></pre>
-<pre><code>## converting counts to integer mode</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating size factors</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating dispersions</code></pre>
-<pre><code>## gene-wise dispersion estimates</code></pre>
-<pre><code>## mean-dispersion relationship</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## final dispersion estimates</code></pre>
-<pre><code>## fitting model and testing</code></pre>
-<pre><code>## converting counts to integer mode</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating size factors</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating dispersions</code></pre>
-<pre><code>## gene-wise dispersion estimates</code></pre>
-<pre><code>## mean-dispersion relationship</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## final dispersion estimates</code></pre>
-<pre><code>## fitting model and testing</code></pre>
-<pre><code>## converting counts to integer mode</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating size factors</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## estimating dispersions</code></pre>
-<pre><code>## gene-wise dispersion estimates</code></pre>
-<pre><code>## mean-dispersion relationship</code></pre>
-<pre><code>##   Note: levels of factors in the design contain characters other than
-##   letters, numbers, &#39;_&#39; and &#39;.&#39;. It is recommended (but not required) to use
-##   only letters, numbers, and delimiters &#39;_&#39; or &#39;.&#39;, as these are safe characters
-##   for column names in R. [This is a message, not a warning or an error]</code></pre>
-<pre><code>## final dispersion estimates</code></pre>
-<pre><code>## fitting model and testing</code></pre>
-<p>Merge DE results by time point, and classify miRNAs based on
-differential expression patterns over time</p>
-<pre class="r"><code># add &quot;_Day28 suffix to Day28 df
-names(res[[&quot;Day28&quot;]])[-1] &lt;- glue::glue(&quot;{names(res[[&#39;Day28&#39;]])[-1]}_Day28&quot;)
-
-# join timepoint dfs
-res_all &lt;- res[[&quot;Day14&quot;]] %&gt;%
-  left_join(res[[&quot;Day21&quot;]],
-            by = &quot;mirna_id&quot;,
-            suffix = c(&quot;_Day14&quot;, &quot;_Day21&quot;)) %&gt;%
-    left_join(res[[&quot;Day28&quot;]],
-            by = &quot;mirna_id&quot;) %&gt;%
-  # group miRNAs by differential expression patterns
-  dplyr::mutate(expr_pattern = case_when(
-    status_Day14 == &quot;B7H3 upregulated&quot; &amp; status_Day21 == &quot;Not DE&quot; &amp; status_Day28 == &quot;Not DE&quot; ~ &quot;B7H3 up, Day 14&quot;,
-    status_Day14 == &quot;Not DE&quot; &amp; status_Day21 == &quot;B7H3 upregulated&quot; &amp; status_Day28 == &quot;Not DE&quot; ~ &quot;B7H3 up, Day 21&quot;,
-    status_Day14 == &quot;Not DE&quot; &amp; status_Day21 == &quot;Not DE&quot; &amp; status_Day28 == &quot;B7H3 upregulated&quot; ~ &quot;B7H3 up, Day 28&quot;,
-    status_Day14 == &quot;B7H3 downregulated&quot; &amp; status_Day21 == &quot;Not DE&quot; &amp; status_Day28 == &quot;Not DE&quot; ~ &quot;B7H3 down, Day 14&quot;,
-    status_Day14 == &quot;Not DE&quot; &amp; status_Day21 == &quot;B7H3 downregulated&quot; &amp; status_Day28 == &quot;Not DE&quot; ~ &quot;B7H3 down, Day 21&quot;,
-    status_Day14 == &quot;Not DE&quot; &amp; status_Day21 == &quot;Not DE&quot; &amp; status_Day28 == &quot;B7H3 downregulated&quot; ~ &quot;B7H3 down, Day 28&quot;,
-    (status_Day14 == &quot;B7H3 upregulated&quot; &amp; status_Day21 == &quot;B7H3 upregulated&quot;) | (status_Day14 == &quot;B7H3 upregulated&quot; &amp; status_Day28 == &quot;B7H3 upregulated&quot;) | (status_Day21 == &quot;B7H3 upregulated&quot; &amp; status_Day28 == &quot;B7H3 upregulated&quot;) ~ &quot;B7H3 up, multiple&quot;,
-    (status_Day14 == &quot;B7H3 downregulated&quot; &amp; status_Day21 == &quot;B7H3 downregulated&quot;) | (status_Day14 == &quot;B7H3 downregulated&quot; &amp; status_Day28 == &quot;B7H3 downregulated&quot;) | (status_Day21 == &quot;B7H3 downregulated&quot; &amp; status_Day28 == &quot;B7H3 downregulated&quot;) ~ &quot;B7H3 down, multiple&quot;,
-    status_Day14 != &quot;Not DE&quot; | status_Day21 != &quot;Not DE&quot; | status_Day28 != &quot;Not DE&quot; ~ &quot;Other DE&quot;,
-    TRUE ~ &quot;Not DE&quot;
-  ))</code></pre>
-<p>Print miRNAs DE at multiple time points</p>
-<pre class="r"><code>res_all %&gt;%
-  dplyr::filter(expr_pattern == &quot;B7H3 up, multiple&quot;) %&gt;%
-  dplyr::select(mirna_id, status_Day14,
-                status_Day21, status_Day28)</code></pre>
-<pre><code>##           mirna_id     status_Day14     status_Day21 status_Day28
-## 1  mmu-miR-146a-5p B7H3 upregulated B7H3 upregulated       Not DE
-## 2   mmu-miR-10b-5p B7H3 upregulated B7H3 upregulated       Not DE
-## 3   mmu-miR-21a-5p B7H3 upregulated B7H3 upregulated       Not DE
-## 4 mmu-miR-92a-1-3p B7H3 upregulated B7H3 upregulated       Not DE
-## 5   mmu-miR-672-5p B7H3 upregulated B7H3 upregulated       Not DE
-## 6   mmu-miR-330-5p B7H3 upregulated B7H3 upregulated       Not DE</code></pre>
-<pre class="r"><code>res_all %&gt;%
-  dplyr::filter(expr_pattern == &quot;B7H3 down, multiple&quot;) %&gt;%
-  dplyr::select(mirna_id, status_Day14,
-                status_Day21, status_Day28)</code></pre>
-<pre><code>##         mirna_id       status_Day14       status_Day21 status_Day28
-## 1 mmu-miR-30c-5p B7H3 downregulated B7H3 downregulated       Not DE</code></pre>
-<p>Print miRNAs with variable expression patterns across time points</p>
-<pre class="r"><code>res_all %&gt;%
-  dplyr::filter(expr_pattern == &quot;Other DE&quot;) %&gt;%
-  dplyr::select(mirna_id, status_Day14,
-                status_Day21, status_Day28)</code></pre>
-<pre><code>##          mirna_id       status_Day14       status_Day21       status_Day28
-## 1  mmu-miR-652-3p   B7H3 upregulated B7H3 downregulated             Not DE
-## 2 mmu-miR-3068-3p B7H3 downregulated   B7H3 upregulated             Not DE
-## 3  mmu-miR-674-3p B7H3 downregulated   B7H3 upregulated             Not DE
-## 4 NovelmiRNA-1191             Not DE   B7H3 upregulated B7H3 downregulated</code></pre>
-<p>Save output</p>
-<pre class="r"><code>write_tsv(res_all,
-          file.path(results_dir,
-                    &quot;mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv&quot;))</code></pre>
-<p>Print session info</p>
-<pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 4.5.0 (2025-04-11)
-## Platform: x86_64-pc-linux-gnu
-## Running under: Ubuntu 24.04.2 LTS
-## 
-## Matrix products: default
-## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
-## 
-## locale:
-##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
-##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
-##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
-##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
-##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
-## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
-## 
-## time zone: Etc/UTC
-## tzcode source: system (glibc)
-## 
-## attached base packages:
-## [1] grid      stats4    stats     graphics  grDevices utils     datasets 
-## [8] methods   base     
-## 
-## other attached packages:
-##  [1] ggthemes_5.1.0              ggpubr_0.6.0               
-##  [3] EnhancedVolcano_1.26.0      ggrepel_0.9.6              
-##  [5] DESeq2_1.48.2               SummarizedExperiment_1.38.1
-##  [7] Biobase_2.68.0              MatrixGenerics_1.20.0      
-##  [9] matrixStats_1.5.0           GenomicRanges_1.60.0       
-## [11] GenomeInfoDb_1.44.3         IRanges_2.42.0             
-## [13] S4Vectors_0.46.0            BiocGenerics_0.54.1        
-## [15] generics_0.1.4              lubridate_1.9.4            
-## [17] forcats_1.0.0               stringr_1.5.1              
-## [19] dplyr_1.1.4                 purrr_1.0.4                
-## [21] readr_2.1.5                 tidyr_1.3.1                
-## [23] tibble_3.3.0                ggplot2_3.5.2              
-## [25] tidyverse_2.0.0            
-## 
-## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.2.1        farver_2.1.2            fastmap_1.2.0          
-##  [4] digest_0.6.37           timechange_0.3.0        lifecycle_1.0.4        
-##  [7] magrittr_2.0.3          compiler_4.5.0          rlang_1.1.6            
-## [10] sass_0.4.10             tools_4.5.0             yaml_2.3.10            
-## [13] knitr_1.50              ggsignif_0.6.4          labeling_0.4.3         
-## [16] S4Arrays_1.8.1          bit_4.6.0               DelayedArray_0.34.1    
-## [19] RColorBrewer_1.1-3      abind_1.4-8             BiocParallel_1.42.2    
-## [22] withr_3.0.2             scales_1.4.0            cli_3.6.5              
-## [25] rmarkdown_2.29          crayon_1.5.3            ragg_1.4.0             
-## [28] rstudioapi_0.17.1       httr_1.4.7              tzdb_0.5.0             
-## [31] cachem_1.1.0            parallel_4.5.0          XVector_0.48.0         
-## [34] vctrs_0.6.5             Matrix_1.7-3            jsonlite_2.0.0         
-## [37] carData_3.0-5           car_3.1-3               hms_1.1.3              
-## [40] bit64_4.6.0-1           rstatix_0.7.2           Formula_1.2-5          
-## [43] systemfonts_1.2.3       locfit_1.5-9.12         jquerylib_0.1.4        
-## [46] glue_1.8.0              codetools_0.2-20        cowplot_1.1.3          
-## [49] stringi_1.8.7           gtable_0.3.6            UCSC.utils_1.4.0       
-## [52] pillar_1.10.2           htmltools_0.5.8.1       GenomeInfoDbData_1.2.14
-## [55] R6_2.6.1                textshaping_1.0.1       rprojroot_2.0.4        
-## [58] vroom_1.6.5             evaluate_1.0.3          lattice_0.22-7         
-## [61] backports_1.5.0         broom_1.0.8             bslib_0.9.0            
-## [64] Rcpp_1.0.14             SparseArray_1.8.1       xfun_0.52              
-## [67] pkgconfig_2.0.3</code></pre>
+<pre><code>## Generating ComplexHeatmap for reference: MouseRNAseqData
+## ✅ Saved clustered heatmap: /home/rstudio/haydar-mirna/analyses/murine-immune-deconvolution/plots/xCell2_scaled_heatmap_MouseRNAseqData_clustered.pdf
+## ✅ Saved ordered heatmap: /home/rstudio/haydar-mirna/analyses/murine-immune-deconvolution/plots/xCell2_scaled_heatmap_MouseRNAseqData_ordered.pdf
+## Generating ComplexHeatmap for reference: ImmGenData
+## ✅ Saved clustered heatmap: /home/rstudio/haydar-mirna/analyses/murine-immune-deconvolution/plots/xCell2_scaled_heatmap_ImmGenData_clustered.pdf
+## ✅ Saved ordered heatmap: /home/rstudio/haydar-mirna/analyses/murine-immune-deconvolution/plots/xCell2_scaled_heatmap_ImmGenData_ordered.pdf</code></pre>
 
 
 
-</div>
-</div>
 
 </div>
 
@@ -1023,35 +625,6 @@ $(document).ready(function () {
 
 <!-- code folding -->
 
-<script>
-$(document).ready(function ()  {
-
-    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
-    $('.unlisted.unnumbered').addClass('toc-ignore')
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = false;
-    options.smoothScroll = false;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
