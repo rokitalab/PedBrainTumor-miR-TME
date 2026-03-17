@@ -398,10 +398,6 @@ for (tumor in tumor_types) {
   p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type)) +
     geom_point(size = 3) +
     scale_color_manual(name = "Sample Type", values = col_map) +
-    geom_text_repel(aes(label = sample_id),
-                    size = 3.2,
-                    max.overlaps = 10,
-                    show.legend = FALSE) +
     labs(
       title = paste("PCA -", tumor, "vs Controls"),
       color = "Sample Type",
@@ -417,8 +413,8 @@ for (tumor in tumor_types) {
       "mirna-pca-", tumor, "-vs-controls.pdf"
     )),
     plot     = p,
-    width    = 7,
-    height   = 4
+    width    = 5,
+    height   = 2.5
   )
 }
 ```
