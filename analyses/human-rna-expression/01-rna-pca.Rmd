@@ -98,28 +98,43 @@ dds <- DESeqDataSetFromMatrix(countData = rnaseq_mat,
 dds <- estimateSizeFactors(dds)
 vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
 
+pca_fmt <- theme_Publication() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 11),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 10),
+    plot.margin = margin(4, 4, 4, 4)
+  )
+
 # PCA plot
 pca_data <- plotPCA(vsd, intgroup = c("histology_condition", "batch"), returnData = TRUE)
 percentVar <- round(100 * attr(pca_data, "percentVar"))
 
-P1 <- ggplot(pca_data, aes(PC1, PC2, color=histology_condition, shape=batch)) +
-  geom_point(size=3) +
+P1 <- ggplot(pca_data, aes(PC1, PC2, color = histology_condition, shape = batch)) +
+  geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
-  labs(title = "PCA",
-       x = paste0("PC1: ", percentVar[1], "%"),
-       y = paste0("PC2: ", percentVar[2], "%")) +
-  theme_Publication()
+  labs(
+    title = "PCA",
+    color = "Condition",
+    shape = "Batch",
+    x = paste0("PC1: ", percentVar[1], "%"),
+    y = paste0("PC2: ", percentVar[2], "%")
+  ) +
+  pca_fmt
+
 print(P1)
 
 # Save plot
-ggsave(filename = file.path(plot_dir, "rna-pca.pdf"), plot = P1, width = 8, height = 6)
+ggsave(filename = file.path(plot_dir, "rna-pca.pdf"), plot = P1, width = 7, height = 4)
 ```
 
 ```{r count-sample}
 # Count sample types per histology
 sample_summary <- histology_df %>%
   filter(sample_type %in% c("Tumor", "Normal-Tumor Adjacent")) %>%
-  count(histology, sample_type) %>%
+  dplyr::count(histology, sample_type) %>%
   pivot_wider(names_from = sample_type, values_from = n, values_fill = 0) %>%
   arrange(histology)
 
@@ -166,18 +181,20 @@ for (tumor in tumor_types) {
   col_map <- col_map[present]
 
   # Now use sample_id for label
-  p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type, shape = sample_type)) +
+  p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type)) +
   geom_point(size = 3) +
   scale_color_manual(name = "Sample Type", values = col_map) +
-  geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
-  labs(title = paste("PCA -", tumor, "vs Controls"),
-       x = paste0("PC1: ", percentVar[1], "% variance"),
-       y = paste0("PC2: ", percentVar[2], "% variance")) +
-  theme_Publication()
+  labs(
+    title = paste("PCA -", tumor, "vs Controls"),
+    color = "Sample Type",
+    x = paste0("PC1: ", percentVar[1], "% variance"),
+    y = paste0("PC2: ", percentVar[2], "% variance")
+  ) +
+  pca_fmt
   
   print(p)
   
-  ggsave(filename = file.path(plot_dir, paste0("rna-pca-", tumor, "-vs-controls.pdf")), plot = p, width = 10, height = 6)
+  ggsave(filename = file.path(plot_dir, paste0("rna-pca-", tumor, "-vs-controls.pdf")), plot = p, width = 5, height = 2.5)
 }
 ```
 

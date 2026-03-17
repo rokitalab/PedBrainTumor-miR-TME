@@ -11,7 +11,7 @@
 
 <meta name="author" content="Bicna Song" />
 
-<meta name="date" content="2025-07-30" />
+<meta name="date" content="2026-03-17" />
 
 <title>Differential RNA Expression Analysis</title>
 
@@ -422,7 +422,7 @@ font-size: 0.95em;
 
 <h1 class="title toc-ignore">Differential RNA Expression Analysis</h1>
 <h4 class="author">Bicna Song</h4>
-<h4 class="date">2025-07-30</h4>
+<h4 class="date">2026-03-17</h4>
 
 </div>
 
@@ -729,7 +729,10 @@ write_csv(summary_df, file.path(results_dir, &quot;DE_summary_counts.csv&quot;))
 <div id="volcano-plots-for-de-comparisons" class="section level3">
 <h3>Volcano Plots for DE Comparisons</h3>
 <pre class="r"><code>for (tumor in all_histologies) {
-  comparison_types &lt;- if (tumor == &quot;LGG&quot;) &quot;healthyNormal&quot; else c(&quot;adjNormal&quot;, &quot;healthyNormal&quot;)
+  comparison_types &lt;- if (tumor == &quot;LGG&quot;)
+    &quot;healthyNormal&quot;
+  else
+    c(&quot;adjNormal&quot;, &quot;healthyNormal&quot;)
   
   for (type in comparison_types) {
     file_path &lt;- file.path(results_dir, paste0(&quot;DESeq2_&quot;, tumor, &quot;_vs_&quot;, type, &quot;.csv&quot;))
@@ -739,28 +742,43 @@ write_csv(summary_df, file.path(results_dir, &quot;DE_summary_counts.csv&quot;))
       p_cut &lt;- max(res_df$pvalue[res_df$padj &lt; 0.05], na.rm = TRUE)
       comp_label &lt;- paste(tumor, &quot;vs&quot;, gsub(&quot;Normal&quot;, &quot;normal&quot;, type))
       
-      plot &lt;- EnhancedVolcano(res_df,
-                              lab = rownames(res_df),
-                              x = &quot;log2FoldChange&quot;,
-                              y = &quot;pvalue&quot;,
-                              title = comp_label,
-                              subtitle = NULL,
-                              caption = NULL,
-                              pCutoff = p_cut,
-                              FCcutoff = 2,
-                              pointSize = 3.5,
-                              labSize = 3,
-                              typeConnectors = &quot;closed&quot;,
-                              drawConnectors = TRUE,
-                              widthConnectors = 0.75,
-                              colConnectors = &#39;grey30&#39;,
-                              max.overlaps = 10)
-
-      ggsave(file.path(plot_dir, paste0(&quot;volcano_&quot;, tumor, &quot;_vs_&quot;, type, &quot;.pdf&quot;)),
-             plot = plot, width = 8, height = 6)
+      top_labels &lt;- res_df %&gt;%
+        filter(!is.na(padj)) %&gt;%
+        arrange(padj, desc(abs(log2FoldChange))) %&gt;%
+        slice_head(n = 10) %&gt;%
+        pull(gene_symbol)
+      
+      plot &lt;- EnhancedVolcano(
+        res_df,
+        lab = rownames(res_df),
+        selectLab = top_labels,
+        x = &quot;log2FoldChange&quot;,
+        y = &quot;pvalue&quot;,
+        title = comp_label,
+        subtitle = NULL,
+        caption = NULL,
+        pCutoff = p_cut,
+        FCcutoff = 2,
+        pointSize = 3.5,
+        labSize = 4.5,
+        typeConnectors = &quot;closed&quot;,
+        drawConnectors = TRUE,
+        widthConnectors = 0.75,
+        colConnectors = &#39;grey30&#39;,
+        max.overlaps = 10
+      )
+      
+      ggsave(
+        file.path(plot_dir, paste0(
+          &quot;volcano_&quot;, tumor, &quot;_vs_&quot;, type, &quot;.pdf&quot;
+        )),
+        plot = plot,
+        width = 8,
+        height = 6
+      )
       
     }
-  
+    
   }
   
 }</code></pre>
@@ -991,25 +1009,38 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
     rownames(res_df) &lt;- res_df$gene_symbol %||% rownames(res_df)
     p_cut &lt;- max(res_df$pvalue[res_df$padj &lt; 0.05], na.rm = TRUE)
     comp_label &lt;- paste(tumor, &quot;Paired Analysis&quot;)
-    plot &lt;- EnhancedVolcano(res_df,
-                             lab = rownames(res_df),
-                             x = &quot;log2FoldChange&quot;,
-                             y = &quot;pvalue&quot;,
-                             title = comp_label,
-                             subtitle = NULL,
-                             caption = NULL,
-                             pCutoff = p_cut,
-                             FCcutoff = 2,
-                             pointSize = 3.5,
-                             labSize = 3,
-                             typeConnectors = &quot;closed&quot;,
-                             drawConnectors = TRUE,
-                             widthConnectors = 0.75,
-                             colConnectors = &#39;grey30&#39;,
-                             max.overlaps = 10)
-
-    ggsave(file.path(plot_dir, paste0(&quot;volcano_&quot;, tumor, &quot;_paired.pdf&quot;)),
-           plot = plot, width = 8, height = 6)
+    top_labels &lt;- res_df %&gt;%
+      filter(!is.na(padj)) %&gt;%
+      arrange(padj, desc(abs(log2FoldChange))) %&gt;%
+      slice_head(n = 10) %&gt;%
+      pull(gene_symbol)
+    
+    plot &lt;- EnhancedVolcano(
+      res_df,
+      lab = rownames(res_df),
+      selectLab = top_labels,
+      x = &quot;log2FoldChange&quot;,
+      y = &quot;pvalue&quot;,
+      title = comp_label,
+      subtitle = NULL,
+      caption = NULL,
+      pCutoff = p_cut,
+      FCcutoff = 2,
+      pointSize = 3.5,
+      labSize = 4.5,
+      typeConnectors = &quot;closed&quot;,
+      drawConnectors = TRUE,
+      widthConnectors = 0.75,
+      colConnectors = &#39;grey30&#39;,
+      max.overlaps = 10
+    )
+    
+    ggsave(
+      file.path(plot_dir, paste0(&quot;volcano_&quot;, tumor, &quot;_paired.pdf&quot;)),
+      plot = plot,
+      width = 8,
+      height = 6
+    )
   }
 }</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
@@ -1021,8 +1052,6 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
-<pre><code>## Warning: ggrepel: 1440 unlabeled data points (too many overlaps). Consider
-## increasing max.overlaps</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
@@ -1032,8 +1061,6 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
-<pre><code>## Warning: ggrepel: 1572 unlabeled data points (too many overlaps). Consider
-## increasing max.overlaps</code></pre>
 <pre><code>## Rows: 46838 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
@@ -1043,19 +1070,19 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre><code>## Warning: Setting row names on a tibble is deprecated.</code></pre>
-<pre><code>## Warning: ggrepel: 1019 unlabeled data points (too many overlaps). Consider
+<pre><code>## Warning: ggrepel: 1 unlabeled data points (too many overlaps). Consider
 ## increasing max.overlaps</code></pre>
 </div>
 <div id="session-info" class="section level3">
 <h3>Session Info</h3>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 4.4.0 (2024-04-24)
+<pre><code>## R version 4.5.0 (2025-04-11)
 ## Platform: x86_64-pc-linux-gnu
-## Running under: Ubuntu 22.04.4 LTS
+## Running under: Ubuntu 24.04.2 LTS
 ## 
 ## Matrix products: default
 ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so;  LAPACK version 3.10.0
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -1073,43 +1100,43 @@ write_csv(summary_paired_df, file.path(results_dir, &quot;DE_summary_counts_pair
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] ashr_2.2-63                 EnhancedVolcano_1.22.0     
-##  [3] ggrepel_0.9.5               rprojroot_2.0.4            
-##  [5] lubridate_1.9.3             forcats_1.0.0              
+##  [1] ashr_2.2-63                 EnhancedVolcano_1.26.0     
+##  [3] ggrepel_0.9.6               rprojroot_2.0.4            
+##  [5] lubridate_1.9.4             forcats_1.0.0              
 ##  [7] stringr_1.5.1               dplyr_1.1.4                
-##  [9] purrr_1.0.2                 readr_2.1.5                
-## [11] tidyr_1.3.1                 tibble_3.2.1               
-## [13] ggplot2_3.5.1               tidyverse_2.0.0            
-## [15] DESeq2_1.44.0               SummarizedExperiment_1.34.0
-## [17] Biobase_2.64.0              MatrixGenerics_1.16.0      
-## [19] matrixStats_1.3.0           GenomicRanges_1.56.2       
-## [21] GenomeInfoDb_1.40.1         IRanges_2.38.1             
-## [23] S4Vectors_0.42.1            BiocGenerics_0.50.0        
+##  [9] purrr_1.0.4                 readr_2.1.5                
+## [11] tidyr_1.3.1                 tibble_3.3.0               
+## [13] ggplot2_3.5.2               tidyverse_2.0.0            
+## [15] DESeq2_1.48.2               SummarizedExperiment_1.38.1
+## [17] Biobase_2.68.0              MatrixGenerics_1.20.0      
+## [19] matrixStats_1.5.0           GenomicRanges_1.60.0       
+## [21] GenomeInfoDb_1.44.3         IRanges_2.42.0             
+## [23] S4Vectors_0.46.0            BiocGenerics_0.54.1        
+## [25] generics_0.1.4             
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] tidyselect_1.2.1        farver_2.1.2            fastmap_1.2.0          
-##  [4] digest_0.6.35           timechange_0.3.0        lifecycle_1.0.4        
-##  [7] invgamma_1.1            magrittr_2.0.3          compiler_4.4.0         
-## [10] rlang_1.1.4             sass_0.4.9              tools_4.4.0            
-## [13] utf8_1.2.4              yaml_2.3.8              knitr_1.47             
-## [16] labeling_0.4.3          S4Arrays_1.4.1          bit_4.0.5              
-## [19] DelayedArray_0.30.1     abind_1.4-5             BiocParallel_1.38.0    
-## [22] withr_3.0.0             grid_4.4.0              fansi_1.0.6            
-## [25] colorspace_2.1-0        scales_1.3.0            cli_3.6.2              
-## [28] rmarkdown_2.27          crayon_1.5.2            ragg_1.3.2             
-## [31] generics_0.1.3          rstudioapi_0.16.0       httr_1.4.7             
-## [34] tzdb_0.4.0              cachem_1.1.0            zlibbioc_1.50.0        
-## [37] parallel_4.4.0          XVector_0.44.0          vctrs_0.6.5            
-## [40] Matrix_1.7-0            jsonlite_1.8.8          hms_1.1.3              
-## [43] mixsqp_0.3-54           bit64_4.0.5             irlba_2.3.5.1          
-## [46] systemfonts_1.1.0       locfit_1.5-9.9          jquerylib_0.1.4        
-## [49] glue_1.7.0              codetools_0.2-20        stringi_1.8.4          
-## [52] gtable_0.3.5            UCSC.utils_1.0.0        munsell_0.5.1          
-## [55] pillar_1.9.0            htmltools_0.5.8.1       GenomeInfoDbData_1.2.12
-## [58] truncnorm_1.0-9         R6_2.5.1                textshaping_0.4.0      
-## [61] vroom_1.6.5             evaluate_0.24.0         lattice_0.22-6         
-## [64] SQUAREM_2021.1          bslib_0.7.0             Rcpp_1.0.12            
-## [67] SparseArray_1.4.8       xfun_0.44               pkgconfig_2.0.3</code></pre>
+##  [4] digest_0.6.37           timechange_0.3.0        lifecycle_1.0.4        
+##  [7] invgamma_1.1            magrittr_2.0.3          compiler_4.5.0         
+## [10] rlang_1.1.6             sass_0.4.10             tools_4.5.0            
+## [13] utf8_1.2.6              yaml_2.3.10             knitr_1.50             
+## [16] labeling_0.4.3          S4Arrays_1.8.1          bit_4.6.0              
+## [19] DelayedArray_0.34.1     RColorBrewer_1.1-3      abind_1.4-8            
+## [22] BiocParallel_1.42.2     withr_3.0.2             grid_4.5.0             
+## [25] scales_1.4.0            cli_3.6.5               rmarkdown_2.29         
+## [28] crayon_1.5.3            ragg_1.4.0              rstudioapi_0.17.1      
+## [31] httr_1.4.7              tzdb_0.5.0              cachem_1.1.0           
+## [34] parallel_4.5.0          XVector_0.48.0          vctrs_0.6.5            
+## [37] Matrix_1.7-3            jsonlite_2.0.0          hms_1.1.3              
+## [40] mixsqp_0.3-54           bit64_4.6.0-1           irlba_2.3.5.1          
+## [43] systemfonts_1.2.3       locfit_1.5-9.12         jquerylib_0.1.4        
+## [46] glue_1.8.0              codetools_0.2-20        stringi_1.8.7          
+## [49] gtable_0.3.6            UCSC.utils_1.4.0        pillar_1.10.2          
+## [52] htmltools_0.5.8.1       GenomeInfoDbData_1.2.14 truncnorm_1.0-9        
+## [55] R6_2.6.1                textshaping_1.0.1       vroom_1.6.5            
+## [58] evaluate_1.0.3          lattice_0.22-7          SQUAREM_2021.1         
+## [61] bslib_0.9.0             Rcpp_1.0.14             SparseArray_1.8.1      
+## [64] xfun_0.52               pkgconfig_2.0.3</code></pre>
 </div>
 
 

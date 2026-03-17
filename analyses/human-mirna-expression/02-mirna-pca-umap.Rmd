@@ -139,17 +139,34 @@ dds <- DESeqDataSetFromMatrix(countData = mirna_cts,
 vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
 ```
 
+```{r}
+pca_fmt <- theme_Publication() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold"),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 11),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 10),
+    plot.margin = margin(4, 4, 4, 4)
+  )
+```
+
 ```{r uncorrected-pca}
 # Uncorrected PCA
 p_uncorr <- plotPCA(vsd, intgroup = c("batch", "histology_condition"), returnData = TRUE)
 var_unc  <- round(100 * attr(p_uncorr, "percentVar"))
 P1 <- ggplot(p_uncorr, aes(PC1, PC2, color=histology_condition, shape=batch)) +
-  geom_point(size=3) +
+  geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
-  labs(title = "PCA (Uncorrected)",
-       x = paste0("PC1: ", var_unc[1], "%"),
-       y = paste0("PC2: ", var_unc[2], "%")) +
-  theme_Publication()
+  labs(
+    title = "PCA (Uncorrected)",
+    color = "Condition",
+    shape = "Batch",
+    x = paste0("PC1: ", var_unc[1], "%"),
+    y = paste0("PC2: ", var_unc[2], "%")
+  ) +
+  pca_fmt
+
 print(P1)
 ```
 
@@ -179,12 +196,16 @@ pc_df    <- as.data.frame(pca_corrected$x) %>%
 percentVar_corrected <- round(100 * (pca_corrected$sdev^2 / sum(pca_corrected$sdev^2)))
 
 P2 <- ggplot(pc_df, aes(PC1, PC2, color=histology_condition, shape=batch)) +
-  geom_point(size=3) +
+  geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
-  labs(title = "PCA (Batch Corrected)",
-       x=paste0("PC1: ", percentVar_corrected[1], "%"),
-       y=paste0("PC2: ", percentVar_corrected[2], "%")) +
-  theme_Publication()
+  labs(
+    title = "PCA (Batch Corrected)",
+    color = "Condition",
+    shape = "Batch",
+    x = paste0("PC1: ", percentVar_corrected[1], "%"),
+    y = paste0("PC2: ", percentVar_corrected[2], "%")
+  ) +
+  pca_fmt
 
 print(P2)
 ```
@@ -213,12 +234,17 @@ var_unc_filtered  <- round(100 * attr(p_uncorr, "percentVar"))
 p_uncorr_filtered$external_sample_id <- rownames(p_uncorr_filtered)
 
 P3 <- ggplot(p_uncorr_filtered, aes(PC1, PC2, color = histology_condition, shape = batch)) +
-  geom_point(size=3) +
+  geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
-  labs(title = "PCA (Uncorrected)",
-       x = paste0("PC1: ", var_unc_filtered[1], "%"),
-       y = paste0("PC2: ", var_unc_filtered[2], "%")) +
-  theme_Publication()
+  labs(
+    title = "PCA (Uncorrected)",
+    color = "Condition",
+    shape = "Batch",
+    x = paste0("PC1: ", var_unc_filtered[1], "%"),
+    y = paste0("PC2: ", var_unc_filtered[2], "%")
+  ) +
+  pca_fmt
+
 print(P3)
 ```
 
@@ -243,23 +269,29 @@ vsd_filt <- varianceStabilizingTransformation(dds_filt, blind = FALSE)
 # Run PCA as before on vsd_filt
 pca_uncorr_filt <- plotPCA(vsd_filt, intgroup = c("batch","histology_condition"), returnData = TRUE)
 percentVar_filt <- round(100 * attr(pca_uncorr_filt, "percentVar"))
+
 P4 <- ggplot(pca_uncorr_filt, aes(PC1, PC2, color = histology_condition, shape = batch)) +
   geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
-  labs(title = "PCA (Uncorrected, outlier removed)",
-       x = paste0("PC1: ", percentVar_filt[1], "%"),
-       y = paste0("PC2: ", percentVar_filt[2], "%")) +
-  theme_Publication()
+  labs(
+    title = "PCA (Uncorrected, outlier removed)",
+    color = "Condition",
+    shape = "Batch",
+    x = paste0("PC1: ", percentVar_filt[1], "%"),
+    y = paste0("PC2: ", percentVar_filt[2], "%")
+  ) +
+  pca_fmt
+
 print(P4)
 ```
 
 ### Save PCA plots
 
 ```{r save-pca-plots}
-ggsave(file.path(plot_dir, "mirna-pca-uncorrected.pdf"), plot = P1, width = 8, height = 5)
-ggsave(file.path(plot_dir, "mirna-pca-corrected.pdf"), plot = P2, width = 8, height = 5)
-ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered.pdf"), plot = P3, width = 8, height = 5)
-ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered-outlier-removed.pdf"), plot = P4, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected.pdf"), plot = P1, width = 7, height = 4)
+ggsave(file.path(plot_dir, "mirna-pca-corrected.pdf"), plot = P2, width = 7, height = 4)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered.pdf"), plot = P3, width = 7, height = 4)
+ggsave(file.path(plot_dir, "mirna-pca-uncorrected-filtered-outlier-removed.pdf"), plot = P4, width = 7, height = 4)
 ```
 
 ### PCA: Tumor-Only Analyses
@@ -274,13 +306,19 @@ dds_tum <- DESeqDataSetFromMatrix(tum_cts, colData = tum_df, design = ~ histolog
 vsd_tum <- varianceStabilizingTransformation(dds_tum, blind = FALSE)
 pca_tum <- plotPCA(vsd_tum, intgroup = c("histology","batch"), returnData = TRUE)
 var_tum <- round(100 * attr(pca_tum, "percentVar"))
+
 P5 <- ggplot(pca_tum, aes(PC1, PC2, color=histology, shape=batch)) +
-  geom_point(size=3) +
+  geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
-  labs(title = "PCA: Tumor Only (Uncorrected)",
-       x=paste0("PC1: ", var_tum[1], "%"),
-       y=paste0("PC2: ", var_tum[2], "%")) +
-  theme_Publication()
+  labs(
+    title = "PCA: Tumor Only (Uncorrected)",
+    color = "Condition",
+    shape = "Batch",
+    x = paste0("PC1: ", var_tum[1], "%"),
+    y = paste0("PC2: ", var_tum[2], "%")
+  ) +
+  pca_fmt
+
 print(P5)
 ```
 
@@ -292,21 +330,27 @@ pc_top   <- prcomp(t(assay(vsd_tum)[top500, ]))
 pc_df2   <- as.data.frame(pc_top$x) %>%
   mutate(histology = tum_df$histology, batch = tum_df$batch)
 var2     <- round(100 * (pc_top$sdev^2 / sum(pc_top$sdev^2)))
+
 P6 <- ggplot(pc_df2, aes(PC1, PC2, color=histology, shape=batch)) +
-  geom_point(size=3) +
+  geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
-  labs(title = "PCA: Tumor Only (Batch Corrected)",
-       x=paste0("PC1: ", var2[1], "%"),
-       y=paste0("PC2: ", var2[2], "%")) +
-  theme_Publication()
+  labs(
+    title = "PCA: Tumor Only (Batch Corrected)",
+    color = "Condition",
+    shape = "Batch",
+    x = paste0("PC1: ", var2[1], "%"),
+    y = paste0("PC2: ", var2[2], "%")
+  ) +
+  pca_fmt
+
 print(P6)
 ```
 
 ### Save PCA plots
 
 ```{r save-pca-tumor-only-plots}
-ggsave(file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = P5, width = 8, height = 5)
-ggsave(file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = P6, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-pca-tumor-only-uncorrected.pdf"), plot = P5, width = 7, height = 4)
+ggsave(file.path(plot_dir, "mirna-pca-tumor-only-corrected.pdf"), plot = P6, width = 7, height = 4)
 ```
 
 ### PCA by Tumor Type vs Controls
@@ -316,28 +360,29 @@ tumor_types <- c("DIPG or DMG", "EPN", "LGG", "MB")
 controls    <- c("B1", "B2", "B3", "B4", "B5")
 
 for (tumor in tumor_types) {
-  tumor_samples    <- histology_df %>% filter(histology == tumor & sample_type == "Tumor")
-  adjacent_normals <- histology_df %>% filter(sample_type == "Normal-Tumor Adjacent" & histology == tumor)
+  tumor_samples    <- histology_df %>% filter(histology == tumor &
+                                                sample_type == "Tumor")
+  adjacent_normals <- histology_df %>% filter(sample_type == "Normal-Tumor Adjacent" &
+                                                histology == tumor)
   healthy_normals  <- histology_df %>% filter(external_sample_id %in% controls)
-
+  
   subset_metadata <- bind_rows(tumor_samples, adjacent_normals, healthy_normals)
   subset_cts      <- mirna_cts_n35[, subset_metadata$external_sample_id]
-
+  
   dds_subset <- DESeqDataSetFromMatrix(
     countData = subset_cts,
     colData   = subset_metadata,
     design    = ~ sample_type
   )
   vsd_subset <- varianceStabilizingTransformation(dds_subset, blind = FALSE)
-
+  
   pca_data    <- plotPCA(vsd_subset, intgroup = "sample_type", returnData = TRUE)
   percentVar  <- round(100 * attr(pca_data, "percentVar"))
   pca_data$external_sample_id <- rownames(pca_data)
   
   # look up the matching sample_id in histology_df
-  pca_data$sample_id <- histology_df$sample_id[
-  match(pca_data$external_sample_id, histology_df$external_sample_id)
-  ]
+  pca_data$sample_id <- histology_df$sample_id[match(pca_data$external_sample_id,
+                                                     histology_df$external_sample_id)]
   
   #define color mapping
   col_map <- c(
@@ -349,25 +394,27 @@ for (tumor in tumor_types) {
   # only keep the ones actually present
   present <- unique(pca_data$sample_type)
   col_map <- col_map[present]
-
+  
   p <- ggplot(pca_data, aes(PC1, PC2, color = sample_type)) +
     geom_point(size = 3) +
     scale_color_manual(name = "Sample Type", values = col_map) +
-    geom_text_repel(aes(label = sample_id), size = 3, max.overlaps = 20) +
     labs(
       title = paste("PCA -", tumor, "vs Controls"),
-      x     = paste0("PC1: ", percentVar[1], "% variance"),
-      y     = paste0("PC2: ", percentVar[2], "% variance")
+      color = "Sample Type",
+      x = paste0("PC1: ", percentVar[1], "% variance"),
+      y = paste0("PC2: ", percentVar[2], "% variance")
     ) +
-    theme_Publication()
+    pca_fmt
   
   print(p)
-
+  
   ggsave(
-    filename = file.path(plot_dir, paste0("mirna-pca-", tumor, "-vs-controls.pdf")),
+    filename = file.path(plot_dir, paste0(
+      "mirna-pca-", tumor, "-vs-controls.pdf"
+    )),
     plot     = p,
-    width    = 8,
-    height   = 5
+    width    = 5,
+    height   = 2.5
   )
 }
 ```
@@ -397,8 +444,9 @@ p_umap1 <- ggplot(umap_df, aes(UMAP1, UMAP2, color = histology_condition, shape 
   geom_point(size = 3) +
   scale_color_jco(name = "Condition") +
   labs(title = "UMAP: Condition",
+       shape = "Batch",
        x = "UMAP1", y = "UMAP2") +
-  theme_Publication()
+  pca_fmt
 print(p_umap1)
 
 # Plot: sample type
@@ -406,16 +454,17 @@ p_umap2 <- ggplot(umap_df, aes(UMAP1, UMAP2, color = sample_type, shape = batch)
   geom_point(size = 3) +
   scale_color_jco(name = "Sample Type") +
   labs(title = "UMAP: Sample Type",
+       shape = "Batch",
        x = "UMAP1", y = "UMAP2") +
-  theme_Publication()
+  pca_fmt
 print(p_umap2)
 ```
 
 ### Save UMAP plots
 
 ```{r save-umap-plots}
-ggsave(file.path(plot_dir, "mirna-umap-condition.pdf"), plot = p_umap1, width = 8, height = 5)
-ggsave(file.path(plot_dir, "mirna-umap-sample-type.pdf"), plot = p_umap2, width = 8, height = 5)
+ggsave(file.path(plot_dir, "mirna-umap-condition.pdf"), plot = p_umap1, width = 7, height = 4)
+ggsave(file.path(plot_dir, "mirna-umap-sample-type.pdf"), plot = p_umap2, width = 7, height = 4)
 ```
 
 ### Session Info
