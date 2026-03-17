@@ -202,7 +202,10 @@ write_csv(summary_df, file.path(results_dir, "DE_summary_counts.csv"))
 
 ```{r volcano-plots, message=FALSE, warning=FALSE}
 for (tumor in all_histologies) {
-  comparison_types <- if (tumor == "LGG") "healthyNormal" else c("adjNormal", "healthyNormal")
+  comparison_types <- if (tumor == "LGG")
+    "healthyNormal"
+  else
+    c("adjNormal", "healthyNormal")
   
   for (type in comparison_types) {
     file_path <- file.path(results_dir, paste0("DESeq2_", tumor, "_vs_", type, ".csv"))
@@ -212,28 +215,43 @@ for (tumor in all_histologies) {
       p_cut <- max(res_df$pvalue[res_df$padj < 0.05], na.rm = TRUE)
       comp_label <- paste(tumor, "vs", gsub("Normal", "normal", type))
       
-      plot <- EnhancedVolcano(res_df,
-                              lab = rownames(res_df),
-                              x = "log2FoldChange",
-                              y = "pvalue",
-                              title = comp_label,
-                              subtitle = NULL,
-                              caption = NULL,
-                              pCutoff = p_cut,
-                              FCcutoff = 2,
-                              pointSize = 3.5,
-                              labSize = 3,
-                              typeConnectors = "closed",
-                              drawConnectors = TRUE,
-                              widthConnectors = 0.75,
-                              colConnectors = 'grey30',
-                              max.overlaps = 10)
-
-      ggsave(file.path(plot_dir, paste0("volcano_", tumor, "_vs_", type, ".pdf")),
-             plot = plot, width = 8, height = 6)
+      top_labels <- res_df %>%
+        filter(!is.na(padj)) %>%
+        arrange(padj, desc(abs(log2FoldChange))) %>%
+        slice_head(n = 10) %>%
+        pull(gene_symbol)
+      
+      plot <- EnhancedVolcano(
+        res_df,
+        lab = rownames(res_df),
+        selectLab = top_labels,
+        x = "log2FoldChange",
+        y = "pvalue",
+        title = comp_label,
+        subtitle = NULL,
+        caption = NULL,
+        pCutoff = p_cut,
+        FCcutoff = 2,
+        pointSize = 3.5,
+        labSize = 4.5,
+        typeConnectors = "closed",
+        drawConnectors = TRUE,
+        widthConnectors = 0.75,
+        colConnectors = 'grey30',
+        max.overlaps = 10
+      )
+      
+      ggsave(
+        file.path(plot_dir, paste0(
+          "volcano_", tumor, "_vs_", type, ".pdf"
+        )),
+        plot = plot,
+        width = 8,
+        height = 6
+      )
       
     }
-  
+    
   }
   
 }
@@ -358,25 +376,38 @@ for (tumor in all_histologies) {
     rownames(res_df) <- res_df$gene_symbol %||% rownames(res_df)
     p_cut <- max(res_df$pvalue[res_df$padj < 0.05], na.rm = TRUE)
     comp_label <- paste(tumor, "Paired Analysis")
-    plot <- EnhancedVolcano(res_df,
-                             lab = rownames(res_df),
-                             x = "log2FoldChange",
-                             y = "pvalue",
-                             title = comp_label,
-                             subtitle = NULL,
-                             caption = NULL,
-                             pCutoff = p_cut,
-                             FCcutoff = 2,
-                             pointSize = 3.5,
-                             labSize = 3,
-                             typeConnectors = "closed",
-                             drawConnectors = TRUE,
-                             widthConnectors = 0.75,
-                             colConnectors = 'grey30',
-                             max.overlaps = 10)
-
-    ggsave(file.path(plot_dir, paste0("volcano_", tumor, "_paired.pdf")),
-           plot = plot, width = 8, height = 6)
+    top_labels <- res_df %>%
+      filter(!is.na(padj)) %>%
+      arrange(padj, desc(abs(log2FoldChange))) %>%
+      slice_head(n = 10) %>%
+      pull(gene_symbol)
+    
+    plot <- EnhancedVolcano(
+      res_df,
+      lab = rownames(res_df),
+      selectLab = top_labels,
+      x = "log2FoldChange",
+      y = "pvalue",
+      title = comp_label,
+      subtitle = NULL,
+      caption = NULL,
+      pCutoff = p_cut,
+      FCcutoff = 2,
+      pointSize = 3.5,
+      labSize = 4.5,
+      typeConnectors = "closed",
+      drawConnectors = TRUE,
+      widthConnectors = 0.75,
+      colConnectors = 'grey30',
+      max.overlaps = 10
+    )
+    
+    ggsave(
+      file.path(plot_dir, paste0("volcano_", tumor, "_paired.pdf")),
+      plot = plot,
+      width = 8,
+      height = 6
+    )
   }
 }
 ```
