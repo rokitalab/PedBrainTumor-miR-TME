@@ -33,7 +33,12 @@ de_mirnas <- read_csv(de_results_file) %>%
 mirna_tpm <- mirna_tpm[rownames(mirna_tpm) %in% de_mirnas, , drop = FALSE]
 
 metadata_df <- read_tsv(metadata_file) %>%
-  filter(time %in% c("Day14", "Day21"))
+  filter(time %in% c("Day14", "Day21")) %>%
+  dplyr::mutate(treatment = case_when(
+    treatment == "B7H3" ~ "CAR",
+    treatment == "STOP" ~ "Ctrl CAR",
+    TRUE ~ treatment
+  ))
 
 ### Convert to long format
 tpm_long <- mirna_tpm %>%
@@ -65,11 +70,11 @@ sig_df <- read_csv(de_results_file) %>%
     expr_pattern,
     # decide which adjusted p-value to use
     padj = case_when(
-      expr_pattern %in% c("B7H3 up, Day14", "B7H3 down, Day14") ~
+      expr_pattern %in% c("CAR up, Day14", "CAR down, Day14") ~
         padj_b7h3_vs_untr_Day14,
-      expr_pattern %in% c("B7H3 up, Day21", "B7H3 down, Day21") ~
+      expr_pattern %in% c("CAR up, Day21", "CAR down, Day21") ~
         padj_b7h3_vs_untr_Day21,
-      expr_pattern %in% c("B7H3 up, multiple", "B7H3 down, multiple") ~
+      expr_pattern %in% c("CAR up, multiple", "CAR down, multiple") ~
         pmin(
           padj_b7h3_vs_untr_Day14,
           padj_b7h3_vs_untr_Day21,
@@ -144,16 +149,16 @@ plot_mirna_timecourse <- function(df, mirna, sig_df) {
     ) +
     scale_linetype_manual(
       values = c(
-        "B7H3" = "solid",
-        "STOP" = "dashed",
-        "untreated" = "longdash"
+        "CAR" = "solid",
+        "Ctrl CAR" = "dashed",
+        "Untreated" = "longdash"
       )
     ) +
     scale_color_manual(
       values = c(
-        "B7H3" = "#E64B35FF",
-        "STOP" = "#4DBBD5FF",
-        "untreated" = "#00A087FF"
+        "CAR" = "#E64B35FF",
+        "Ctrl CAR" = "#4DBBD5FF",
+        "Untreated" = "#00A087FF"
       )
     ) +
     guides(linetype = "none") +

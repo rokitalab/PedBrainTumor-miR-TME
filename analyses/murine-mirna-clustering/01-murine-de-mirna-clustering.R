@@ -36,7 +36,7 @@ histology_file <- file.path(root_dir, "analyses",
 mirna_cts <- read_csv(mirna_cts_file) %>%
   column_to_rownames("...1") %>% 
   dplyr::select(-`Day14-Tube1`) %>%
-  select(-matches("Day28"))
+  dplyr::select(-matches("Day28"))
   
 names(mirna_cts) <- str_replace(names(mirna_cts), "RESUB-", "")
 mirna_cts <- mirna_cts[rowSums(mirna_cts != 0) >= 5, ]
@@ -65,7 +65,12 @@ mirna_tpm <- log2(as.matrix(mirna_tpm) + 1)
 
 ### Metadata
 histology_df <- read_delim(histology_file, show_col_types = FALSE) %>%
-  filter(time != "Day28")
+  filter(time != "Day28") %>%
+  dplyr::mutate(treatment = case_when(
+    treatment == "B7H3" ~ "CAR",
+    treatment == "STOP" ~ "Ctrl CAR",
+    TRUE ~ treatment
+  ))
 
 ### Normalize (Z-score)
 miRNA_zscores <- t(scale(t(mirna_tpm)))
@@ -81,8 +86,8 @@ sig_DE_miRNA_list <- DE_miRNA_list %>%
                                         c("Day 14" = "Day14",
                                           "Day 21" = "Day21",
                                           "Day 28" = "Day28"))) %>%
-  filter(expr_pattern %in% c("B7H3 down, Day14","B7H3 down, Day21", "B7H3 down, multiple",
-                             "B7H3 up, Day14", "B7H3 up, Day21", "B7H3 up, multiple")) %>%
+  filter(expr_pattern %in% c("CAR down, Day14","CAR down, Day21", "CAR down, multiple",
+                             "CAR up, Day14", "CAR up, Day21", "CAR up, multiple")) %>%
   filter(mirna_id != "NovelmiRNA-1146")
 
 write_csv(sig_DE_miRNA_list, file.path(results_dir, "mouse_sig_DE_miRNA_list.csv"))
@@ -95,14 +100,14 @@ miRNA_expr_sub <- miRNA_zscores[rownames(miRNA_zscores) %in% de_mirnas, , drop=F
 # Expression pattern
 expr_cols <- c(
   # Downregulated (blue shades)
-  "B7H3 down, Day14"   = "#08306B",  # dark navy blue
-  "B7H3 down, Day21"   = "#2171B5",  # medium blue
-  "B7H3 down, multiple" = "#6BAED6",  # light blue
+  "CAR down, Day14"   = "#08306B",  # dark navy blue
+  "CAR down, Day21"   = "#2171B5",  # medium blue
+  "CAR down, multiple" = "#6BAED6",  # light blue
   
   # Upregulated (red shades)
-  "B7H3 up, Day14"     = "#67000D",  # dark crimson
-  "B7H3 up, Day21"     = "#CB181D",  # strong red
-  "B7H3 up, multiple"   = "#FB6A4A"   # salmon red
+  "CAR up, Day14"     = "#67000D",  # dark crimson
+  "CAR up, Day21"     = "#CB181D",  # strong red
+  "CAR up, multiple"   = "#FB6A4A"   # salmon red
 )
 
 # Time
@@ -113,9 +118,9 @@ time_cols <- c(
 
 # Treatment
 treatment_cols <- c(
-  "B7H3"      = "#E64B35FF",
-  "STOP"      = "#4DBBD5FF",
-  "untreated" = "#00A087FF"
+  "CAR"      = "#E64B35FF",
+  "Ctrl CAR"      = "#4DBBD5FF",
+  "Untreated" = "#00A087FF"
 )
 
 # Annotation
@@ -138,7 +143,8 @@ ra_left <- rowAnnotation(
   Annotated = mirna_anno$Annotated,
   `Expression pattern` = mirna_anno$expr_pattern,
   col = anno_cols[c("Annotated", "Expression pattern")],
-  annotation_name_gp = gpar(fontsize = 10)
+  annotation_name_gp = gpar(fontsize = 10),
+  annotation_name_side = "top"
 )
 
 ha_all <- HeatmapAnnotation(
@@ -175,7 +181,10 @@ mirna_ht <- Heatmap(
 )
  
 pdf(file.path(plot_dir, glue::glue("de-mirna-heatmap.pdf")), width = 8, height = 8)
-mirna_ht <- draw(mirna_ht)
+mirna_ht <- draw(mirna_ht,
+                 heatmap_legend_side = "right",
+                 annotation_legend_side = "right",
+                 merge_legends = TRUE)
 dev.off()
 
 # create miRNA df that includes cluster assignment
@@ -210,10 +219,10 @@ for (day in c("Day14", "Day21")) {
   # Filter miRNAs specific to this time point
   de_mirna_list_time <- sig_DE_miRNA_list %>%
     filter(expr_pattern %in% c(
-      paste("B7H3 down,", day),
-      "B7H3 down, multiple",
-      paste("B7H3 up,", day),
-      "B7H3 up, multiple"
+      paste("CAR down,", day),
+      "CAR down, multiple",
+      paste("CAR up,", day),
+      "CAR up, multiple"
     ))
   
   de_mirnas <- de_mirna_list_time$mirna_id

@@ -256,8 +256,8 @@ for (timepoint in timepoints){
               by = "mirna_id") %>%
     # define B7H3-upregulated and -downregulated miRNAs as those DE in B7H3 versus untreated ONLY, and NOT DE in same dir in STOP versus untreated comparison 
     dplyr::mutate(status = case_when(
-      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr > 0 & (padj_stop_vs_untr > 0.1 | log2FoldChange_stop_vs_untr < 0) ~ "B7H3 upregulated",
-      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr < 0 & (padj_stop_vs_untr > 0.1  | log2FoldChange_stop_vs_untr > 0) ~ "B7H3 downregulated",
+      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr > 0 & (padj_stop_vs_untr > 0.1 | log2FoldChange_stop_vs_untr < 0) ~ "CAR upregulated",
+      padj_b7h3_vs_untr < 0.1 & log2FoldChange_b7h3_vs_untr < 0 & (padj_stop_vs_untr > 0.1  | log2FoldChange_stop_vs_untr > 0) ~ "CAR downregulated",
       TRUE ~ "Not DE"
     ))
   
@@ -280,14 +280,14 @@ res_all <- res[["Day14"]] %>%
             by = "mirna_id") %>%
   # group miRNAs by differential expression patterns
   dplyr::mutate(expr_pattern = case_when(
-    status_Day14 == "B7H3 upregulated" & status_Day21 == "Not DE" & status_Day28 == "Not DE" ~ "B7H3 up, Day 14",
-    status_Day14 == "Not DE" & status_Day21 == "B7H3 upregulated" & status_Day28 == "Not DE" ~ "B7H3 up, Day 21",
-    status_Day14 == "Not DE" & status_Day21 == "Not DE" & status_Day28 == "B7H3 upregulated" ~ "B7H3 up, Day 28",
-    status_Day14 == "B7H3 downregulated" & status_Day21 == "Not DE" & status_Day28 == "Not DE" ~ "B7H3 down, Day 14",
-    status_Day14 == "Not DE" & status_Day21 == "B7H3 downregulated" & status_Day28 == "Not DE" ~ "B7H3 down, Day 21",
-    status_Day14 == "Not DE" & status_Day21 == "Not DE" & status_Day28 == "B7H3 downregulated" ~ "B7H3 down, Day 28",
-    (status_Day14 == "B7H3 upregulated" & status_Day21 == "B7H3 upregulated") | (status_Day14 == "B7H3 upregulated" & status_Day28 == "B7H3 upregulated") | (status_Day21 == "B7H3 upregulated" & status_Day28 == "B7H3 upregulated") ~ "B7H3 up, multiple",
-    (status_Day14 == "B7H3 downregulated" & status_Day21 == "B7H3 downregulated") | (status_Day14 == "B7H3 downregulated" & status_Day28 == "B7H3 downregulated") | (status_Day21 == "B7H3 downregulated" & status_Day28 == "B7H3 downregulated") ~ "B7H3 down, multiple",
+    status_Day14 == "CAR upregulated" & status_Day21 == "Not DE" & status_Day28 == "Not DE" ~ "CAR up, Day 14",
+    status_Day14 == "Not DE" & status_Day21 == "CAR upregulated" & status_Day28 == "Not DE" ~ "CAR up, Day 21",
+    status_Day14 == "Not DE" & status_Day21 == "Not DE" & status_Day28 == "CAR upregulated" ~ "CAR up, Day 28",
+    status_Day14 == "CAR downregulated" & status_Day21 == "Not DE" & status_Day28 == "Not DE" ~ "CAR down, Day 14",
+    status_Day14 == "Not DE" & status_Day21 == "CAR downregulated" & status_Day28 == "Not DE" ~ "CAR down, Day 21",
+    status_Day14 == "Not DE" & status_Day21 == "Not DE" & status_Day28 == "CAR downregulated" ~ "CAR down, Day 28",
+    (status_Day14 == "CAR upregulated" & status_Day21 == "CAR upregulated") | (status_Day14 == "CAR upregulated" & status_Day28 == "CAR upregulated") | (status_Day21 == "CAR upregulated" & status_Day28 == "CAR upregulated") ~ "CAR up, multiple",
+    (status_Day14 == "CAR downregulated" & status_Day21 == "CAR downregulated") | (status_Day14 == "CAR downregulated" & status_Day28 == "CAR downregulated") | (status_Day21 == "CAR downregulated" & status_Day28 == "CAR downregulated") ~ "CAR down, multiple",
     status_Day14 != "Not DE" | status_Day21 != "Not DE" | status_Day28 != "Not DE" ~ "Other DE",
     TRUE ~ "Not DE"
   ))
@@ -297,14 +297,14 @@ Print miRNAs DE at multiple time points
 
 ```{r print multi up}
 res_all %>%
-  dplyr::filter(expr_pattern == "B7H3 up, multiple") %>%
+  dplyr::filter(expr_pattern == "CAR up, multiple") %>%
   dplyr::select(mirna_id, status_Day14,
                 status_Day21, status_Day28)
 ```
 
 ```{r print multi down}
 res_all %>%
-  dplyr::filter(expr_pattern == "B7H3 down, multiple") %>%
+  dplyr::filter(expr_pattern == "CAR down, multiple") %>%
   dplyr::select(mirna_id, status_Day14,
                 status_Day21, status_Day28)
 ```
