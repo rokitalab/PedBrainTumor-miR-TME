@@ -223,7 +223,7 @@ for (i in 1:nrow(de_target_df)){
       labs(x = glue::glue("{mirna}\nlog2-TPM"),
            y = glue::glue("{target}\nlog2-TPM"),
            color = "Treatment",
-           shape = "Timepoint") + 
+           shape = "Time") + 
       stat_cor(method = "pearson",
                label.x.npc = "center", 
                label.y.npc = "top", size = 2.25,
