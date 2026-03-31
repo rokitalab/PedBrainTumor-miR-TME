@@ -1,0 +1,250 @@
+---
+title: 'B7H3 DE miRNA - immune target correlation analysis'
+output: 
+  html_document:
+  toc: TRUE
+toc_float: TRUE
+author: Ryan Corbett, Bicna Song
+date: "`r Sys.Date()`"
+---
+
+This script performs the following:  
+
+1. Identifies B7H3 upregulated genes associated with enriched, CAR T therapy response GO terms
+2. Identifies DE miRNAs that are predicted to target genes above, and that are downregualted in B7H3
+3. Calculates correlation coefficients between miRNA-target pairs identified above
+3. Plots most significant correlations
+
+Load packages
+
+```{r load packages}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(ggsci)
+```
+
+Set directory paths
+
+```{r dir paths}
+root_dir <- rprojroot::find_root(rprojroot::has_dir(".git"))
+
+data_dir <- file.path(root_dir, "data")
+analysis_dir <- file.path(root_dir, "analyses", "murine-rna-expression")
+results_dir <- file.path(analysis_dir, "results")
+plot_dir <- file.path(analysis_dir, "plots")
+
+source(file.path(root_dir, "figures", "theme.R"))
+```
+
+Set file paths
+
+```{r}
+de_mirna_file <- file.path(root_dir, "analyses",
+                           "murine-mirna-differential-expression",
+                           "results",
+                           "mirna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv")
+
+de_rna_file <- file.path(root_dir, "analyses",
+                           "murine-rna-expression",
+                           "results",
+                           "rna-differential-expression-deseq2-b7h3-stop-vs-untreated-by-timepoint.tsv")
+
+mirna_target_file <- file.path(root_dir, "analyses", 
+                               "murine-novel-mirna-target-prediction",
+                               "results",
+                               "mouse_miranda_output_parsed_anno.csv")
+
+d14_up_go_file <- file.path(results_dir, 
+                            "b7h3_up_d14-enriched-go-terms.tsv")
+
+d21_up_go_file <- file.path(results_dir, 
+                            "b7h3_up_d21-enriched-go-terms.tsv")
+
+mirna_tpm_file <- file.path(root_dir, "analyses",
+                            "murine-mirna-clustering",
+                            "results",
+                            "murine-mirna-tpm.rds")
+
+rna_tpm_file <- file.path(data_dir, 
+                          "mouse-gene-expression-rsem-tpm-collapsed.rds")
+
+meta_file <- file.path(root_dir, "analyses",
+                       "murine-rna-expression",
+                       "input",
+                       "Haydar_Mouse_RNA_miRNA_manifest_IDs_assigned.tsv")
+```
+
+Wrangle data
+
+```{r}
+# DE miRNA and gene results
+de_mirna_df <- read_tsv(de_mirna_file) %>%
+  dplyr::filter(expr_pattern != "Not DE") 
+
+de_rna_df <- read_tsv(de_rna_file)
+
+# miRNA target df
+mirna_target_df <- read_csv(mirna_target_file) %>%
+  # filter for high confidence targets
+  filter(Max_Score >= 145, Max_Energy <= -20,
+        GeneSymbol %in% de_rna_df$gene_symbol)
+
+# GO enrichment results
+d14_up_go_res <- read_tsv(d14_up_go_file)
+
+d21_up_go_res <- read_tsv(d21_up_go_file)
+```
+
+Filter GO enrichment results for immune response terms, and extract DEGs per term
+
+```{r}
+keywords <- "immunity|granzyme|T cell|immune|leukocyte|lymphocyte|myeloid|monocyte|chemokine|cytokine|inflammatory|cell killing|chemotaxis|T-helper|toll-like|inflammasome|natural killer|transforming growth factor beta|MHC|antigen|IP-10|interleukin|interferon|thymocyte|macrophage|B cell"
+
+d14_up_immune_go <- d14_up_go_res %>%
+  dplyr::filter(grepl(keywords, Term))
+
+d14_up_immune_genes <- unique(unlist(strsplit(d14_up_immune_go$DEGs, ", ")))
+
+d21_up_immune_go <- d21_up_go_res %>%
+  dplyr::filter(grepl(keywords, Term))
+
+d21_up_immune_genes <- unique(unlist(strsplit(d21_up_immune_go$DEGs, ", ")))
+```
+
+Identify downregulated miRNAs predictd to target any of the d14 or d21 upregulated genes
+
+```{r}
+down_mirnas <- de_mirna_df %>%
+  dplyr::filter(grepl("down, Day 14|down, Day 21", expr_pattern)) %>%
+  pull(mirna_id)
+
+
+de_target_df <- mirna_target_df %>% 
+  dplyr::filter(GeneSymbol %in% c(d14_up_immune_genes,
+                                  d21_up_immune_genes),
+                Seq1 %in% down_mirnas) %>%
+  distinct(Seq1, GeneSymbol, .keep_all = TRUE)
+```
+
+Load expression matrices
+
+```{r}
+mirna_tpm_mat <- readRDS(mirna_tpm_file)
+
+rna_tpm_mat <- readRDS(rna_tpm_file) 
+names(rna_tpm_mat) <- str_remove(names(rna_tpm_mat), "_[^_]+$")
+```
+
+Load sample metadata to match RNA IDs to miRNA IDs for correlation analyses
+
+```{r}
+meta_df <- read_tsv(meta_file)
+
+match_df <- meta_df %>% 
+  # create ID columns for matching
+  dplyr::mutate(id = glue::glue("{Day}_{Treatment}_{external_aliquot_id}")) %>%
+  # pull miRNA data
+  dplyr::filter(experimental_strategy == "miRNA-Seq",
+                !grepl("28", external_sample_id),
+                external_sample_id != "Day14-Tube1") %>%
+  distinct(id, external_sample_id) %>%
+  dplyr::rename(mirna_id = external_sample_id) %>%
+  # Join RNA sample data
+  left_join(meta_df %>%
+              dplyr::filter(experimental_strategy == "RNA-Seq",
+                !grepl("28", external_sample_id)) %>%
+              dplyr::mutate(id = glue::glue("{Day}_{Treatment}_{external_aliquot_id}")) %>%
+                distinct(id, Bioassay_ID)) %>%
+  dplyr::rename(rna_id = Bioassay_ID) %>%
+  # filter for samples without matched miRNA & RNA-seq
+  dplyr::filter(!is.na(mirna_id) & !is.na(rna_id)) %>%
+  # define trt & timepoint columns
+  dplyr::mutate(Timepoint = unlist(lapply(strsplit(mirna_id, "-"), function(x) x[[1]])),
+                Treatment = case_when(
+                  grepl("STOP", id) ~ "Ctrl CAR",
+                  grepl("B7H3", id) ~ "CAR",
+                  grepl("Untreated", id) ~ "Untreated"
+                ))
+
+# order miRNA and RNA tpm columns to match for correlation analyses
+mirna_tpm_mat <- mirna_tpm_mat %>%
+  dplyr::select(any_of(match_df$mirna_id))
+
+rna_tpm_mat <- rna_tpm_mat %>%
+  dplyr::select(any_of(match_df$rna_id))
+```
+
+Run correlation analyses
+
+```{r}
+de_target_df <- de_target_df %>%
+  dplyr::mutate(pearson_r = NA_integer_,
+                pearson_p = NA_integer_)
+
+# Loop through rows of target df
+for (i in 1:nrow(de_target_df)){
+  
+  mirna <- de_target_df$Seq1[i]
+  target <- de_target_df$GeneSymbol[i]
+  
+  #pull tpms
+  mirna_tpms <- log2(unlist(mirna_tpm_mat[mirna,] + 1))
+  target_tpms <- log2(unlist(rna_tpm_mat[target,] + 1))
+  
+  # calculate pearson correlation coefficients and p-values
+  de_target_df$pearson_r[i] <- cor.test(mirna_tpms,
+                                        target_tpms,
+                                        method = "pearson")$estimate
+  de_target_df$pearson_p[i] <- cor.test(mirna_tpms,
+                                      target_tpms,
+                                        method = "pearson")$p.value
+  
+  # plot most significant correlations
+  if (de_target_df$pearson_p[i] < 6e-4){
+    
+    plot_df <- match_df %>%
+      dplyr::mutate(mirna_tpm = mirna_tpms,
+                    target_tpm = target_tpms)
+    
+    plot_df %>%
+      
+      ggplot(aes(x = mirna_tpm, y = target_tpm)) +
+      geom_point(aes(color = Treatment,
+                     shape = Timepoint),
+                 show.legend = TRUE) +
+      stat_smooth(method = "lm", 
+                  formula = y ~ x, 
+                  geom = "smooth", 
+                  colour = "red",
+                  fill = "pink",
+                  linetype="dashed") +
+      labs(x = glue::glue("{mirna}\nlog2-TPM"),
+           y = glue::glue("{target}\nlog2-TPM"),
+           color = "Treatment",
+           shape = "Time") + 
+      stat_cor(method = "pearson",
+               label.x.npc = "center", 
+               label.y.npc = "top", size = 2.25,
+               p.digits = 3) +
+      scale_color_npg() +
+      theme_Publication()
+    
+    ggsave(file.path(plot_dir,
+                     glue::glue("{mirna}-{target}-tpm-dotplot.pdf")),
+           width = 4.5, height = 3)
+    
+  }
+  
+}
+
+de_target_df <- de_target_df %>%
+  dplyr::mutate(pearson_fdr = p.adjust(pearson_p, method = "BH"))
+```
+
+Print session info
+```{r}
+sessionInfo()
+```
+
