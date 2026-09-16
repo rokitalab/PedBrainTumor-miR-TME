@@ -83,7 +83,7 @@ for (file in dmg_clust6_go_files){
 }
 
 # define key words used to further filter results for plotting
-plot_keywords <- "MHC|antigen|myeloid|T cell selection|T cell activation|cytotoxicity|T cell proliferation|natural killer|interferon-alpha|interferon-beta|macrophage|interleukin-12 production"
+plot_keywords <- "MHC|antigen|myeloid|T cell selection|T cell activation|T cell cytokine production|T cell mediated immunity|cytotoxicity|T cell proliferation|natural killer|interferon-alpha|interferon-beta|macrophage|interleukin-12 production"
 
 # define plotting df
 plot_df <- merged_filtered_go_df %>%
@@ -130,7 +130,7 @@ plot_df %>%
 # save plot
 ggsave(file.path(plot_dir,
                  "DIPG-DMG-cluster-6-immune-go-term-dotplot.pdf"),
-       width = 14, height = 9)
+       width = 14, height = 9.5)
 
 
 # save full and reduced merged GO enrichment tables

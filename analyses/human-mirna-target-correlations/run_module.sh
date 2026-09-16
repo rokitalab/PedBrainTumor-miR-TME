@@ -16,3 +16,9 @@ Rscript --vanilla 03-mb-cluster1-mirna-target-interactions.R
 
 # Plot significant associations in MB by immune cell process
 Rscript --vanilla 04-mb-cluster1-mirna-target-dotplot.R
+
+# Correlate DMG cluster 6 miRNA and immune-pathway target expression
+Rscript --vanilla 05-dmg-cluster6-mirna-target-pathway-correlations.R
+
+# Correlate MB cluster 1 miRNA and immune-pathway target expression
+Rscript --vanilla 06-mb-cluster1-mirna-target-pathway-correlations.R
