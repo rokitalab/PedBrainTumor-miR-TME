@@ -60,7 +60,7 @@ immune_keywords <- paste(
 excluded_go_terms <- "MAPK cascade|cytokinesis"
 
 # Identify upregulated DMG cluster 6 miRNAs.
-cluster6_mirnas <- read_tsv(dmg_cluster_file, show_col_types = FALSE) %>%
+cluster6_mirnas <- read_tsv(dmg_cluster_file) %>%
   filter(row_cluster == 6, direction == "up") %>%
   pull(miRNA) %>%
   unique()
@@ -75,7 +75,7 @@ go_files <- list.files(
 immune_go_terms <- tibble(go_file = go_files) %>%
   mutate(miRNA = str_remove(basename(go_file), "-DIPG or DMG-shared-GO-BP_all\\.tsv$")) %>%
   filter(miRNA %in% cluster6_mirnas) %>%
-  mutate(go_data = map(go_file, ~ read_tsv(.x, show_col_types = FALSE))) %>%
+  mutate(go_data = map(go_file, ~ read_tsv(.x))) %>%
   dplyr::select(-go_file) %>%
   unnest(go_data) %>%
   filter(str_detect(Term, immune_keywords),
@@ -88,7 +88,7 @@ immune_go_terms <- tibble(go_file = go_files) %>%
 # to each enriched term.  Keep the two DE contrasts separate in the output.
 target_de <- imap_dfr(
   target_de_files,
-  ~ read_tsv(.x, show_col_types = FALSE) %>% mutate(contrast = .y)
+  ~ read_tsv(.x) %>% mutate(contrast = .y)
 )
 
 term_target_genes <- immune_go_terms %>%
@@ -109,7 +109,7 @@ pathway_targets <- term_target_genes %>%
 
 # Match DMG tumor miRNA-seq and RNA-seq samples by their external sample ID.
 # This prevents relying on separate sort orders for the two TPM matrices.
-histologies <- read_tsv(histologies_file, show_col_types = FALSE)
+histologies <- read_tsv(histologies_file)
 mirna_tpm <- readRDS(mirna_tpm_file)
 target_tpm <- readRDS(target_tpm_file)
 
@@ -244,7 +244,7 @@ for (i in seq_len(nrow(significant_correlations))) {
       title = str_wrap(correlation_row$Term, width = 25),
       subtitle = paste0(correlation_row$miRNA,
                         "\nPearson r = ", round(correlation_row$pearson_r, 2),
-                        "; p = ", signif(correlation_row$pearson_p, 3)),
+                        "; p = ", signif(correlation_row$pearson_fdr_within_mirna, 3)),
       x = "log2(miRNA TPM)",
       y = "log2(mean target TPM)"
     ) +

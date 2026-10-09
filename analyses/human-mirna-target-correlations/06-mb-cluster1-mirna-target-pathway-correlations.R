@@ -49,10 +49,10 @@ excluded_go_terms <- "MAPK cascade|cytokinesis"
 
 # The direction filter retains the miRNAs whose higher MB expression is
 # expected to be inversely related to target expression.
-cluster1_mirnas <- read_tsv(cluster_file, show_col_types = FALSE) %>%
+cluster1_mirnas <- read_tsv(cluster_file) %>%
   filter(row_cluster == 1, direction == "up") %>%
-  pull(miRNA) %>%
-  unique()
+  distinct(miRNA) %>%
+  pull(miRNA)
 
 if (length(cluster1_mirnas) == 0) {
   stop("No upregulated MB cluster 1 miRNAs were found in the cluster table.")
@@ -64,7 +64,7 @@ go_files <- list.files(file.path(go_analysis_dir, "results"),
 immune_go_terms <- tibble(go_file = go_files) %>%
   mutate(miRNA = str_remove(basename(go_file), "-MB-shared-GO-BP_all\\.tsv$")) %>%
   filter(miRNA %in% cluster1_mirnas) %>%
-  mutate(go_data = map(go_file, ~ read_tsv(.x, show_col_types = FALSE))) %>%
+  mutate(go_data = map(go_file, ~ read_tsv(.x))) %>%
   dplyr::select(-go_file) %>%
   unnest(go_data) %>%
   filter(str_detect(Term, regex(immune_keywords, ignore_case = TRUE)),
@@ -78,7 +78,7 @@ if (nrow(immune_go_terms) == 0) {
 
 # Genes in GO tables are annotations. Intersect them with the per-miRNA DE
 # target lists to retain the targets contributing to each enrichment result.
-target_de <- imap_dfr(target_de_files, ~ read_tsv(.x, show_col_types = FALSE) %>%
+target_de <- imap_dfr(target_de_files, ~ read_tsv(.x) %>%
                         mutate(contrast = .y))
 
 term_target_genes <- immune_go_terms %>%
@@ -99,7 +99,7 @@ if (nrow(pathway_targets) == 0) {
 
 # Match assays by external sample ID rather than relying on independently
 # sorted TPM columns.
-histologies <- read_tsv(histologies_file, show_col_types = FALSE)
+histologies <- read_tsv(histologies_file)
 mirna_tpm <- readRDS(mirna_tpm_file)
 target_tpm <- readRDS(target_tpm_file)
 
@@ -189,9 +189,9 @@ for (i in seq_len(nrow(significant_correlations))) {
     geom_point(size = 2.5, alpha = 0.85) +
     geom_smooth(method = "lm", se = FALSE, colour = "darkred") +
     labs(title = str_wrap(correlation_row$Term, width = 25),
-         subtitle = paste0(correlation_row$miRNA, "\\nPearson r = ",
+         subtitle = paste0(correlation_row$miRNA, "\nPearson r = ",
                            round(correlation_row$pearson_r, 2), "; p = ",
-                           signif(correlation_row$pearson_p, 3)),
+                           signif(correlation_row$pearson_fdr_within_mirna, 3)),
          x = "log2(miRNA TPM)", y = "log2(mean target TPM)") +
     theme_Publication() +
     theme(plot.title = element_text(size = rel(0.85)),

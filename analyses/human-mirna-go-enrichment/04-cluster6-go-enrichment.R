@@ -106,7 +106,7 @@ plot_df <- merged_filtered_go_df %>%
                                     rev(mixedsort(unique(miRNA)))))
 
 # generate dot plot
-plot_df %>% 
+p <- plot_df %>% 
   ggplot(aes(x = miRNA, y = Term,
              size = gene_ratio,
              colour = -log10(classicFisher))) +
@@ -130,6 +130,7 @@ plot_df %>%
 # save plot
 ggsave(file.path(plot_dir,
                  "DIPG-DMG-cluster-6-immune-go-term-dotplot.pdf"),
+       plot = p, 
        width = 14, height = 9.5)
 
 
