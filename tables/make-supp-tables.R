@@ -477,6 +477,31 @@ if (!all(vapply(table_s2_sheets, function(sheet) {
 table_s2_path <- file.path(tables_dir, "TableS2.xlsx")
 write_xlsx(table_s2_sheets, table_s2_path)
 
+# Read the shared oncogenic/tumor-suppressive reference for Tables S3 and S4.
+table_s4_input_path <- file.path(tables_input_dir, "onco-ts-mirs.tsv")
+if (!file.exists(table_s4_input_path)) {
+  table_s4_input_path <- file.path(tables_input_dir, "onco-ts-mirs.txt")
+}
+if (!file.exists(table_s4_input_path)) {
+  stop("Missing oncogenic/tumor-suppressive miRNA input file: ",
+       table_s4_input_path)
+}
+table_s4 <- read_tsv(table_s4_input_path)
+required_annotation_columns <- c("human_miRNA_id", "class")
+if (!all(required_annotation_columns %in% names(table_s4))) {
+  stop("Missing required miRNA annotation columns: ",
+       paste(setdiff(required_annotation_columns, names(table_s4)),
+             collapse = ", "))
+}
+human_mirna_annotations <- unique(table_s4[
+  !is.na(table_s4$human_miRNA_id) & nzchar(table_s4$human_miRNA_id),
+  required_annotation_columns,
+  drop = FALSE
+])
+if (anyDuplicated(human_mirna_annotations$human_miRNA_id)) {
+  stop("Conflicting classes for human miRNA IDs in ", table_s4_input_path)
+}
+
 table_s3_files <- c(
   "DIPG or DMG" = "DIPG or DMG-de-mirna-cluster-membership-immune-scores.tsv",
   "Medulloblastoma" = "MB-de-mirna-cluster-membership-immune-scores.tsv"
@@ -502,6 +527,10 @@ table_s3_sheets <- lapply(seq_along(table_s3_sources), function(index) {
   for (column in columns_after_first_four) {
     names(source)[names(source) == column] <- paste0(column, "-correlation")
   }
+  # Match mature human IDs exactly, preserving row order and unlisted miRNAs.
+  source[["OncomiR/TS miRNA"]] <- human_mirna_annotations$class[
+    match(source$miRNA, human_mirna_annotations$human_miRNA_id)
+  ]
   source
 })
 names(table_s3_sheets) <- names(table_s3_files)
@@ -521,14 +550,6 @@ message(length(secondary_only_ids),
         " unique sample_id(s) were found only in the CBTN CSV.")
 
 # Table S4: oncogenic and tumor-suppressive miRNAs.
-table_s4_input_path <- file.path(tables_input_dir, "onco-ts-mirs.tsv")
-if (!file.exists(table_s4_input_path)) {
-  table_s4_input_path <- file.path(tables_input_dir, "onco-ts-mirs.txt")
-}
-if (!file.exists(table_s4_input_path)) {
-  stop("Missing Table S4 input file: ", table_s4_input_path)
-}
-table_s4 <- read_tsv(table_s4_input_path)
 table_s4_path <- file.path(tables_dir, "TableS4.xlsx")
 write_xlsx(list(S4 = table_s4), table_s4_path)
 message("Wrote ", table_s4_path, " with ", nrow(table_s4), " rows and ",
