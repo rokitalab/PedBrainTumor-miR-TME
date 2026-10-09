@@ -1,5 +1,10 @@
-# Pan-pediatric brain tumor microRNA networks shape immune and neuronal tumor microenvironments and influence CAR T-cell therapy response
+# Pan-pediatric brain tumor microRNA networks define immune microenvironment states and responses to CAR T-cell therapy
 
+Kaleem Coleman^, Ryan Corbett^, Zhongzhen Yi, Bicna Song, Alex Sickler, Aylar Babaei, Jo Lynne Rokita+, Dalia Haydar+*
+
+^ equal authorship
++ co-senior authors
+* correspondence: Dalia Haydar, dhaydar@childrensnational.org
 
 ## To reproduce the code in this repository:
 This repository contains a docker image and code used to conduct analyses
