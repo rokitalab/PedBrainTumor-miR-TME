@@ -288,7 +288,7 @@ histologies <- histologies[
   drop = FALSE
 ]
 
-xlsx_path <- file.path(tables_dir, "TableS1.xlsx")
+xlsx_path <- file.path(tables_dir, "results","TableS1.xlsx")
 write_xlsx <- function(sheets, path, na_rep = "") {
   if (is.data.frame(sheets)) {
     sheets <- list(Sheet1 = sheets)
@@ -477,7 +477,7 @@ if (!all(vapply(table_s2_sheets, function(sheet) {
 }, logical(1)))) {
   stop("The Table S2 input files do not all have the same columns.")
 }
-table_s2_path <- file.path(tables_dir, "TableS2.xlsx")
+table_s2_path <- file.path(tables_dir, "results", "TableS2.xlsx")
 write_xlsx(table_s2_sheets, table_s2_path)
 
 # Read the shared oncogenic/tumor-suppressive reference for Tables S3 and S4.
@@ -490,6 +490,7 @@ if (!file.exists(table_s4_input_path)) {
        table_s4_input_path)
 }
 table_s4 <- read_tsv(table_s4_input_path,
+                     skip = 1,
                      col_names = c("miRNA",
                                    "human_miRNA_id",
                                    "mouse_miRNA_id",
@@ -542,7 +543,7 @@ table_s3_sheets <- lapply(seq_along(table_s3_sources), function(index) {
   source
 })
 names(table_s3_sheets) <- names(table_s3_files)
-table_s3_path <- file.path(tables_dir, "TableS3.xlsx")
+table_s3_path <- file.path(tables_dir, "results", "TableS3.xlsx")
 write_xlsx(table_s3_sheets, table_s3_path, na_rep = "NA")
 table_s3_row_count <- sum(vapply(table_s3_sheets, nrow, integer(1)))
 
@@ -558,7 +559,7 @@ message(length(secondary_only_ids),
         " unique sample_id(s) were found only in the CBTN CSV.")
 
 # Table S4: oncogenic and tumor-suppressive miRNAs.
-table_s4_path <- file.path(tables_dir, "TableS4.xlsx")
+table_s4_path <- file.path(tables_dir, "results","TableS4.xlsx")
 write_xlsx(list(S4 = table_s4), table_s4_path)
 message("Wrote ", table_s4_path, " with ", nrow(table_s4), " rows and ",
         ncol(table_s4), " columns.")
@@ -582,7 +583,7 @@ if (!all(vapply(table_s5_sheets, function(sheet) {
 }, logical(1)))) {
   stop("The Table S5 input files do not all have the same columns.")
 }
-table_s5_path <- file.path(tables_dir, "TableS5.xlsx")
+table_s5_path <- file.path(tables_dir, "results","TableS5.xlsx")
 write_xlsx(table_s5_sheets, table_s5_path)
 
 # Table S6: RNA differential expression files corresponding to the Table S2
@@ -618,7 +619,7 @@ if (!all(vapply(table_s6_sheets, function(sheet) {
 }, logical(1)))) {
   stop("The Table S6 input files do not all have the same columns.")
 }
-table_s6_path <- file.path(tables_dir, "TableS6.xlsx")
+table_s6_path <- file.path(tables_dir, "results","TableS6.xlsx")
 write_xlsx(table_s6_sheets, table_s6_path)
 
 # Table S7: one row per sample matched by the Day/Treatment/aliquot key used
@@ -768,7 +769,7 @@ table_s7 <- table_s7[
   ,
   drop = FALSE
 ]
-table_s7_path <- file.path(tables_dir, "TableS7.xlsx")
+table_s7_path <- file.path(tables_dir, "results","TableS7.xlsx")
 write_xlsx(list("Mouse metadata" = table_s7), table_s7_path)
 
 message("Wrote ", table_s5_path, " with ", length(table_s5_sheets),
@@ -829,7 +830,7 @@ if (any(grepl("_Day28$", names(table_s8_rna_summary)))) {
   stop("Day 28 columns remain in the second Table S8 summary file.")
 }
 
-table_s8_path <- file.path(tables_dir, "TableS8.xlsx")
+table_s8_path <- file.path(tables_dir, "results","TableS8.xlsx")
 table_s8_sheets <- list(
   "miRNA DE summary" = table_s8_summary,
   "RNA DE summary" = table_s8_rna_summary
@@ -852,7 +853,7 @@ if (!file.exists(table_s9_input_path)) {
 }
 table_s9 <- read_tsv(table_s9_input_path)
 table_s9 <- table_s9[c("mirna_id", "row_cluster", "expr_pattern")]
-table_s9_path <- file.path(tables_dir, "TableS9.xlsx")
+table_s9_path <- file.path(tables_dir, "results","TableS9.xlsx")
 write_xlsx(list("Cluster membership" = table_s9), table_s9_path)
 message("Wrote ", table_s9_path, " with ", nrow(table_s9), " rows and ",
         ncol(table_s9), " columns.")
@@ -877,7 +878,7 @@ if (!all(vapply(table_s10_sheets, function(sheet) {
 }, logical(1)))) {
   stop("The Table S10 input files do not have the same columns.")
 }
-table_s10_path <- file.path(tables_dir, "TableS10.xlsx")
+table_s10_path <- file.path(tables_dir, "results","TableS10.xlsx")
 write_xlsx(table_s10_sheets, table_s10_path)
 message("Wrote ", table_s10_path, " with ", length(table_s10_sheets),
         " worksheets.")
