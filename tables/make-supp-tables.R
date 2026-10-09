@@ -2,6 +2,8 @@
 
 # Generate the supplementary tables for the manuscript.
 
+library(tidyverse)
+
 # Find the repository root from the current working directory without requiring
 # an additional package.
 find_repo_root <- function(path = getwd()) {
@@ -52,16 +54,16 @@ if (length(cbtn_files) != 1L) {
        "; found ", length(cbtn_files), ".")
 }
 
-read_tsv <- function(path) {
-  read.delim(
-    path,
-    header = TRUE,
-    sep = "\t",
-    check.names = FALSE,
-    stringsAsFactors = FALSE,
-    na.strings = "NA"
-  )
-}
+# read_tsv <- function(path) {
+#   read.delim(
+#     path,
+#     header = TRUE,
+#     sep = "\t",
+#     check.names = FALSE,
+#     stringsAsFactors = FALSE,
+#     na.strings = "NA"
+#   )
+# }
 
 histologies <- read_tsv(histologies_path)
 metadata <- read_tsv(metadata_path)
@@ -266,7 +268,6 @@ output_columns <- c(
   sample_type = "Sample Type",
   primary_site = "CNS Region",
   cancer_group = "Cancer Group",
-  molecular_subtype = "Molecular Subtype",
   histology = "Patient Histology Group",
   reported_gender = "Reported Gender",
   race = "Reported Race",
@@ -466,7 +467,9 @@ table_s2_sheets <- lapply(table_s2_files, function(file_name) {
     check.names = FALSE,
     stringsAsFactors = FALSE,
     na.strings = c("", "NA")
-  )
+  ) %>%
+    dplyr::filter(!is.na(pvalue),
+                  !is.na(padj))
 })
 expected_s2_columns <- names(table_s2_sheets[[1L]])
 if (!all(vapply(table_s2_sheets, function(sheet) {
@@ -486,7 +489,12 @@ if (!file.exists(table_s4_input_path)) {
   stop("Missing oncogenic/tumor-suppressive miRNA input file: ",
        table_s4_input_path)
 }
-table_s4 <- read_tsv(table_s4_input_path)
+table_s4 <- read_tsv(table_s4_input_path,
+                     col_names = c("miRNA",
+                                   "human_miRNA_id",
+                                   "mouse_miRNA_id",
+                                   "class",
+                                   "source"))
 required_annotation_columns <- c("human_miRNA_id", "class")
 if (!all(required_annotation_columns %in% names(table_s4))) {
   stop("Missing required miRNA annotation columns: ",
@@ -600,7 +608,9 @@ table_s6_sheets <- lapply(table_s6_files, function(file_name) {
     check.names = FALSE,
     stringsAsFactors = FALSE,
     na.strings = c("", "NA")
-  )
+  ) %>%
+    dplyr::filter(!is.na(pvalue),
+                  !is.na(padj))
 })
 expected_s6_columns <- names(table_s6_sheets[[1L]])
 if (!all(vapply(table_s6_sheets, function(sheet) {
