@@ -6,7 +6,7 @@ This repository contains a docker image and code used to conduct analyses
 
 1. Clone the repository
 ```
-git clone git@github.com:childrens-bti/haydar-mirna.git
+git clone git@github.com:rokitalab/PedBrainTumor-miR-TME.git
 ```
 
 2. Pull the docker container:
@@ -15,13 +15,13 @@ docker pull pgc-images.sbgenomics.com/rokita-lab/haydar-mirna:v1.0.3
 ```
 NOTE: if running on a Mac with Apple Silicon chip (M1-M4), please add `--platform linux/amd64`; otherwise add `--platform linux/arm64`
 
-3. Start the docker container, from the `haydar-mirna` folder, run:
+3. Start the docker container, from the `PedBrainTumor-miR-TME` folder, run:
 ```
 docker run --platform linux/amd64 --name <CONTAINER_NAME> -d -e PASSWORD=ANYTHING -p 8787:8787 -v $PWD:/home/rstudio/haydar-mirna pgc-images.sbgenomics.com/rokita-lab/haydar-mirna:v1.0.3
 ```
 NOTE: if running on a Mac with Apple Silicon chip (M1-M4), please add `platform linux/amd64`
 
-4. To execute shell within the docker image, from the `haydar-mirna` folder, run:
+4. To execute shell within the docker image, from the `PedBrainTumor-miR-TME` folder, run:
 ```
 docker exec -ti <CONTAINER_NAME> bash
 ```
@@ -33,7 +33,7 @@ bash download_data.sh
 
 6. Navigate to an analysis module and run the shell script:
 ```
-cd /home/rstudio/haydar-mirna/analyses/module_of_interest
+cd /home/rstudio/PedBrainTumor-miR-TME/analyses/module_of_interest
 ```
 
 
