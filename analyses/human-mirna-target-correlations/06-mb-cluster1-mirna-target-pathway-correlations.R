@@ -156,11 +156,12 @@ correlations <- sample_means %>%
     n_samples = n(), n_target_genes = dplyr::first(n_target_genes),
     pearson_r = if (n() >= 3 && sd(log2(mirna_tpm + 0.01)) > 0 &&
                      sd(log2(mean_target_tpm + 0.01)) > 0)
-      cor(log2(mirna_tpm + 0.01), log2(mean_target_tpm + 0.01)) else NA_real_,
+      cor(log2(mirna_tpm + 0.01), log2(mean_target_tpm + 0.01),
+          method = "pearson") else NA_real_,
     pearson_p = if (n() >= 3 && sd(log2(mirna_tpm + 0.01)) > 0 &&
                      sd(log2(mean_target_tpm + 0.01)) > 0)
       cor.test(log2(mirna_tpm + 0.01), log2(mean_target_tpm + 0.01),
-               method = "spearman")$p.value else NA_real_,
+               method = "pearson")$p.value else NA_real_,
     .groups = "drop"
   ) %>%
   group_by(miRNA) %>%
