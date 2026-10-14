@@ -2,9 +2,9 @@
 
 Kaleem Coleman^, Ryan Corbett^, Zhongzhen Yi, Bicna Song, Alex Sickler, Aylar Babaei, Jo Lynne Rokita+, Dalia Haydar+*
 
-^ equal authorship
-+ co-senior authors
-* correspondence: Dalia Haydar, dhaydar@childrensnational.org
+^ equal authorship  
+\+ co-senior authors  
+\* correspondence: Dalia Haydar, dhaydar@childrensnational.org
 
 ## To reproduce the code in this repository:
 This repository contains a docker image and code used to conduct analyses
