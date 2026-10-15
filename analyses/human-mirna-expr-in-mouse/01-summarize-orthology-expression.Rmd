@@ -254,28 +254,37 @@ cluster_summary_df <- cluster_summary_df %>%
 Plot enrichment of miRNAs in B7H3-associated expression groups in mouse by cluster
 
 ```{r}
-enr_plot <- cluster_summary_df %>% 
+enr_df <- cluster_summary_df %>%
   # remove clusters with <2 orthologous miRNAs
-  dplyr::filter(!hsa_dmg_cluster %in% c(2,7)) %>%
-  dplyr::mutate(OR = case_when(
-    is.infinite(OR) ~ 1000,
-    TRUE ~ OR
-  )) %>%
-  dplyr::mutate(OR_CI_upper = case_when(
-    is.infinite(OR_CI_upper) ~ 100,
-    TRUE ~ OR_CI_upper
-  )) %>%
-  ggplot(aes(x = log10(OR+0.01), y = factor(de_mir_group),
+  dplyr::filter(!hsa_dmg_cluster %in% c(2,7))
+
+# OR (and CI bounds) of 0 or Inf are drawn at fixed caps just beyond the finite log10 range
+finite_log_or <- log10(c(enr_df$OR, enr_df$OR_CI_lower, enr_df$OR_CI_upper))
+finite_log_or <- finite_log_or[is.finite(finite_log_or)]
+lo <- min(-2, floor(min(finite_log_or)) - 0.5)
+hi <- max(2, ceiling(max(finite_log_or)) + 0.5)
+x_breaks <- seq(ceiling(lo), floor(hi))
+
+enr_plot <- enr_df %>%
+  dplyr::mutate(
+    log_OR = pmin(pmax(log10(OR), lo), hi),
+    log_CI_lower = pmin(pmax(log10(OR_CI_lower), lo), hi),
+    log_CI_upper = pmin(pmax(log10(OR_CI_upper), lo), hi)
+  ) %>%
+  ggplot(aes(x = log_OR, y = factor(de_mir_group),
              color = factor(de_mir_group),
              label = p_text)) +
-  geom_point(size = 3, show.legend = FALSE) + 
   # add log10-transformed confidence intervals
-  geom_errorbar(aes(xmin = log10(OR_CI_lower+0.01), xmax = log10(OR_CI_upper+0.01),
-                    color = factor(de_mir_group)), width = 0.2, 
+  geom_errorbar(aes(xmin = log_CI_lower, xmax = log_CI_upper,
+                    color = factor(de_mir_group)), width = 0.2,
                 show.legend = FALSE) +
-  geom_text(x = 1.5, hjust = 0, size = 6, fontface = 2,
+  geom_point(size = 3, show.legend = FALSE) +
+  geom_text(aes(x = 2.25), hjust = 0, size = 6, fontface = 2,
             show.legend = FALSE) +
-  labs(x = "log10-Odds Ratio\n(95% CI)", y = "B7H3 DE miRNA class") + 
+  scale_x_continuous(breaks = x_breaks,
+                     expand = expansion(mult = c(0.08, 0.15))) +
+  coord_cartesian(clip = "off") +
+  labs(x = "log10-Odds Ratio\n(95% CI)", y = "B7H3 DE miRNA class") +
   # Add OR threshold line
   geom_vline(xintercept = 0, linetype = "dashed") +
   # facet wrap by variable, place strips to left
@@ -283,6 +292,7 @@ enr_plot <- cluster_summary_df %>%
              nrow = 8,
              strip.position = "left") +
   expand_limits(y=0) +
+  xlim(c(NA, 2.5)) +
   scale_color_manual(values = c("#3C5488FF", "#E64B35FF",
                                 "#4DBBD5FF", "#F39B7FFF",
                                 "#00A087FF")) +
